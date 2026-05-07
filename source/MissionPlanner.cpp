@@ -38,7 +38,7 @@ MissionPlanner::~MissionPlanner()
 void MissionPlanner::initUI()
 {
 #if WIN32
-    setWindowFlags(Qt::FramelessWindowHint | Qt::Window);	//窗口头部隐藏
+    //setWindowFlags(Qt::FramelessWindowHint | Qt::Window);	//窗口头部隐藏
 #else
     setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);	//窗口头部隐藏
 #endif
@@ -46,8 +46,8 @@ void MissionPlanner::initUI()
     //setWindowOpacity(0.85);
     //setAutoFillBackground(true);
 
-    WindowStyle* _pWindowStyle = new WindowStyle();
-    _pWindowStyle->activateOn(ui->widget_Title);
+    //WindowStyle* _pWindowStyle = new WindowStyle();
+    //_pWindowStyle->activateOn(ui->widget_Title);
 
     // 创建步骤导航按钮组，包含5个步骤按钮（任务创建、兵力需求计算、协同任务分配、航路规划、参数装订）
     stepButtonGroup = new QButtonGroup(this);

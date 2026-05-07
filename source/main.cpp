@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QDebug>
-#include "source/MissionPlanner.h"
+#include "MissionPlanner.h"
 
 int main(int argc, char *argv[])
 {

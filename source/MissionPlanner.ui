@@ -569,7 +569,7 @@ PARAMETER LOADING</string>
             <item>
              <widget class="QStackedWidget" name="contentStackedWidget">
               <property name="currentIndex">
-               <number>1</number>
+               <number>4</number>
               </property>
               <widget class="AddOrEditTaskplan" name="step1Page">
                <layout class="QVBoxLayout" name="step1Layout">
@@ -609,7 +609,7 @@ PARAMETER LOADING</string>
                 </property>
                </layout>
               </widget>
-              <widget class="QWidget" name="step3Page">
+              <widget class="TaskAllocationPanel" name="step3Page">
                <layout class="QVBoxLayout" name="step3Layout">
                 <property name="spacing">
                  <number>16</number>
@@ -628,7 +628,7 @@ PARAMETER LOADING</string>
                 </property>
                </layout>
               </widget>
-              <widget class="QWidget" name="step4Page">
+              <widget class="RoutePlanning" name="step4Page">
                <layout class="QVBoxLayout" name="step4Layout">
                 <property name="spacing">
                  <number>16</number>
@@ -793,6 +793,18 @@ PARAMETER LOADING</string>
    <class>ForceRequirementPanel</class>
    <extends>QWidget</extends>
    <header location="global">ForceRequirementPanel.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RoutePlanning</class>
+   <extends>QWidget</extends>
+   <header location="global">RoutePlanning.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TaskAllocationPanel</class>
+   <extends>QWidget</extends>
+   <header location="global">TaskAllocationPanel.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
