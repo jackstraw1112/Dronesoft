@@ -37,10 +37,16 @@ find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 set(SOURCES
+    source/main.cpp
     source/MissionPlanner.cpp
     source/TaskListWidget.cpp
     source/RightSidePanel.cpp
     source/WindowStyle.cpp
+    source/AddOrEditTaskplan.cpp
+    source/ForceRequirementPanel.cpp
+    source/ParameterLoading.cpp
+    source/RoutePlanning.cpp
+    source/TaskAllocationPanel.cpp
 )
 
 set(HEADERS
@@ -49,10 +55,14 @@ set(HEADERS
     source/RightSidePanel.h
     source/StructData.h
     source/WindowStyle.h
+    source/AddOrEditTaskplan.h
+    source/ForceRequirementPanel.h
+    source/ParameterLoading.h
+    source/RoutePlanning.h
+    source/TaskAllocationPanel.h
 )
 
 add_executable(${PROJECT_NAME}
-    source/main.cpp
     ${SOURCES}
     ${HEADERS}
 )
