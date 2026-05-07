@@ -10,9 +10,7 @@
 #include <QStyle>
 
 TaskItemWidget::TaskItemWidget(QWidget *parent)
-    : QFrame(parent)
-    , ui(new Ui::TaskItemWidget)
-    , m_taskId("")
+    : QFrame(parent), ui(new Ui::TaskItemWidget), m_taskId("")
 {
     ui->setupUi(this);
 
@@ -55,21 +53,23 @@ void TaskItemWidget::loadStyleSheet()
     QString qss;
     const QString appDir = QCoreApplication::applicationDirPath();
     const QStringList candidates = {
-        appDir + "/theme/TaskItemWidget.qss",
-        appDir + "/../theme/TaskItemWidget.qss",
-        appDir + "/../source/01-TaskPlan/TaskItemWidget.qss",
-        "source/01-TaskPlan/TaskItemWidget.qss"
-    };
+            appDir + "/theme/TaskItemWidget.qss",
+            appDir + "/../theme/TaskItemWidget.qss",
+            appDir + "/../source/01-TaskPlan/TaskItemWidget.qss",
+            "source/01-TaskPlan/TaskItemWidget.qss"};
 
-    for (const QString &path : candidates) {
+    for (const QString &path : candidates)
+    {
         QFile file(path);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
             qss = QString::fromUtf8(file.readAll());
             break;
         }
     }
 
-    if (!qss.isEmpty()) {
+    if (!qss.isEmpty())
+    {
         setStyleSheet(qss);
     }
 }
@@ -98,19 +98,28 @@ void TaskItemWidget::setTaskStatus(QString status)
 {
     m_status = status;
 
-    if (status == "规划中" || status == "planning") {
+    if (status == "规划中" || status == "planning")
+    {
         ui->statusLabel->setText(status == "planning" ? "规划中" : status);
         ui->statusLabel->setProperty("statusType", "planning");
-    } else if (status == "待执行" || status == "ready") {
+    }
+    else if (status == "待执行" || status == "ready")
+    {
         ui->statusLabel->setText(status == "ready" ? "待执行" : status);
         ui->statusLabel->setProperty("statusType", "ready");
-    } else if (status == "执行中" || status == "active") {
+    }
+    else if (status == "执行中" || status == "active")
+    {
         ui->statusLabel->setText(status == "active" ? "执行中" : status);
         ui->statusLabel->setProperty("statusType", "active");
-    } else if (status == "已完成" || status == "completed") {
+    }
+    else if (status == "已完成" || status == "completed")
+    {
         ui->statusLabel->setText(status == "completed" ? "已完成" : status);
         ui->statusLabel->setProperty("statusType", "completed");
-    } else {
+    }
+    else
+    {
         ui->statusLabel->setText(status);
         ui->statusLabel->setProperty("statusType", "other");
     }
@@ -131,9 +140,12 @@ void TaskItemWidget::setThreatLevel(const QString &level)
 void TaskItemWidget::setTime(QString time)
 {
     const QString trimmed = time.trimmed();
-    if (trimmed.contains("~") || trimmed.contains("-")) {
+    if (trimmed.contains("~") || trimmed.contains("-"))
+    {
         ui->timeLabel->setText(QString("⏱ %1").arg(trimmed));
-    } else {
+    }
+    else
+    {
         ui->timeLabel->setText(QString("⏱ %1 ~ %1").arg(trimmed));
     }
 }
@@ -146,7 +158,8 @@ void TaskItemWidget::setSelected(bool selected)
 
 void TaskItemWidget::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::LeftButton)
+    {
         emit clicked(m_taskId);
     }
     QFrame::mousePressEvent(event);

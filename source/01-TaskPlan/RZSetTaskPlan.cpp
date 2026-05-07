@@ -13,9 +13,9 @@
 #include <QAction>
 #include <QDateTime>
 #include <QHeaderView>
+#include <QInputDialog>
 #include <QMenu>
 #include <QMessageBox>
-#include <QInputDialog>
 #include <QPushButton>
 #include <QTableWidget>
 #include <QTableWidgetItem>
@@ -72,20 +72,15 @@ void RZSetTaskPlan::initConnect()
     connect(ui->addPointTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onAddPointTargetBtnClicked);
     connect(ui->editPointTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onEditPointTargetBtnClicked);
     connect(ui->deletePointTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onDeletePointTargetBtnClicked);
-    connect(ui->tableWidget_2, &QTableWidget::itemSelectionChanged,
-            this, &RZSetTaskPlan::updatePointTargetActionBtnState);
-    connect(ui->tableWidget_2, &QTableWidget::cellDoubleClicked,
-            this, &RZSetTaskPlan::onPointTargetDoubleClicked);
-    connect(ui->tableWidget_2, &QWidget::customContextMenuRequested,
-            this, &RZSetTaskPlan::onPointTargetContextMenu);
+    connect(ui->tableWidget_2, &QTableWidget::itemSelectionChanged, this, &RZSetTaskPlan::updatePointTargetActionBtnState);
+    connect(ui->tableWidget_2, &QTableWidget::cellDoubleClicked, this, &RZSetTaskPlan::onPointTargetDoubleClicked);
+    connect(ui->tableWidget_2, &QWidget::customContextMenuRequested, this, &RZSetTaskPlan::onPointTargetContextMenu);
 
     connect(ui->addAreaTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onAddAreaTargetBtnClicked);
     connect(ui->editAreaTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onEditAreaTargetBtnClicked);
     connect(ui->deleteAreaTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onDeleteAreaTargetBtnClicked);
-    connect(ui->tableWidget, &QTableWidget::itemSelectionChanged,
-            this, &RZSetTaskPlan::updateAreaTargetActionBtnState);
-    connect(ui->tableWidget, &QTableWidget::cellDoubleClicked,
-            this, [this](int row, int)
+    connect(ui->tableWidget, &QTableWidget::itemSelectionChanged, this, &RZSetTaskPlan::updateAreaTargetActionBtnState);
+    connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, [this](int row, int)
             { editAreaTargetAtRow(row); });
 }
 
@@ -96,7 +91,8 @@ void RZSetTaskPlan::onSaveTaskBtnClicked()
 
 bool RZSetTaskPlan::triggerSave(bool showSuccessMessage)
 {
-    if (!canOperate()) {
+    if (!canOperate())
+    {
         QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("当前为只读状态，请通过新建或编辑进入可操作模式。"));
         return false;
     }
@@ -141,7 +137,8 @@ bool RZSetTaskPlan::triggerSave(bool showSuccessMessage)
 
     TaskBasicInfo info;
     // 新建任务使用自动生成的 taskUid；编辑任务沿用原 taskUid。
-    if (!m_lastSavedTaskInfo.taskUid.isEmpty()) {
+    if (!m_lastSavedTaskInfo.taskUid.isEmpty())
+    {
         info.taskUid = m_lastSavedTaskInfo.taskUid;
     }
     info.taskName = taskName;
@@ -164,11 +161,10 @@ bool RZSetTaskPlan::triggerSave(bool showSuccessMessage)
     info.startTimestampSec = static_cast<uint>(startTime.toSecsSinceEpoch());
     info.endTimestampSec = static_cast<uint>(endTime.toSecsSinceEpoch());
     info.status = resolveTaskStatus(
-        TaskPlanStage::Scheme,
-        static_cast<uint>(QDateTime::currentSecsSinceEpoch()),
-        info.startTimestampSec,
-        info.endTimestampSec
-    );
+            TaskPlanStage::Scheme,
+            static_cast<uint>(QDateTime::currentSecsSinceEpoch()),
+            info.startTimestampSec,
+            info.endTimestampSec);
     info.intent = ui->textEdit->toPlainText().trimmed();
 
     m_lastSavedTaskInfo = info;
@@ -188,8 +184,8 @@ bool RZSetTaskPlan::triggerSave(bool showSuccessMessage)
 }
 
 void RZSetTaskPlan::loadTaskForEdit(const TaskBasicInfo &taskInfo,
-                                        const QList<PointTargetInfo> &pointTargets,
-                                        const QList<AreaTargetInfo> &areaTargets)
+                                    const QList<PointTargetInfo> &pointTargets,
+                                    const QList<AreaTargetInfo> &areaTargets)
 {
     m_lastSavedTaskInfo = taskInfo;
     m_pointTargets = pointTargets;
@@ -265,14 +261,17 @@ void RZSetTaskPlan::resetForNewTask()
 
 void RZSetTaskPlan::onAddPointTargetBtnClicked()
 {
-    if (!canOperate()) {
+    if (!canOperate())
+    {
         return;
     }
 
     SetPointTargetEditDialog dialog(this);
     QStringList targetNames;
-    for (const PointTargetInfo &target : m_pointTargets) {
-        if (!target.name.trimmed().isEmpty() && !targetNames.contains(target.name)) {
+    for (const PointTargetInfo &target : m_pointTargets)
+    {
+        if (!target.name.trimmed().isEmpty() && !targetNames.contains(target.name))
+        {
             targetNames.append(target.name);
         }
     }
@@ -303,7 +302,8 @@ void RZSetTaskPlan::onAddPointTargetBtnClicked()
 
 void RZSetTaskPlan::onEditPointTargetBtnClicked()
 {
-    if (!canOperate()) {
+    if (!canOperate())
+    {
         return;
     }
     editPointTargetAtRow(ui->tableWidget_2->currentRow());
@@ -311,7 +311,8 @@ void RZSetTaskPlan::onEditPointTargetBtnClicked()
 
 void RZSetTaskPlan::onDeletePointTargetBtnClicked()
 {
-    if (!canOperate()) {
+    if (!canOperate())
+    {
         return;
     }
 
@@ -385,8 +386,10 @@ void RZSetTaskPlan::editPointTargetAtRow(int row)
 
     SetPointTargetEditDialog dialog(this);
     QStringList targetNames;
-    for (const PointTargetInfo &target : m_pointTargets) {
-        if (!target.name.trimmed().isEmpty() && !targetNames.contains(target.name)) {
+    for (const PointTargetInfo &target : m_pointTargets)
+    {
+        if (!target.name.trimmed().isEmpty() && !targetNames.contains(target.name))
+        {
             targetNames.append(target.name);
         }
     }
@@ -436,12 +439,14 @@ void RZSetTaskPlan::setPointTargetRow(int row, const PointTargetInfo &targetInfo
 
 void RZSetTaskPlan::onAddAreaTargetBtnClicked()
 {
-    if (!canOperate()) {
+    if (!canOperate())
+    {
         return;
     }
 
     SetAreaTargetEditDialog dialog(this);
-    connect(&dialog, &SetAreaTargetEditDialog::requestMapPick, this, [this, &dialog]() {
+    connect(&dialog, &SetAreaTargetEditDialog::requestMapPick, this, [this, &dialog]()
+            {
         bool okLat = false;
         const double lat = QInputDialog::getDouble(
             this, QStringLiteral("地图拾取"),
@@ -465,8 +470,7 @@ void RZSetTaskPlan::onAddAreaTargetBtnClicked()
         GeoPoint point;
         point.latitude = lat;
         point.longitude = lon;
-        dialog.appendPickedVertex(point);
-    });
+        dialog.appendPickedVertex(point); });
 
     if (dialog.exec() != QDialog::Accepted)
     {
@@ -494,7 +498,8 @@ void RZSetTaskPlan::onAddAreaTargetBtnClicked()
 
 void RZSetTaskPlan::onEditAreaTargetBtnClicked()
 {
-    if (!canOperate()) {
+    if (!canOperate())
+    {
         return;
     }
     editAreaTargetAtRow(ui->tableWidget->currentRow());
@@ -502,7 +507,8 @@ void RZSetTaskPlan::onEditAreaTargetBtnClicked()
 
 void RZSetTaskPlan::onDeleteAreaTargetBtnClicked()
 {
-    if (!canOperate()) {
+    if (!canOperate())
+    {
         return;
     }
 
@@ -562,7 +568,8 @@ void RZSetTaskPlan::editAreaTargetAtRow(int row)
     }
 
     SetAreaTargetEditDialog dialog(this);
-    connect(&dialog, &SetAreaTargetEditDialog::requestMapPick, this, [this, &dialog]() {
+    connect(&dialog, &SetAreaTargetEditDialog::requestMapPick, this, [this, &dialog]()
+            {
         bool okLat = false;
         const double lat = QInputDialog::getDouble(
             this, QStringLiteral("地图拾取"),
@@ -586,8 +593,7 @@ void RZSetTaskPlan::editAreaTargetAtRow(int row)
         GeoPoint point;
         point.latitude = lat;
         point.longitude = lon;
-        dialog.appendPickedVertex(point);
-    });
+        dialog.appendPickedVertex(point); });
     dialog.setDialogTitle(QStringLiteral("编辑区域目标"));
     dialog.setAreaTargetInfo(m_areaTargets.at(row));
     if (dialog.exec() != QDialog::Accepted)

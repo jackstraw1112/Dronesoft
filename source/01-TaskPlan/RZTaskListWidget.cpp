@@ -2,17 +2,16 @@
 // 实现任务列表组件的功能
 
 #include "RZTaskListWidget.h"
-#include "ui_RZTaskListWidget.h"
 #include <QDebug>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSizePolicy>
 #include <QVBoxLayout>
+#include "ui_RZTaskListWidget.h"
 
 // 任务列表组件构造函数
 RZTaskListWidget::RZTaskListWidget(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::RZTaskListWidget)
+    : QWidget(parent), ui(new Ui::RZTaskListWidget)
 {
     ui->setupUi(this);
 
@@ -54,11 +53,12 @@ void RZTaskListWidget::initConnect()
 
 // 添加任务项：根据提供的信息创建并显示任务卡片
 void RZTaskListWidget::addTask(QString taskId, QString taskName,
-                             QString status, int targets, int aircraft,
-                             QString time)
+                               QString status, int targets, int aircraft,
+                               QString time)
 {
     // 检查是否已存在相同ID的任务，避免重复添加
-    if (m_taskItems.contains(taskId)) {
+    if (m_taskItems.contains(taskId))
+    {
         return;
     }
 
@@ -73,7 +73,7 @@ void RZTaskListWidget::addTask(QString taskId, QString taskName,
     item->setTargetCount(targets);
     item->setTime(time);
     const QString threatLevel = (aircraft >= 10) ? QStringLiteral("高")
-                              : (aircraft >= 6)  ? QStringLiteral("中")
+            : (aircraft >= 6)                    ? QStringLiteral("中")
                                                  : QStringLiteral("低");
     item->setThreatLevel(threatLevel);
 
@@ -91,7 +91,8 @@ void RZTaskListWidget::addTask(QString taskId, QString taskName,
     updateBadge();
 
     // 如果没有选中的任务，自动选中新添加的任务
-    if (m_selectedTaskId.isEmpty()) {
+    if (m_selectedTaskId.isEmpty())
+    {
         setSelectedTask(taskId);
     }
 }
@@ -100,34 +101,37 @@ void RZTaskListWidget::addTask(QString taskId, QString taskName,
 void RZTaskListWidget::clearTasks()
 {
     // 遍历映射表，删除所有任务项组件
-    QMap<QString, TaskItemWidget*>::iterator it = m_taskItems.begin();
-    while (it != m_taskItems.end()) {
+    QMap<QString, TaskItemWidget *>::iterator it = m_taskItems.begin();
+    while (it != m_taskItems.end())
+    {
         delete it.value();
         ++it;
     }
-    m_taskItems.clear();       // 清空映射表
-    m_selectedTaskId.clear();  // 清空选中状态
+    m_taskItems.clear();      // 清空映射表
+    m_selectedTaskId.clear(); // 清空选中状态
     updateTaskItemWidthConstraints();
-    updateBadge();             // 更新徽章
+    updateBadge(); // 更新徽章
 }
 
 // 设置选中的任务：高亮显示指定任务并发射选中信号
 void RZTaskListWidget::setSelectedTask(QString taskId)
 {
     // 检查任务是否存在
-    if (!m_taskItems.contains(taskId)) {
+    if (!m_taskItems.contains(taskId))
+    {
         return;
     }
 
     // 取消上一个选中任务的选中状态
-    if (!m_selectedTaskId.isEmpty() && m_taskItems.contains(m_selectedTaskId)) {
+    if (!m_selectedTaskId.isEmpty() && m_taskItems.contains(m_selectedTaskId))
+    {
         m_taskItems.value(m_selectedTaskId)->setSelected(false);
     }
 
     // 设置新的选中状态
     m_selectedTaskId = taskId;
     m_taskItems.value(taskId)->setSelected(true);
-    emit taskSelected(taskId);  // 发射选中信号
+    emit taskSelected(taskId); // 发射选中信号
 }
 
 // 更新任务数量徽章：根据当前任务数量更新显示
@@ -144,7 +148,8 @@ void RZTaskListWidget::onTaskItemClicked(QString taskId)
 
 void RZTaskListWidget::onDeleteTaskClicked()
 {
-    if (m_selectedTaskId.isEmpty() || !m_taskItems.contains(m_selectedTaskId)) {
+    if (m_selectedTaskId.isEmpty() || !m_taskItems.contains(m_selectedTaskId))
+    {
         return;
     }
 
@@ -157,7 +162,8 @@ void RZTaskListWidget::onDeleteTaskClicked()
     updateBadge();
     emit deleteTaskClicked(deletedTaskId);
 
-    if (!m_taskItems.isEmpty()) {
+    if (!m_taskItems.isEmpty())
+    {
         setSelectedTask(m_taskItems.first()->getTaskId());
     }
 }
@@ -170,7 +176,8 @@ void RZTaskListWidget::resizeEvent(QResizeEvent *event)
 
 void RZTaskListWidget::updateTaskItemWidthConstraints()
 {
-    if (!ui || !ui->taskScrollArea || !ui->scrollContent) {
+    if (!ui || !ui->taskScrollArea || !ui->scrollContent)
+    {
         return;
     }
 
@@ -180,9 +187,11 @@ void RZTaskListWidget::updateTaskItemWidthConstraints()
     const int availableWidth = qMax(0, viewportWidth - margins.left() - margins.right());
 
     QMap<QString, TaskItemWidget *>::const_iterator it = m_taskItems.constBegin();
-    while (it != m_taskItems.constEnd()) {
+    while (it != m_taskItems.constEnd())
+    {
         TaskItemWidget *item = it.value();
-        if (item) {
+        if (item)
+        {
             item->setMaximumWidth(availableWidth);
         }
         ++it;
@@ -201,5 +210,4 @@ void RZTaskListWidget::addTestTasks()
 
     addTask("MSN-2026-0503-C", "压制干扰任务 - 通信中继C区",
             "待执行", 3, 6, "2026-05-04 06:00");
-
 }

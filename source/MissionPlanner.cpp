@@ -2,11 +2,11 @@
 // ARUA Mission Planning System - Main Window Implementation
 
 #include "MissionPlanner.h"
-#include "TaskPlanningTypeConvert.h"
 #include <QDateTime>
 #include <QDebug>
 #include <QMessageBox>
 #include <QTimer>
+#include "TaskPlanningTypeConvert.h"
 
 MissionPlanner *MissionPlanner::GetInstance(QWidget *parent)
 {
@@ -73,7 +73,8 @@ void MissionPlanner::initObject()
     mRightSidePanel = ui->widget_Source;
 
     // 延时初始化临时演示数据，避免界面初次布局未完成导致刷新不完整
-    QTimer::singleShot(0, this, [this]() {
+    QTimer::singleShot(0, this, [this]()
+                       {
         generateDemoData();
         refreshTaskList();
 
@@ -84,8 +85,7 @@ void MissionPlanner::initObject()
             {
                 onTaskItemSelected(firstTaskId);
             }
-        }
-    });
+        } });
 }
 
 // 关联信号与槽函数
@@ -119,8 +119,8 @@ void MissionPlanner::setRuntimeStage(TaskPlanStage stage, uint simTimestampSec)
     if (stage == TaskPlanStage::Simulate)
     {
         m_runtimeSimTimestampSec = (simTimestampSec == 0)
-                                       ? static_cast<uint>(QDateTime::currentSecsSinceEpoch())
-                                       : simTimestampSec;
+                ? static_cast<uint>(QDateTime::currentSecsSinceEpoch())
+                : simTimestampSec;
     }
     else
     {
@@ -239,14 +239,13 @@ void MissionPlanner::refreshTaskList()
         }
         // 根据当前阶段与仿真时间动态判定任务状态
         const uint statusTime = (m_runtimeStage == TaskPlanStage::Simulate)
-                                    ? m_runtimeSimTimestampSec
-                                    : static_cast<uint>(QDateTime::currentSecsSinceEpoch());
+                ? m_runtimeSimTimestampSec
+                : static_cast<uint>(QDateTime::currentSecsSinceEpoch());
         const TaskStatusType status = resolveTaskStatus(
-            m_runtimeStage,
-            statusTime,
-            task.startTimestampSec,
-            task.endTimestampSec
-        );
+                m_runtimeStage,
+                statusTime,
+                task.startTimestampSec,
+                task.endTimestampSec);
         const QString statusText = taskStatusTypeToChinese(status);
         // 将时间戳转换为可读时间范围
         const QString timeRange = QString("%1 ~ %2")

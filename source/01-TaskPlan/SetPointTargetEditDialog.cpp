@@ -1,5 +1,5 @@
-#include "../TaskPlanningTypeConvert.h"
 #include "SetPointTargetEditDialog.h"
+#include "../TaskPlanningTypeConvert.h"
 #include "ui_SetPointTargetEditDialog.h"
 
 #include <QMessageBox>
@@ -7,8 +7,7 @@
 #include <QRegularExpression>
 
 SetPointTargetEditDialog::SetPointTargetEditDialog(QWidget *parent)
-    : QDialog(parent)
-    , ui(new Ui::SetPointTargetEditDialog)
+    : QDialog(parent), ui(new Ui::SetPointTargetEditDialog)
 {
     ui->setupUi(this);
     initObject();
@@ -31,8 +30,8 @@ PointTargetInfo SetPointTargetEditDialog::pointTargetInfo() const
     info.longitude = ui->longitudeSpin->value();
     info.cepMeters = ui->cepSpin->value();
     info.band = QStringLiteral("%1~%2 MHz")
-                    .arg(ui->bandLowerSpin->value(), 0, 'f', 2)
-                    .arg(ui->bandUpperSpin->value(), 0, 'f', 2);
+                        .arg(ui->bandLowerSpin->value(), 0, 'f', 2)
+                        .arg(ui->bandUpperSpin->value(), 0, 'f', 2);
     info.emissionPattern = ui->emissionPatternEdit->text().trimmed();
     info.priority = ui->priorityCombo->currentText().trimmed();
     info.requiredPk = ui->requiredPkSpin->value();
@@ -44,7 +43,8 @@ void SetPointTargetEditDialog::setTargetNameOptions(const QStringList &targetNam
     const QString currentText = ui->targetNameCombo->currentText().trimmed();
     ui->targetNameCombo->clear();
     ui->targetNameCombo->addItems(targetNames);
-    if (!currentText.isEmpty()) {
+    if (!currentText.isEmpty())
+    {
         ui->targetNameCombo->setCurrentText(currentText);
     }
 }
@@ -52,7 +52,8 @@ void SetPointTargetEditDialog::setTargetNameOptions(const QStringList &targetNam
 void SetPointTargetEditDialog::setPointTargetInfo(const PointTargetInfo &info)
 {
     ui->targetIdEdit->setText(info.targetId);
-    if (ui->targetNameCombo->findText(info.name) < 0) {
+    if (ui->targetNameCombo->findText(info.name) < 0)
+    {
         ui->targetNameCombo->addItem(info.name);
     }
     ui->targetNameCombo->setCurrentText(info.name);
@@ -64,7 +65,8 @@ void SetPointTargetEditDialog::setPointTargetInfo(const PointTargetInfo &info)
     const QRegularExpression bandPattern(QStringLiteral("([\\d\\.]+)\\s*~\\s*([\\d\\.]+)\\s*MHz"),
                                          QRegularExpression::CaseInsensitiveOption);
     const QRegularExpressionMatch bandMatch = bandPattern.match(info.band);
-    if (bandMatch.hasMatch()) {
+    if (bandMatch.hasMatch())
+    {
         ui->bandLowerSpin->setValue(bandMatch.captured(1).toDouble());
         ui->bandUpperSpin->setValue(bandMatch.captured(2).toDouble());
     }
@@ -80,15 +82,18 @@ void SetPointTargetEditDialog::setDialogTitle(const QString &title)
 
 void SetPointTargetEditDialog::onAcceptClicked()
 {
-    if (ui->targetIdEdit->text().trimmed().isEmpty()) {
+    if (ui->targetIdEdit->text().trimmed().isEmpty())
+    {
         QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请输入点目标编号。"));
         return;
     }
-    if (ui->targetNameCombo->currentText().trimmed().isEmpty()) {
+    if (ui->targetNameCombo->currentText().trimmed().isEmpty())
+    {
         QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请选择目标名称。"));
         return;
     }
-    if (ui->bandLowerSpin->value() > ui->bandUpperSpin->value()) {
+    if (ui->bandLowerSpin->value() > ui->bandUpperSpin->value())
+    {
         QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("频段下限不能大于频段上限。"));
         return;
     }
