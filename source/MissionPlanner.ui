@@ -450,7 +450,7 @@
           <number>9</number>
          </property>
          <item>
-          <widget class="TaskListWidget" name="widget_Task" native="true">
+          <widget class="RZTaskListWidget" name="widget_Task" native="true">
            <property name="minimumSize">
             <size>
              <width>300</width>
@@ -484,89 +484,11 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QWidget" name="widget_3" native="true">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>50</height>
-               </size>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_4">
-               <item>
-                <widget class="QLabel" name="label">
-                 <property name="text">
-                  <string>MSN-2026-0430-A</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_2">
-                 <property name="text">
-                  <string>合肥东郊压制行动</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_8">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QPushButton" name="pushButton">
-                 <property name="minimumSize">
-                  <size>
-                   <width>100</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>保存 SAVE</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="pushButton_2">
-                 <property name="minimumSize">
-                  <size>
-                   <width>100</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>推演 SIMULATE</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="pushButton_3">
-                 <property name="minimumSize">
-                  <size>
-                   <width>100</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>下发 DEPLOY</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
              <widget class="QStackedWidget" name="contentStackedWidget">
               <property name="currentIndex">
-               <number>4</number>
+               <number>0</number>
               </property>
-              <widget class="AddOrEditTaskplan" name="step1Page">
+              <widget class="RZSetTaskPlan" name="step1Page">
                <layout class="QVBoxLayout" name="step1Layout">
                 <property name="spacing">
                  <number>16</number>
@@ -767,21 +689,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>TaskListWidget</class>
-   <extends>QWidget</extends>
-   <header location="global">TaskListWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>RightSidePanel</class>
    <extends>QWidget</extends>
    <header location="global">RightSidePanel.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>AddOrEditTaskplan</class>
-   <extends>QWidget</extends>
-   <header location="global">AddOrEditTaskplan.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -800,6 +710,18 @@
    <class>TaskAllocationPanel</class>
    <extends>QWidget</extends>
    <header location="global">TaskAllocationPanel.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RZSetTaskPlan</class>
+   <extends>QWidget</extends>
+   <header>RZSetTaskPlan.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RZTaskListWidget</class>
+   <extends>QWidget</extends>
+   <header>RZTaskListWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

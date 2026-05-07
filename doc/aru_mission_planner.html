@@ -1,0 +1,5131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反辐射无人机任务规划系统 / ARUA Mission Planning System</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@500;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base: #0a0e0f;
+  --bg-panel: #0f1518;
+  --bg-panel-2: #131a1d;
+  --bg-elevated: #182125;
+  --border-dim: #1f2a2f;
+  --border: #2a3a40;
+  --border-bright: #3d5660;
+  --text-dim: #5a6e75;
+  --text: #a8bdc4;
+  --text-bright: #d8e8ee;
+  --amber: #ffb627;
+  --amber-dim: #8a6010;
+  --cyan: #4fd1c5;
+  --cyan-dim: #1a5f58;
+  --red: #ff4d4d;
+  --red-dim: #5a1818;
+  --green: #5dde85;
+  --grid: rgba(79, 209, 197, 0.04);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: var(--bg-base);
+  color: var(--text);
+  font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at top, transparent 0%, var(--bg-base) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ===== TOP BAR ===== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.topbar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  opacity: 0.5;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  width: 36px; height: 36px;
+  border: 1px solid var(--amber);
+  display: grid; place-items: center;
+  position: relative;
+  background: rgba(255, 182, 39, 0.05);
+}
+.logo::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--amber-dim);
+}
+.logo svg { width: 18px; height: 18px; fill: var(--amber); }
+
+.brand-text { display: flex; flex-direction: column; gap: 2px; }
+.brand-cn {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px; font-weight: 500;
+  color: var(--text-bright);
+  letter-spacing: 2px;
+}
+.brand-en {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px; font-weight: 500;
+  color: var(--amber);
+  letter-spacing: 3px;
+}
+
+.topbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  font-size: 11px;
+}
+
+.meta-item { display: flex; flex-direction: column; gap: 2px; }
+.meta-label { color: var(--text-dim); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; }
+.meta-value { color: var(--text-bright); font-weight: 500; }
+.meta-value.live::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--green); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 4px transparent; }
+}
+
+.classification {
+  background: var(--red-dim);
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+/* ===== STEPS NAV ===== */
+.steps {
+  display: flex;
+  background: var(--bg-panel-2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  position: relative;
+  cursor: pointer;
+  border-right: 1px solid var(--border-dim);
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.step:hover { background: var(--bg-elevated); }
+
+.step.active {
+  background: var(--bg-elevated);
+}
+
+.step.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--amber);
+  box-shadow: 0 0 12px var(--amber);
+}
+
+.step.completed .step-num {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.step-num {
+  width: 24px; height: 24px;
+  border: 1px solid var(--border-bright);
+  display: grid; place-items: center;
+  font-size: 11px;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.step.active .step-num {
+  background: var(--amber);
+  color: var(--bg-base);
+  border-color: var(--amber);
+}
+
+.step-label { display: flex; flex-direction: column; }
+.step-cn { font-family: 'Noto Sans SC', sans-serif; font-size: 12px; color: var(--text-bright); font-weight: 500; }
+.step-en { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+
+/* ===== MAIN ===== */
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  gap: 1px;
+  background: var(--border-dim);
+  min-height: 0;
+}
+
+.panel {
+  background: var(--bg-panel);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-panel-2);
+  position: sticky; top: 0; z-index: 5;
+}
+
+.panel-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 2px;
+  font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-title::before {
+  content: '';
+  width: 3px; height: 12px;
+  background: var(--amber);
+}
+
+.panel-badge {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.panel-body { padding: 16px; flex: 1; }
+
+/* ===== LEFT — TASK LIST ===== */
+.task-item {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--bg-panel-2);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.task-item:hover { border-color: var(--border-bright); }
+
+.task-item.selected {
+  border-color: var(--amber);
+  background: rgba(255, 182, 39, 0.05);
+}
+.task-item.selected::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: -1px;
+  width: 3px;
+  background: var(--amber);
+}
+
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.task-id {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+  letter-spacing: 1.5px;
+}
+
+.task-status {
+  font-size: 9px;
+  padding: 2px 6px;
+  letter-spacing: 1px;
+}
+.status-planning { color: var(--amber); border: 1px solid var(--amber-dim); }
+.status-ready { color: var(--green); border: 1px solid #2d5a3a; }
+.status-active { color: var(--cyan); border: 1px solid var(--cyan-dim); }
+
+.task-name {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--text-bright);
+  margin: 4px 0;
+  font-weight: 500;
+}
+
+.task-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.task-meta span::before {
+  content: attr(data-icon);
+  margin-right: 3px;
+  color: var(--cyan);
+}
+
+.btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--amber-dim);
+  color: var(--amber);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+.btn:hover {
+  background: rgba(255, 182, 39, 0.1);
+  border-color: var(--amber);
+  box-shadow: inset 0 0 0 1px var(--amber-dim);
+}
+.btn-primary {
+  background: var(--amber);
+  color: var(--bg-base);
+  border-color: var(--amber);
+  font-weight: 700;
+}
+.btn-primary:hover { background: #ffc547; box-shadow: 0 0 16px rgba(255, 182, 39, 0.4); }
+
+/* ===== CENTER PANEL ===== */
+.center {
+  background: var(--bg-base);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.center-header {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.task-title-block { display: flex; align-items: center; gap: 16px; }
+
+.task-title-id {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+  padding: 4px 8px;
+  border: 1px solid var(--cyan-dim);
+}
+
+.task-title-name {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 16px;
+  color: var(--text-bright);
+  font-weight: 500;
+}
+
+.center-actions { display: flex; gap: 8px; }
+.action-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.action-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.center-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+/* ===== TASK CREATION FORM ===== */
+.section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.section-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--amber);
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.section-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--bg-base);
+  background: var(--amber);
+  padding: 2px 6px;
+  font-weight: 700;
+}
+
+.section-tag {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.section-body { padding: 16px; }
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 20px;
+}
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field.full { grid-column: 1 / -1; }
+
+.field-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+}
+.field-label::before {
+  content: '▸ ';
+  color: var(--amber);
+  margin-right: 4px;
+}
+
+.field-cn { font-family: 'Noto Sans SC', sans-serif; }
+.req { color: var(--red); margin-left: 4px; }
+
+.input, .select, .textarea {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--amber);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 2px rgba(255, 182, 39, 0.1);
+}
+
+.textarea { resize: vertical; min-height: 60px; font-family: 'Noto Sans SC', sans-serif; }
+
+.coord-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 8px;
+}
+
+/* ===== TARGET TABLE ===== */
+.target-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+
+/* ===== TGT TABS (POINT / AREA) ===== */
+.tgt-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.tgt-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+  position: relative;
+}
+
+.tgt-tab:hover { border-color: var(--border-bright); }
+
+.tgt-tab.active {
+  background: rgba(255, 182, 39, 0.08);
+  border-color: var(--amber);
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+
+.tgt-tab-icon {
+  color: var(--cyan);
+  font-size: 14px;
+  font-family: 'Orbitron', monospace;
+}
+.tgt-tab.active .tgt-tab-icon { color: var(--amber); }
+
+.tgt-tab-cn {
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--text-bright);
+  font-weight: 500;
+}
+
+.tgt-tab-en {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+}
+
+.tgt-tab-count {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--bg-base);
+  background: var(--text-dim);
+  padding: 1px 5px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.tgt-tab.active .tgt-tab-count {
+  background: var(--amber);
+}
+
+.tgt-tabs-hint {
+  flex: 1;
+  text-align: right;
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-style: italic;
+  min-width: 200px;
+}
+
+.tgt-pane { display: none; animation: fade 0.25s ease; }
+.tgt-pane.active { display: block; }
+
+.cep {
+  display: inline-block;
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+/* AREA TARGET DETAIL */
+.area-detail {
+  margin-top: 16px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 14px;
+}
+
+.area-detail-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.area-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.area-item {
+  background: var(--bg-panel);
+  border-left: 2px solid var(--cyan);
+  padding: 8px 10px;
+}
+
+.area-lbl {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'Noto Sans SC', sans-serif;
+  margin-bottom: 4px;
+}
+
+.area-val {
+  font-family: 'Orbitron', monospace;
+  color: var(--text-bright);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.area-sketch {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-dim);
+  margin-bottom: 14px;
+}
+.area-sketch svg { width: 100%; display: block; }
+
+.area-strategy {
+  background: var(--bg-panel);
+  padding: 10px 12px;
+  border-left: 2px solid var(--amber);
+}
+
+.strat-header {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 10px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+
+.strat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 10px;
+  border-bottom: 1px dashed var(--border-dim);
+}
+.strat-row:last-child { border-bottom: none; }
+.strat-lbl { color: var(--text); font-family: 'Noto Sans SC', sans-serif; }
+.strat-val { color: var(--text-bright); font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; }
+
+.target-table thead th {
+  background: var(--bg-panel-2);
+  color: var(--amber);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-bright);
+}
+
+.target-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-dim);
+  color: var(--text);
+}
+
+.target-table tbody tr:hover { background: var(--bg-elevated); }
+
+.target-id {
+  font-family: 'Orbitron', monospace;
+  color: var(--cyan);
+  font-weight: 500;
+}
+
+.priority {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.priority.p1 { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+.priority.p2 { background: rgba(255, 182, 39, 0.1); color: var(--amber); border: 1px solid var(--amber-dim); }
+.priority.p3 { background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-dim); }
+
+.band-tag {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+  background: rgba(79, 209, 197, 0.08);
+  padding: 1px 5px;
+  border: 1px solid var(--cyan-dim);
+  letter-spacing: 1px;
+}
+
+/* ===== STEP CONTENT (toggleable) ===== */
+.step-content { display: none; animation: fade 0.3s ease; }
+.step-content.active { display: block; }
+
+/* ===== SIMPLIFIED FORCE CALC ===== */
+.target-selector {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.ts-label {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.ts-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ts-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+  flex: 1;
+  min-width: 180px;
+}
+.ts-pill:hover { border-color: var(--border-bright); }
+.ts-pill.active {
+  background: rgba(255, 182, 39, 0.08);
+  border-color: var(--amber);
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+.ts-pill-mark {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.ts-pill-mark.pt { background: var(--red); }
+.ts-pill-mark.ar {
+  background: rgba(255, 182, 39, 0.3);
+  border: 1px dashed var(--amber);
+  border-radius: 2px;
+}
+.ts-pill-id {
+  font-family: 'Orbitron', monospace;
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.ts-pill-name {
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--text-bright);
+}
+
+/* CALC PANE */
+.calc-pane { display: none; animation: fade 0.25s ease; }
+.calc-pane.active { display: block; }
+
+.model-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  border-left: 3px solid var(--amber);
+  background: linear-gradient(90deg, rgba(255, 182, 39, 0.08), transparent 60%);
+}
+.model-banner.ar {
+  border-left-color: var(--amber);
+  background: linear-gradient(90deg, rgba(255, 182, 39, 0.10), transparent 60%);
+}
+.mb-tag {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--amber);
+  font-weight: 500;
+  letter-spacing: 1.5px;
+}
+.mb-desc {
+  font-size: 10px;
+  color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* TWO-COL LAYOUT */
+.simple-calc {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 14px;
+}
+
+.sc-input, .sc-process {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+
+.sc-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.sc-field { margin-bottom: 18px; }
+
+.sc-flbl {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.sc-flbl-cn {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--text-bright);
+  font-weight: 500;
+}
+.sc-flbl-en {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+}
+
+.sc-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-style: italic;
+}
+
+/* SEGMENTED CONTROL */
+.seg-ctrl {
+  display: flex;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+}
+.seg {
+  flex: 1;
+  padding: 8px 4px;
+  text-align: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+.seg:last-child { border-right: none; }
+.seg:hover { background: var(--bg-elevated); }
+.seg.active {
+  background: var(--amber);
+  color: var(--bg-base);
+  font-weight: 700;
+}
+
+/* NUM INPUT */
+.num-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+}
+.ni-btn {
+  width: 32px;
+  height: 32px;
+  background: var(--bg-panel-2);
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--amber);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Orbitron', monospace;
+}
+.ni-btn:hover { background: var(--amber); color: var(--bg-base); }
+.ni-btn:last-of-type { border-right: none; border-left: 1px solid var(--border); }
+.ni-val {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-bright);
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px;
+  outline: none;
+}
+.ni-tag {
+  padding: 0 10px;
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+  border-left: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* PROCESS STEPS */
+.proc-step {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.proc-step:last-of-type { border-bottom: none; }
+
+.ps-num {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--cyan);
+  background: var(--cyan-dim);
+  display: grid; place-items: center;
+  color: var(--cyan);
+  font-family: 'Orbitron', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ps-body { flex: 1; }
+
+.ps-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--text-bright);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.ps-formula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  background: var(--bg-base);
+  border-left: 2px solid var(--cyan);
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.ps-trace {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  margin: 4px 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+.ps-trace.big {
+  padding-top: 4px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border-dim);
+}
+
+.t-tok {
+  background: var(--bg-base);
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.t-tok span {
+  color: var(--text-bright);
+  font-weight: 500;
+}
+
+.t-result {
+  background: var(--bg-elevated);
+  padding: 3px 10px;
+  border: 1px solid var(--border-bright);
+  color: var(--text-bright);
+  font-weight: 700;
+  font-family: 'Orbitron', monospace;
+}
+.t-result.amber {
+  background: rgba(255, 182, 39, 0.1);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.t-result.big {
+  font-size: 14px;
+  padding: 5px 14px;
+}
+
+.ps-note {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-style: italic;
+}
+
+/* FINAL OUTPUT */
+.final-out {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(255, 182, 39, 0.12), rgba(255, 182, 39, 0.02));
+  border: 1px solid var(--amber);
+  position: relative;
+}
+.final-out::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: var(--amber);
+}
+.fo-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.fo-lbl {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--text-bright);
+  font-weight: 500;
+}
+.fo-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 28px;
+  color: var(--amber);
+  font-weight: 700;
+}
+.fo-unit {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-left: 4px;
+  font-weight: 400;
+}
+.fo-sub {
+  font-size: 10px;
+  color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif;
+  padding-top: 8px;
+  border-top: 1px dashed var(--amber-dim);
+}
+
+/* FORCE TABLE */
+.force-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.force-table th {
+  background: var(--bg-panel-2);
+  color: var(--amber);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-bright);
+}
+.force-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-dim);
+  color: var(--text);
+}
+.force-table tbody tr:hover { background: var(--bg-elevated); }
+
+.ft-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.ft-final {
+  text-align: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.tt-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.tt-tag.pt {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+.tt-tag.ar {
+  background: rgba(255, 182, 39, 0.1);
+  color: var(--amber);
+  border: 1px dashed var(--amber);
+}
+
+.ft-total {
+  background: rgba(255, 182, 39, 0.06);
+  border-top: 1px solid var(--amber-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 500;
+}
+
+/* INV CHECK */
+.inv-check {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+}
+.inv-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.inv-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 130px;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 11px;
+}
+.inv-name {
+  font-family: 'Orbitron', monospace;
+  color: var(--cyan);
+  font-size: 11px;
+}
+.inv-bar {
+  height: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.inv-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+}
+.inv-stat {
+  text-align: right;
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--green);
+}
+
+@keyframes fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== FORCE CALC ===== */
+.calc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.calc-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+
+.calc-card-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 11px;
+}
+
+.calc-label { color: var(--text); font-family: 'Noto Sans SC', sans-serif; }
+.calc-value {
+  color: var(--text-bright);
+  font-family: 'Orbitron', monospace;
+  font-weight: 500;
+}
+.calc-value.bright { color: var(--amber); font-size: 13px; }
+
+.formula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  background: var(--bg-base);
+  border-left: 2px solid var(--cyan);
+  padding: 8px 10px;
+  color: var(--cyan);
+  margin: 10px 0;
+  letter-spacing: 0.5px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 60px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border-dim);
+}
+.bar-row:last-child { border-bottom: none; }
+.bar-row .lbl { color: var(--text); }
+.bar-row .val { color: var(--amber); font-family: 'Orbitron', monospace; text-align: right; font-weight: 500; }
+.bar-track {
+  height: 6px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  position: relative;
+}
+.bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shine 2s infinite;
+}
+@keyframes shine { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+.summary {
+  background: linear-gradient(135deg, rgba(255, 182, 39, 0.08), transparent);
+  border: 1px solid var(--amber-dim);
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.summary-row:last-child { margin-bottom: 0; }
+.summary-label { font-family: 'Noto Sans SC', sans-serif; font-size: 11px; color: var(--text); }
+.summary-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px;
+  color: var(--amber);
+  font-weight: 700;
+}
+.summary-unit { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
+
+/* ===== ASSIGNMENT MATRIX ===== */
+.assign-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+
+/* ===== ALGORITHM-DRIVEN ASSIGNMENT ===== */
+
+/* 3.1 Algorithm Config */
+.alg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.alg-block {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+}
+
+.alg-block-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+}
+
+/* algorithm options */
+.alg-options { display: flex; flex-direction: column; gap: 8px; }
+.alg-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.alg-opt:hover { border-color: var(--border-bright); }
+.alg-opt.active {
+  border-color: var(--amber);
+  background: rgba(255, 182, 39, 0.06);
+}
+.alg-opt input { display: none; }
+.alg-opt-body { flex: 1; }
+.alg-opt-name {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.alg-opt-desc {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.alg-badge {
+  font-family: 'Orbitron', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  padding: 2px 5px;
+  border: 1px solid;
+  font-weight: 700;
+}
+.alg-badge.fast { color: var(--green); border-color: var(--green); background: rgba(93, 222, 133, 0.05); }
+.alg-badge.slow { color: var(--amber); border-color: var(--amber-dim); }
+.alg-badge.dist { color: var(--cyan); border-color: var(--cyan-dim); }
+
+/* objective weights */
+.obj-formula {
+  background: var(--bg-panel);
+  border-left: 2px solid var(--cyan);
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+}
+.weight-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 50px;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 11px;
+}
+.weight-lbl {
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--text);
+  font-size: 10px;
+}
+.weight-bar {
+  height: 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.weight-fill {
+  height: 100%;
+  transition: width 0.3s;
+}
+.weight-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: var(--text-bright);
+  text-align: right;
+}
+
+/* hard constraints */
+.constraints { display: flex; flex-direction: column; gap: 6px; }
+.cs-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-panel);
+  border-left: 2px solid var(--border-bright);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cs-item.checked {
+  border-left-color: var(--green);
+  background: rgba(93, 222, 133, 0.03);
+}
+.cs-box {
+  width: 16px; height: 16px;
+  border: 1px solid var(--border-bright);
+  display: grid; place-items: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: transparent;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.cs-item.checked .cs-box {
+  border-color: var(--green);
+  background: rgba(93, 222, 133, 0.1);
+  color: var(--green);
+}
+.cs-body { flex: 1; }
+.cs-name {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.cs-desc {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* solve bar */
+.solve-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, rgba(255, 182, 39, 0.08), transparent 60%);
+  border: 1px solid var(--amber-dim);
+  border-left: 3px solid var(--amber);
+}
+.btn-solve {
+  background: var(--amber);
+  border: none;
+  color: var(--bg-base);
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-solve:hover {
+  background: #ffc547;
+  box-shadow: 0 0 20px rgba(255, 182, 39, 0.5);
+  transform: translateY(-1px);
+}
+.btn-solve:active { transform: translateY(0); }
+.solve-meta {
+  display: flex;
+  gap: 24px;
+  font-size: 10px;
+  font-family: 'Noto Sans SC', sans-serif;
+  flex-wrap: wrap;
+}
+.sm-item { color: var(--text-dim); letter-spacing: 1px; }
+.sm-v { color: var(--cyan); margin-left: 6px; font-family: 'Orbitron', monospace; font-weight: 500; }
+
+/* 3.2 Solver Output */
+.solver-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 14px;
+}
+
+.solver-log, .solver-metrics {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+}
+
+.log-header {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.log-body {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #050708;
+  border: 1px solid var(--border-dim);
+  padding: 10px;
+}
+
+.log-line {
+  display: grid;
+  grid-template-columns: 90px 60px 1fr;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px dashed rgba(31, 42, 47, 0.5);
+}
+.log-line:last-child { border-bottom: none; }
+.lt { color: var(--text-dim); }
+.lv {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.lv.ok { color: var(--cyan); }
+.lv.warn { color: var(--amber); }
+.lv.done { color: var(--green); }
+.lm { color: var(--text); }
+
+/* metrics */
+.metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.metric-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 10px;
+}
+.mc-lbl {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.mc-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+.mc-val.cyan { color: var(--cyan); }
+.mc-val.amber { color: var(--amber); }
+.mc-val.green { color: var(--green); }
+.mc-unit {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: 2px;
+  font-weight: 400;
+}
+.mc-tag {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.alt-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 10px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin: 12px 0 8px;
+}
+
+.alt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.alt-table th, .alt-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-dim);
+}
+.alt-table th {
+  background: var(--bg-panel-2);
+  color: var(--amber);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+.alt-table tbody td { color: var(--text); font-family: 'Orbitron', monospace; }
+.alt-table tbody td:first-child { font-family: 'Noto Sans SC', sans-serif; }
+.alt-table tr.alt-current { background: rgba(255, 182, 39, 0.06); }
+.alt-table .amber { color: var(--amber); }
+.tag-on {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--bg-base);
+  background: var(--amber);
+  padding: 2px 6px;
+  letter-spacing: 1px;
+}
+.tag-pick {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--cyan);
+  border: 1px solid var(--cyan-dim);
+  padding: 2px 6px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tag-pick:hover { background: rgba(79, 209, 197, 0.1); }
+
+/* 3.3 Allocation Result */
+.alloc-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alloc-group {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  position: relative;
+  border-left: 3px solid var(--cyan);
+}
+.alloc-group.p1 { border-left-color: var(--red); }
+.alloc-group.p2 { border-left-color: var(--amber); }
+.alloc-group.ar { border-left-color: var(--amber); border-left-style: dashed; }
+
+.ag-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.ag-tgt {
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  color: var(--cyan);
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.ag-name {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--text-bright);
+  font-weight: 500;
+  flex: 1;
+}
+.ag-tot {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--amber);
+  letter-spacing: 1px;
+  background: rgba(255, 182, 39, 0.08);
+  padding: 3px 8px;
+  border: 1px solid var(--amber-dim);
+}
+
+.ag-uavs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.uav-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  min-width: 110px;
+  position: relative;
+}
+.uav-chip.primary {
+  border-color: var(--cyan);
+  background: rgba(79, 209, 197, 0.05);
+}
+.uav-chip.backup {
+  border-color: var(--text-dim);
+  border-style: dashed;
+}
+.uav-chip.warn {
+  border-color: var(--amber);
+  background: rgba(255, 182, 39, 0.05);
+}
+.uav-chip.area {
+  border-color: var(--amber);
+  background: rgba(255, 182, 39, 0.05);
+  border-style: dashed;
+}
+.uc-id {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.uc-role {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 10px;
+  color: var(--amber);
+}
+.uc-meta {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: 'Orbitron', monospace;
+}
+
+.ag-coord {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-dim);
+}
+.cd-tag {
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--amber);
+  letter-spacing: 1px;
+  font-size: 9px;
+  padding: 2px 6px;
+  border: 1px solid var(--amber-dim);
+  background: rgba(255, 182, 39, 0.05);
+  white-space: nowrap;
+}
+.cd-val {
+  flex: 1;
+  color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif;
+  line-height: 1.5;
+}
+
+.alloc-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  justify-content: flex-end;
+}
+.assign-table th, .assign-table td {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.assign-table th {
+  background: var(--bg-panel-2);
+  color: var(--amber);
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+}
+.assign-table tbody td:first-child {
+  text-align: left;
+  background: var(--bg-panel-2);
+  color: var(--cyan);
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+}
+.assign-cell {
+  width: 26px; height: 26px;
+  display: inline-block;
+  border: 1px solid var(--border);
+  position: relative;
+}
+.assign-cell.x {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+.assign-cell.x::after {
+  content: '✕';
+  position: absolute;
+  inset: 0;
+  display: grid; place-items: center;
+  color: var(--bg-base);
+  font-weight: 700;
+  font-size: 14px;
+}
+.assign-cell.s {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+}
+.assign-cell.s::after {
+  content: 'S';
+  position: absolute;
+  inset: 0;
+  display: grid; place-items: center;
+  color: var(--cyan);
+  font-weight: 700;
+  font-size: 11px;
+}
+.assign-cell.h {
+  background: rgba(255, 182, 39, 0.15);
+  border-color: var(--amber);
+  border-style: dashed;
+}
+.assign-cell.h::after {
+  content: 'H';
+  position: absolute;
+  inset: 0;
+  display: grid; place-items: center;
+  color: var(--amber);
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.legend-box.h {
+  background: rgba(255, 182, 39, 0.15);
+  border: 1px dashed var(--amber);
+}
+
+.legend { display: flex; gap: 16px; padding: 10px 0; font-size: 10px; color: var(--text-dim); }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-box { width: 12px; height: 12px; border: 1px solid var(--border); display: inline-block; }
+.legend-box.x { background: var(--amber); border-color: var(--amber); }
+.legend-box.s { background: var(--cyan-dim); border-color: var(--cyan); }
+
+/* ===== TIMELINE ===== */
+.timeline {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 16px;
+  position: relative;
+}
+
+.timeline-axis {
+  position: relative;
+  height: 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.tick {
+  position: absolute;
+  bottom: 0;
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: 'Orbitron', monospace;
+  transform: translateX(-50%);
+}
+.tick::before {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 50%;
+  width: 1px; height: 6px;
+  background: var(--border-bright);
+  transform: translateX(-50%);
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+}
+.tl-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+}
+.tl-track {
+  position: relative;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border-dim);
+}
+.tl-bar {
+  position: absolute;
+  top: 2px; bottom: 2px;
+  background: linear-gradient(90deg, var(--cyan-dim), var(--amber));
+  border: 1px solid var(--amber);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 9px;
+  color: var(--bg-base);
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-family: 'Orbitron', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tl-marker {
+  position: absolute;
+  top: -6px; bottom: -6px;
+  width: 2px;
+  background: var(--red);
+  box-shadow: 0 0 8px var(--red);
+}
+.tl-marker::after {
+  content: 'TOT';
+  position: absolute;
+  top: -14px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--red);
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 1px;
+}
+
+/* ===== 4-PHASE ROUTE PLANNING ===== */
+
+/* 4.1 Planning parameters */
+.rp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.rp-phase {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--cyan-dim);
+  position: relative;
+}
+.rp-phase:nth-child(1) { border-top-color: var(--green); }
+.rp-phase:nth-child(2) { border-top-color: var(--cyan); }
+.rp-phase:nth-child(3) { border-top-color: #ffd54f; }
+.rp-phase:nth-child(4) { border-top-color: var(--red); }
+.rp-phase.active {
+  background: var(--bg-elevated);
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.15);
+}
+
+.rp-ph-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px dashed var(--border);
+  background: var(--bg-panel-2);
+}
+.rp-ph-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--amber);
+}
+.rp-ph-cn {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: var(--text-bright);
+  font-weight: 500;
+  flex: 1;
+}
+.rp-ph-en {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+}
+.rp-key {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 9px;
+  color: var(--bg-base);
+  background: #ffd54f;
+  padding: 1px 5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.rp-ph-body { padding: 10px 12px; }
+
+.rp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border-dim);
+  font-size: 11px;
+}
+.rp-row:last-child { border-bottom: none; }
+.rp-lbl {
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--text);
+  font-size: 10px;
+}
+.rp-num {
+  font-family: 'Orbitron', monospace;
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 500;
+}
+.rp-sel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  font-family: 'Noto Sans SC', 'JetBrains Mono', sans-serif;
+  font-size: 10px;
+  padding: 3px 6px;
+  outline: none;
+  max-width: 150px;
+}
+.rp-sel:focus { border-color: var(--amber); }
+
+/* global constraints */
+.rp-global {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.rp-global-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.rp-global-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.rp-tog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 10px;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.rp-tog.active {
+  border-color: var(--green);
+  background: rgba(93, 222, 133, 0.04);
+  color: var(--text-bright);
+}
+.rp-tg-box {
+  width: 14px; height: 14px;
+  border: 1px solid var(--border-bright);
+  display: grid; place-items: center;
+  font-size: 10px;
+  color: transparent;
+  flex-shrink: 0;
+}
+.rp-tog.active .rp-tg-box {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* auto-plan button */
+.rp-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, rgba(255, 182, 39, 0.08), transparent 60%);
+  border: 1px solid var(--amber-dim);
+  border-left: 3px solid var(--amber);
+}
+.btn-plan {
+  background: var(--amber);
+  border: none;
+  color: var(--bg-base);
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-plan:hover {
+  background: #ffc547;
+  box-shadow: 0 0 20px rgba(255, 182, 39, 0.5);
+  transform: translateY(-1px);
+}
+.btn-plan:active { transform: translateY(0); }
+.rp-meta {
+  display: flex;
+  gap: 24px;
+  font-size: 10px;
+  font-family: 'Noto Sans SC', sans-serif;
+  flex-wrap: wrap;
+}
+.rp-mi { color: var(--text-dim); letter-spacing: 1px; }
+.rp-mv { color: var(--cyan); margin-left: 6px; font-family: 'Orbitron', monospace; font-weight: 500; }
+
+/* phase legend marks */
+.phase-mark {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+}
+.phase-mark.p1 { background: var(--green); }
+.phase-mark.p2 { background: var(--cyan); }
+.phase-mark.p3 { background: #ffd54f; }
+.phase-mark.p4 { background: var(--red); }
+
+/* route selector */
+.route-selector {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.rs-lbl {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+}
+.rs-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.rs-pill {
+  padding: 5px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--text);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.rs-pill:hover { border-color: var(--cyan); color: var(--cyan); }
+.rs-pill.active {
+  background: var(--amber);
+  color: var(--bg-base);
+  border-color: var(--amber);
+  font-weight: 700;
+}
+
+/* 4.3 altitude profile */
+.alt-profile {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.ap-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.ap-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* phase cards */
+.phase-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.phase-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--cyan);
+  padding: 10px 12px;
+}
+.phase-card.climb { border-top-color: var(--green); }
+.phase-card.cruise { border-top-color: var(--cyan); }
+.phase-card.search { border-top-color: #ffd54f; }
+.phase-card.strike { border-top-color: var(--red); }
+
+.pc-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+  flex-wrap: wrap;
+}
+.pc-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--amber);
+}
+.pc-name {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 500;
+  flex: 1;
+}
+.pc-time {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--cyan);
+  letter-spacing: 0.5px;
+}
+
+.pc-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+}
+.pc-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  padding: 2px 0;
+}
+.pcs-l {
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.pcs-v {
+  color: var(--text-bright);
+  font-family: 'Orbitron', monospace;
+  font-weight: 500;
+}
+.pc-note {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-style: italic;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-dim);
+}
+
+/* 4.4 waypoint table */
+.wp-tip {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-style: italic;
+  padding: 8px 12px;
+  background: var(--bg-base);
+  border-left: 2px solid var(--cyan-dim);
+  margin-bottom: 12px;
+}
+
+.wp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.wp-table th {
+  background: var(--bg-panel-2);
+  color: var(--amber);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  padding: 8px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-bright);
+}
+.wp-table tbody td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-dim);
+  color: var(--text);
+}
+.wp-table tbody tr:hover { background: var(--bg-elevated); }
+
+.wp-id {
+  font-family: 'Orbitron', monospace;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.wp-in {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border-dim);
+  color: var(--text-bright);
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  padding: 4px 6px;
+  outline: none;
+  text-align: center;
+}
+.wp-in:focus {
+  border-color: var(--amber);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 2px rgba(255, 182, 39, 0.1);
+}
+
+.ph-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 9px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.ph-tag.climb { color: var(--green); border-color: var(--green); background: rgba(93,222,133,0.05); }
+.ph-tag.cruise { color: var(--cyan); border-color: var(--cyan); background: rgba(79,209,197,0.05); }
+.ph-tag.search { color: #ffd54f; border-color: #ffd54f; background: rgba(255,213,79,0.05); }
+.ph-tag.strike { color: var(--red); border-color: var(--red); background: rgba(255,77,77,0.05); }
+
+.wp-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 3px 8px;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.wp-btn:hover { border-color: var(--amber); color: var(--amber); }
+.wp-btn.warn {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.wp-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  justify-content: flex-end;
+}
+
+.rt-summary-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin: 18px 0 10px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.rt-stat {
+  display: inline-block;
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  padding: 2px 6px;
+  letter-spacing: 1px;
+}
+.rt-stat.ok { color: var(--green); border: 1px solid #2d5a3a; background: rgba(93,222,133,0.05); }
+.rt-stat.warn { color: var(--amber); border: 1px solid var(--amber-dim); background: rgba(255,182,39,0.05); }
+
+/* ===== ROUTE MAP ===== */
+.map-wrap {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+}
+
+.map-svg { width: 100%; height: 100%; display: block; }
+
+.map-legend {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: rgba(15, 21, 24, 0.9);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  font-size: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 5;
+}
+.map-legend-item { display: flex; align-items: center; gap: 6px; color: var(--text); }
+.map-legend-mark { width: 16px; height: 2px; }
+
+.coord-readout {
+  position: absolute;
+  bottom: 10px; left: 10px;
+  background: rgba(15, 21, 24, 0.9);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  color: var(--cyan);
+  z-index: 5;
+  letter-spacing: 1px;
+}
+
+.route-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
+.route-table th, .route-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-dim);
+  text-align: left;
+}
+.route-table th {
+  background: var(--bg-panel-2);
+  color: var(--amber);
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+}
+.route-table tbody td { color: var(--text); font-size: 10px; }
+.route-table tbody td:first-child {
+  font-family: 'Orbitron', monospace;
+  color: var(--cyan);
+}
+
+/* ===== PARAM BINDING ===== */
+.param-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.param-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-dim);
+  border-left: 2px solid var(--cyan);
+  font-size: 11px;
+}
+.param-row.amber { border-left-color: var(--amber); }
+.param-row.red { border-left-color: var(--red); }
+.param-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.param-name-cn { color: var(--text-bright); font-family: 'Noto Sans SC', sans-serif; }
+.param-name-en { color: var(--text-dim); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+.param-val {
+  font-family: 'Orbitron', monospace;
+  color: var(--amber);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.upload-zone {
+  border: 1px dashed var(--cyan-dim);
+  background: rgba(79, 209, 197, 0.03);
+  padding: 16px;
+  text-align: center;
+  margin-top: 12px;
+}
+.upload-zone-title {
+  color: var(--cyan);
+  font-size: 11px;
+  font-family: 'Noto Sans SC', sans-serif;
+  margin-bottom: 4px;
+}
+.upload-zone-desc {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+/* ===== RIGHT PANEL ===== */
+.right-section {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+
+.right-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.right-title::before { content: ''; width: 3px; height: 11px; background: var(--amber); margin-right: 8px; }
+
+.uav-card {
+  background: var(--bg-panel-2);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+}
+.uav-icon {
+  width: 28px; height: 28px;
+  border: 1px solid var(--cyan-dim);
+  display: grid; place-items: center;
+  background: rgba(79, 209, 197, 0.05);
+}
+.uav-icon svg { width: 16px; height: 16px; fill: var(--cyan); }
+
+.uav-info { flex: 1; }
+.uav-name {
+  color: var(--text-bright);
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.uav-spec { color: var(--text-dim); font-size: 9px; margin-top: 2px; }
+
+.uav-status { font-size: 9px; padding: 2px 5px; letter-spacing: 1px; }
+.status-rdy { color: var(--green); border: 1px solid #2d5a3a; }
+.status-asg { color: var(--amber); border: 1px solid var(--amber-dim); }
+.status-mnt { color: var(--text-dim); border: 1px solid var(--border); }
+
+.threat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-base);
+  border-left: 2px solid var(--red);
+  margin-bottom: 6px;
+  font-size: 10px;
+}
+.threat-name { color: var(--text-bright); font-family: 'Noto Sans SC', sans-serif; }
+.threat-rng { color: var(--red); font-family: 'Orbitron', monospace; }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.kpi {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 10px;
+  text-align: center;
+}
+.kpi-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.kpi-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--amber);
+}
+.kpi-unit { font-size: 9px; color: var(--text-dim); margin-left: 2px; }
+
+/* ===== STATUS BAR ===== */
+.statusbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 24px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.sb-left, .sb-right { display: flex; gap: 20px; }
+.sb-item { letter-spacing: 1px; }
+.sb-item .v { color: var(--text-bright); margin-left: 4px; font-family: 'Orbitron', monospace; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); }
+::-webkit-scrollbar-thumb:hover { background: var(--amber-dim); }
+
+/* ===== UTILITIES ===== */
+.hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 8px 12px;
+  background: var(--bg-base);
+  border-left: 2px solid var(--cyan-dim);
+  margin-bottom: 12px;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* corner brackets for sections */
+.bracket {
+  position: relative;
+}
+.bracket::before, .bracket::after {
+  content: '';
+  position: absolute;
+  width: 10px; height: 10px;
+  border-color: var(--amber);
+  border-style: solid;
+}
+.bracket::before {
+  top: -1px; left: -1px;
+  border-width: 1px 0 0 1px;
+}
+.bracket::after {
+  bottom: -1px; right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ===== TOP BAR ===== -->
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 12l10 10 10-10L12 2zm0 4l6 6-6 6-6-6 6-6z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-cn">反辐射无人机任务规划系统</div>
+      <div class="brand-en">ARUA · MISSION PLANNING SYSTEM · v2.6.1</div>
+    </div>
+  </div>
+  <div class="topbar-meta">
+    <div class="meta-item">
+      <span class="meta-label">UTC TIME</span>
+      <span class="meta-value" id="clock">2026-04-30 14:23:18</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">OPERATOR</span>
+      <span class="meta-value">CMD-072 / AME</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">DATA LINK</span>
+      <span class="meta-value live">OPERATIONAL</span>
+    </div>
+    <div class="classification">机密 · CONFIDENTIAL</div>
+  </div>
+</div>
+
+<!-- ===== STEPS NAV ===== -->
+<div class="steps">
+  <div class="step active" data-step="1">
+    <div class="step-num">01</div>
+    <div class="step-label">
+      <div class="step-cn">任务创建</div>
+      <div class="step-en">TASK CREATION</div>
+    </div>
+  </div>
+  <div class="step" data-step="2">
+    <div class="step-num">02</div>
+    <div class="step-label">
+      <div class="step-cn">兵力需求计算</div>
+      <div class="step-en">FORCE CALCULATION</div>
+    </div>
+  </div>
+  <div class="step" data-step="3">
+    <div class="step-num">03</div>
+    <div class="step-label">
+      <div class="step-cn">协同任务分配</div>
+      <div class="step-en">TASK ASSIGNMENT</div>
+    </div>
+  </div>
+  <div class="step" data-step="4">
+    <div class="step-num">04</div>
+    <div class="step-label">
+      <div class="step-cn">航路规划</div>
+      <div class="step-en">ROUTE PLANNING</div>
+    </div>
+  </div>
+  <div class="step" data-step="5">
+    <div class="step-num">05</div>
+    <div class="step-label">
+      <div class="step-cn">参数装订</div>
+      <div class="step-en">PARAMETER LOADING</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- ===== LEFT PANEL — TASK LIST ===== -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">任务列表</div>
+      <div class="panel-badge">04 ACTIVE</div>
+    </div>
+    <div class="panel-body">
+      <div class="task-item selected">
+        <div class="task-row">
+          <div class="task-id">MSN-2026-0430-A</div>
+          <div class="task-status status-planning">规划中</div>
+        </div>
+        <div class="task-name">合肥东郊压制行动</div>
+        <div class="task-meta">
+          <span data-icon="◉">3 目标</span>
+          <span data-icon="✈">4 架次</span>
+          <span data-icon="⏱">14:30</span>
+        </div>
+      </div>
+
+      <div class="task-item">
+        <div class="task-row">
+          <div class="task-id">MSN-2026-0429-D</div>
+          <div class="task-status status-ready">待执行</div>
+        </div>
+        <div class="task-name">巢湖南岸雷达清剿</div>
+        <div class="task-meta">
+          <span data-icon="◉">2 目标</span>
+          <span data-icon="✈">3 架次</span>
+          <span data-icon="⏱">06:00</span>
+        </div>
+      </div>
+
+      <div class="task-item">
+        <div class="task-row">
+          <div class="task-id">MSN-2026-0429-C</div>
+          <div class="task-status status-active">执行中</div>
+        </div>
+        <div class="task-name">滁州方向防空压制</div>
+        <div class="task-meta">
+          <span data-icon="◉">5 目标</span>
+          <span data-icon="✈">8 架次</span>
+          <span data-icon="⏱">进行中</span>
+        </div>
+      </div>
+
+      <div class="task-item">
+        <div class="task-row">
+          <div class="task-id">MSN-2026-0428-B</div>
+          <div class="task-status status-ready">待执行</div>
+        </div>
+        <div class="task-name">蚌埠以北火控压制</div>
+        <div class="task-meta">
+          <span data-icon="◉">2 目标</span>
+          <span data-icon="✈">2 架次</span>
+          <span data-icon="⏱">21:00</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary">+ 新建任务 / NEW MISSION</button>
+      <button class="btn">导入情报 / IMPORT INTEL</button>
+    </div>
+  </div>
+
+  <!-- ===== CENTER PANEL ===== -->
+  <div class="center">
+    <div class="center-header">
+      <div class="task-title-block">
+        <div class="task-title-id">MSN-2026-0430-A</div>
+        <div class="task-title-name">合肥东郊压制行动</div>
+      </div>
+      <div class="center-actions">
+        <button class="action-btn">保存 SAVE</button>
+        <button class="action-btn">推演 SIMULATE</button>
+        <button class="action-btn">下发 DEPLOY</button>
+      </div>
+    </div>
+
+    <div class="center-body">
+
+      <!-- ===== STEP 1: TASK CREATION ===== -->
+      <div class="step-content active" id="step-1">
+
+        <div class="hint">▎ 任务创建是规划起点。请定义任务基本信息、目标集合、威胁环境与约束条件。带 <span style="color:var(--red)">*</span> 为必填项。</div>
+
+        <!-- 1.1 BASIC INFO -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">1.1</span>任务基本信息</div>
+            <div class="section-tag">BASIC INFO</div>
+          </div>
+          <div class="section-body">
+            <div class="field-grid">
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">任务名称</span><span class="req">*</span></span><span>NAME</span></div>
+                <input type="text" class="input" value="合肥东郊压制行动">
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">任务编号</span></span><span>ID · AUTO</span></div>
+                <input type="text" class="input" value="MSN-2026-0430-A" readonly style="color:var(--cyan);">
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">任务类型</span><span class="req">*</span></span><span>TYPE</span></div>
+                <select class="select">
+                  <option>SEAD · 防空压制</option>
+                  <option>DEAD · 防空摧毁</option>
+                  <option>SEARCH · 游猎扫荡</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">优先级</span></span><span>PRIORITY</span></div>
+                <select class="select">
+                  <option>P1 · 紧急</option>
+                  <option selected>P2 · 高</option>
+                  <option>P3 · 一般</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">任务时窗 · 起</span><span class="req">*</span></span><span>T-START</span></div>
+                <input type="text" class="input" value="2026-04-30 14:30:00 UTC">
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">任务时窗 · 止</span><span class="req">*</span></span><span>T-END</span></div>
+                <input type="text" class="input" value="2026-04-30 16:00:00 UTC">
+              </div>
+              <div class="field full">
+                <div class="field-label"><span><span class="field-cn">任务意图</span></span><span>INTENT</span></div>
+                <textarea class="textarea">压制合肥东郊预警警戒雷达网，致盲该方向防空体系，为后续突击行动开辟通道。重点摧毁制导雷达 R-2，确保火控雷达 R-1 处于关机或失效状态不少于 30 分钟。</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1.2 TARGET LIST — POINT + AREA -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">1.2</span>目标清单 · 点目标 + 区域目标</div>
+            <div class="section-tag">TARGETS · 03 PT + 02 AREA</div>
+          </div>
+          <div class="section-body">
+
+            <!-- target type tabs -->
+            <div class="tgt-tabs">
+              <div class="tgt-tab active" data-tgt="point">
+                <span class="tgt-tab-icon">●</span>
+                <span class="tgt-tab-cn">点目标</span>
+                <span class="tgt-tab-en">POINT TARGETS</span>
+                <span class="tgt-tab-count">03</span>
+              </div>
+              <div class="tgt-tab" data-tgt="area">
+                <span class="tgt-tab-icon">▢</span>
+                <span class="tgt-tab-cn">区域目标</span>
+                <span class="tgt-tab-en">AREA TARGETS</span>
+                <span class="tgt-tab-count">02</span>
+              </div>
+              <div class="tgt-tabs-hint">▸ 点目标已知精确坐标；区域目标仅知道大致范围，需进入区域后由导引头自主搜索</div>
+            </div>
+
+            <!-- POINT TARGETS -->
+            <div class="tgt-pane active" id="tgt-point">
+              <table class="target-table">
+                <thead>
+                  <tr>
+                    <th>编号</th>
+                    <th>目标名称</th>
+                    <th>类型</th>
+                    <th>坐标 / CEP</th>
+                    <th>频段</th>
+                    <th>辐射规律</th>
+                    <th>优先级</th>
+                    <th>毁伤要求</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="target-id">PT-01</td>
+                    <td>东郊制导雷达 R-2</td>
+                    <td>制导雷达</td>
+                    <td>31.8642°N 117.3851°E<br><span class="cep">CEP 15m</span></td>
+                    <td><span class="band-tag">I-BAND</span></td>
+                    <td>连续</td>
+                    <td><span class="priority p1">P1</span></td>
+                    <td>P<sub>k</sub> ≥ 0.90</td>
+                  </tr>
+                  <tr>
+                    <td class="target-id">PT-02</td>
+                    <td>东郊火控雷达 R-1</td>
+                    <td>火控雷达</td>
+                    <td>31.8421°N 117.4203°E<br><span class="cep">CEP 25m</span></td>
+                    <td><span class="band-tag">H-BAND</span></td>
+                    <td>间歇 · 30s/120s</td>
+                    <td><span class="priority p1">P1</span></td>
+                    <td>P<sub>k</sub> ≥ 0.85</td>
+                  </tr>
+                  <tr>
+                    <td class="target-id">PT-03</td>
+                    <td>北山警戒雷达 R-3</td>
+                    <td>搜索雷达</td>
+                    <td>31.9123°N 117.4012°E<br><span class="cep">CEP 50m</span></td>
+                    <td><span class="band-tag">D/E-BAND</span></td>
+                    <td>连续 · 跳频</td>
+                    <td><span class="priority p2">P2</span></td>
+                    <td>P<sub>k</sub> ≥ 0.75</td>
+                  </tr>
+                </tbody>
+              </table>
+              <button class="btn" style="width:auto; padding:6px 16px; margin-top:12px;">+ 添加点目标</button>
+            </div>
+
+            <!-- AREA TARGETS -->
+            <div class="tgt-pane" id="tgt-area">
+              <table class="target-table">
+                <thead>
+                  <tr>
+                    <th>编号</th>
+                    <th>区域名称</th>
+                    <th>区域类型</th>
+                    <th>中心坐标</th>
+                    <th>范围</th>
+                    <th>预期辐射源</th>
+                    <th>搜索策略</th>
+                    <th>优先级</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="target-id">AR-01</td>
+                    <td>巢北防空集群区</td>
+                    <td>圆形</td>
+                    <td>31.7820°N 117.4630°E</td>
+                    <td><span class="cep">R = 5.0 km</span></td>
+                    <td>2~3 部 H/I 频火控</td>
+                    <td>螺旋扫描</td>
+                    <td><span class="priority p1">P1</span></td>
+                  </tr>
+                  <tr>
+                    <td class="target-id">AR-02</td>
+                    <td>店埠机动雷达走廊</td>
+                    <td>矩形</td>
+                    <td>31.8950°N 117.5510°E</td>
+                    <td><span class="cep">8.0 × 3.0 km</span></td>
+                    <td>1~2 部机动雷达</td>
+                    <td>沿走廊横扫</td>
+                    <td><span class="priority p2">P2</span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- area target detail -->
+              <div class="area-detail">
+                <div class="area-detail-title">▌ 区域目标 AR-01 · 详细参数</div>
+                <div class="area-grid">
+                  <div class="area-item">
+                    <div class="area-lbl">区域几何</div>
+                    <div class="area-val">圆形 · R 5.0 km</div>
+                  </div>
+                  <div class="area-item">
+                    <div class="area-lbl">面积</div>
+                    <div class="area-val">78.5 km²</div>
+                  </div>
+                  <div class="area-item">
+                    <div class="area-lbl">预计目标数</div>
+                    <div class="area-val">2 ~ 3 部</div>
+                  </div>
+                  <div class="area-item">
+                    <div class="area-lbl">情报置信度</div>
+                    <div class="area-val">中 · 67%</div>
+                  </div>
+                  <div class="area-item">
+                    <div class="area-lbl">导引头扫描带宽</div>
+                    <div class="area-val">±30° / 单机</div>
+                  </div>
+                  <div class="area-item">
+                    <div class="area-lbl">单机覆盖率</div>
+                    <div class="area-val">~ 35%</div>
+                  </div>
+                  <div class="area-item">
+                    <div class="area-lbl">建议搜索时长</div>
+                    <div class="area-val">90 ~ 180 s</div>
+                  </div>
+                  <div class="area-item">
+                    <div class="area-lbl">建议无人机数</div>
+                    <div class="area-val" style="color:var(--amber);">3 ~ 4 架</div>
+                  </div>
+                </div>
+
+                <!-- mini area sketch -->
+                <div class="area-sketch">
+                  <svg viewBox="0 0 500 180" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                      <pattern id="aGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(79, 209, 197, 0.06)" stroke-width="0.5"/>
+                      </pattern>
+                      <radialGradient id="areaFill" cx="50%" cy="50%">
+                        <stop offset="0%" stop-color="rgba(255, 182, 39, 0.18)"/>
+                        <stop offset="100%" stop-color="rgba(255, 182, 39, 0.04)"/>
+                      </radialGradient>
+                    </defs>
+                    <rect width="500" height="180" fill="url(#aGrid)"/>
+
+                    <!-- area circle -->
+                    <circle cx="250" cy="90" r="70" fill="url(#areaFill)" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <circle cx="250" cy="90" r="3" fill="var(--amber)"/>
+                    <text x="250" y="80" text-anchor="middle" fill="var(--amber)" font-size="9" font-family="Orbitron">AR-01 · R=5KM</text>
+                    <text x="250" y="170" text-anchor="middle" fill="var(--text-dim)" font-size="8" font-family="Orbitron">31.7820°N · 117.4630°E</text>
+
+                    <!-- estimated emitters inside -->
+                    <g>
+                      <circle cx="220" cy="75" r="4" fill="var(--red)" opacity="0.7"/>
+                      <text x="228" y="72" fill="var(--red)" font-size="8" font-family="Orbitron">E?</text>
+                      <circle cx="280" cy="105" r="4" fill="var(--red)" opacity="0.7"/>
+                      <text x="288" y="102" fill="var(--red)" font-size="8" font-family="Orbitron">E?</text>
+                      <circle cx="245" cy="125" r="4" fill="var(--red)" opacity="0.4"/>
+                      <text x="253" y="122" fill="var(--red)" font-size="8" font-family="Orbitron" opacity="0.7">E?</text>
+                    </g>
+
+                    <!-- spiral search path -->
+                    <path d="M 250 90 m 0,-20 a 20,20 0 1,1 -0.1,0
+                             M 250 90 m 0,-40 a 40,40 0 1,1 -0.1,0
+                             M 250 90 m 0,-60 a 60,60 0 1,1 -0.1,0"
+                      fill="none" stroke="var(--cyan)" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
+                    <text x="380" y="40" fill="var(--cyan)" font-size="8" font-family="Orbitron">SPIRAL SEARCH</text>
+                    <line x1="375" y1="42" x2="320" y2="60" stroke="var(--cyan)" stroke-width="0.5" stroke-dasharray="2 2"/>
+
+                    <!-- legend -->
+                    <g transform="translate(20, 20)">
+                      <circle cx="6" cy="0" r="4" fill="var(--red)" opacity="0.7"/>
+                      <text x="16" y="3" fill="var(--text)" font-size="9" font-family="Noto Sans SC">推测辐射源位置</text>
+                    </g>
+                  </svg>
+                </div>
+
+                <div class="area-strategy">
+                  <div class="strat-header">▌ 搜索策略 · SEARCH STRATEGY</div>
+                  <div class="strat-row">
+                    <span class="strat-lbl">入区方向</span>
+                    <span class="strat-val">从 SW 方向进入 / 290° 航向</span>
+                  </div>
+                  <div class="strat-row">
+                    <span class="strat-lbl">分区方式</span>
+                    <span class="strat-val">扇形分区 · 3 架并行 · 各负责 120°</span>
+                  </div>
+                  <div class="strat-row">
+                    <span class="strat-lbl">截获即攻</span>
+                    <span class="strat-val">是 · 首机锁定后广播退出</span>
+                  </div>
+                  <div class="strat-row">
+                    <span class="strat-lbl">未截获处置</span>
+                    <span class="strat-val">盘旋待机 60s → 备选区 / 返航</span>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn" style="width:auto; padding:6px 16px; margin-top:12px;">+ 添加区域目标</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 1.3 CONSTRAINTS -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">1.3</span>约束条件</div>
+            <div class="section-tag">CONSTRAINTS</div>
+          </div>
+          <div class="section-body">
+            <div class="field-grid">
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">发射阵地</span></span><span>LAUNCH SITE</span></div>
+                <select class="select">
+                  <option>合肥西北 · LP-A · 31.95°N 117.05°E</option>
+                  <option>巢湖东 · LP-B</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">协同方式</span></span><span>COORDINATION</span></div>
+                <select class="select">
+                  <option>同时到达 · 饱和攻击</option>
+                  <option>序贯打击</option>
+                  <option>独立打击</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">禁飞区</span></span><span>NO-FLY ZONES</span></div>
+                <input type="text" class="input" value="2 个区域已加载（民航 / 友军）">
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">气象条件</span></span><span>WEATHER</span></div>
+                <input type="text" class="input" value="晴 · 风 SW 4m/s · 能见度 12km">
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">突防策略</span></span><span>PENETRATION</span></div>
+                <select class="select">
+                  <option selected>低空突防 · 100m AGL</option>
+                  <option>中空巡航 · 3000m</option>
+                  <option>地形跟随</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label"><span><span class="field-cn">附带损伤限制</span></span><span>COLLATERAL</span></div>
+                <select class="select">
+                  <option>严格 · 50m 缓冲</option>
+                  <option>标准 · 100m</option>
+                  <option>宽松</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== STEP 2: FORCE CALC (SIMPLIFIED) ===== -->
+      <div class="step-content" id="step-2">
+
+        <div class="hint">▎ 简化兵力计算：选择目标 → 输入 3~4 项参数 → 自动得出建议架次。点目标按"概率叠加"，区域目标按"覆盖+打击"。</div>
+
+        <!-- ============ TARGET SELECTOR ============ -->
+        <div class="target-selector">
+          <div class="ts-label">▌ 选择计算目标 / SELECT TARGET</div>
+          <div class="ts-pills">
+            <div class="ts-pill active" data-tcalc="PT-01" data-ttype="point">
+              <span class="ts-pill-mark pt"></span>
+              <span class="ts-pill-id">PT-01</span>
+              <span class="ts-pill-name">东郊制导雷达</span>
+            </div>
+            <div class="ts-pill" data-tcalc="PT-02" data-ttype="point">
+              <span class="ts-pill-mark pt"></span>
+              <span class="ts-pill-id">PT-02</span>
+              <span class="ts-pill-name">东郊火控雷达</span>
+            </div>
+            <div class="ts-pill" data-tcalc="PT-03" data-ttype="point">
+              <span class="ts-pill-mark pt"></span>
+              <span class="ts-pill-id">PT-03</span>
+              <span class="ts-pill-name">北山警戒雷达</span>
+            </div>
+            <div class="ts-pill" data-tcalc="AR-01" data-ttype="area">
+              <span class="ts-pill-mark ar"></span>
+              <span class="ts-pill-id">AR-01</span>
+              <span class="ts-pill-name">巢北防空集群区</span>
+            </div>
+            <div class="ts-pill" data-tcalc="AR-02" data-ttype="area">
+              <span class="ts-pill-mark ar"></span>
+              <span class="ts-pill-id">AR-02</span>
+              <span class="ts-pill-name">店埠雷达走廊</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ POINT TARGET CALC ============ -->
+        <div class="calc-pane active" id="calc-point">
+          <div class="model-banner pt">
+            <span class="mb-tag">● 点目标模型 · POINT MODEL</span>
+            <span class="mb-desc">已知精确坐标 → 概率叠加 → 反算所需弹数</span>
+          </div>
+
+          <div class="simple-calc">
+            <!-- LEFT: INPUTS -->
+            <div class="sc-input">
+              <div class="sc-title">▌ 输入参数 · INPUTS</div>
+
+              <div class="sc-field">
+                <div class="sc-flbl">
+                  <span class="sc-flbl-cn">毁伤要求</span>
+                  <span class="sc-flbl-en">DAMAGE LEVEL</span>
+                </div>
+                <div class="seg-ctrl" data-target="pbar">
+                  <div class="seg" data-val="0.7">低 0.7</div>
+                  <div class="seg" data-val="0.8">中 0.8</div>
+                  <div class="seg active" data-val="0.9">高 0.9</div>
+                </div>
+                <div class="sc-hint">期望摧毁概率 P̄</div>
+              </div>
+
+              <div class="sc-field">
+                <div class="sc-flbl">
+                  <span class="sc-flbl-cn">单弹毁伤概率</span>
+                  <span class="sc-flbl-en">SINGLE-SHOT P<sub>k</sub></span>
+                </div>
+                <div class="num-input">
+                  <button class="ni-btn" data-op="-" data-target="pk">−</button>
+                  <input type="number" class="ni-val" id="in-pk" value="0.70" step="0.05" min="0.3" max="0.95">
+                  <button class="ni-btn" data-op="+" data-target="pk">+</button>
+                  <span class="ni-tag">武器手册</span>
+                </div>
+                <div class="sc-hint">HF-ARM-200A 对制导雷达默认 0.70</div>
+              </div>
+
+              <div class="sc-field">
+                <div class="sc-flbl">
+                  <span class="sc-flbl-cn">备份架数</span>
+                  <span class="sc-flbl-en">BACKUP UAVS</span>
+                </div>
+                <div class="num-input">
+                  <button class="ni-btn" data-op="-" data-target="bk">−</button>
+                  <input type="number" class="ni-val" id="in-bk" value="1" step="1" min="0" max="5">
+                  <button class="ni-btn" data-op="+" data-target="bk">+</button>
+                  <span class="ni-tag">默认 1</span>
+                </div>
+                <div class="sc-hint">应对突防损耗的冗余</div>
+              </div>
+            </div>
+
+            <!-- RIGHT: PROCESS -->
+            <div class="sc-process">
+              <div class="sc-title">▌ 计算过程 · COMPUTATION</div>
+
+              <div class="proc-step">
+                <div class="ps-num">①</div>
+                <div class="ps-body">
+                  <div class="ps-title">所需弹数 n</div>
+                  <div class="ps-formula">n = ⌈ log(1 − P̄) / log(1 − P<sub>k</sub>) ⌉</div>
+                  <div class="ps-trace">
+                    <span class="t-tok">P̄ = <span id="t-pbar">0.90</span></span>
+                    <span>→</span>
+                    <span class="t-tok">log(1−0.90) = <span id="t-logpb">−1.000</span></span>
+                  </div>
+                  <div class="ps-trace">
+                    <span class="t-tok">P<sub>k</sub> = <span id="t-pk">0.70</span></span>
+                    <span>→</span>
+                    <span class="t-tok">log(1−0.70) = <span id="t-logpk">−0.523</span></span>
+                  </div>
+                  <div class="ps-trace">
+                    <span>商 = </span>
+                    <span class="t-result" id="t-nraw">1.91</span>
+                    <span>向上取整 →</span>
+                    <span class="t-result amber" id="t-n">2 弹</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="proc-step">
+                <div class="ps-num">②</div>
+                <div class="ps-body">
+                  <div class="ps-title">总架次 N（含备份）</div>
+                  <div class="ps-formula">N = n + 备份架数</div>
+                  <div class="ps-trace big">
+                    <span class="t-tok">n = <span id="t-n2">2</span></span>
+                    <span>+</span>
+                    <span class="t-tok">备份 = <span id="t-bk">1</span></span>
+                    <span>=</span>
+                    <span class="t-result big" id="t-N">3 架</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FINAL OUTPUT -->
+              <div class="final-out pt">
+                <div class="fo-row">
+                  <span class="fo-lbl">建议出动</span>
+                  <span class="fo-val"><span id="out-N-pt">3</span><span class="fo-unit">架</span></span>
+                </div>
+                <div class="fo-sub">
+                  按 <span id="out-n-pt">2</span> 弹齐射 + <span id="out-bk-pt">1</span> 架备份编组，预计达成毁伤率 ≥ <span id="out-pbar-pt">0.90</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ AREA TARGET CALC ============ -->
+        <div class="calc-pane" id="calc-area">
+          <div class="model-banner ar">
+            <span class="mb-tag">▢ 区域目标模型 · AREA MODEL</span>
+            <span class="mb-desc">仅知大致范围 → 覆盖搜索 + 打击毁伤 → 取大者</span>
+          </div>
+
+          <div class="simple-calc">
+            <!-- LEFT: INPUTS -->
+            <div class="sc-input">
+              <div class="sc-title">▌ 输入参数 · INPUTS</div>
+
+              <div class="sc-field">
+                <div class="sc-flbl">
+                  <span class="sc-flbl-cn">区域面积</span>
+                  <span class="sc-flbl-en">AREA SIZE</span>
+                </div>
+                <div class="num-input">
+                  <button class="ni-btn" data-op="-" data-target="area">−</button>
+                  <input type="number" class="ni-val" id="in-area" value="78" step="5" min="5" max="500">
+                  <button class="ni-btn" data-op="+" data-target="area">+</button>
+                  <span class="ni-tag">km²</span>
+                </div>
+                <div class="sc-hint">圆形 R=5km · 自动从区域几何带出</div>
+              </div>
+
+              <div class="sc-field">
+                <div class="sc-flbl">
+                  <span class="sc-flbl-cn">估计目标数</span>
+                  <span class="sc-flbl-en">ESTIMATED EMITTERS</span>
+                </div>
+                <div class="num-input">
+                  <button class="ni-btn" data-op="-" data-target="m">−</button>
+                  <input type="number" class="ni-val" id="in-m" value="3" step="1" min="1" max="10">
+                  <button class="ni-btn" data-op="+" data-target="m">+</button>
+                  <span class="ni-tag">部</span>
+                </div>
+                <div class="sc-hint">情报推测 · 取上限值更安全</div>
+              </div>
+
+              <div class="sc-field">
+                <div class="sc-flbl">
+                  <span class="sc-flbl-cn">每目标弹数</span>
+                  <span class="sc-flbl-en">SHOTS PER EMITTER</span>
+                </div>
+                <div class="num-input">
+                  <button class="ni-btn" data-op="-" data-target="n">−</button>
+                  <input type="number" class="ni-val" id="in-n" value="2" step="1" min="1" max="5">
+                  <button class="ni-btn" data-op="+" data-target="n">+</button>
+                  <span class="ni-tag">弹/部</span>
+                </div>
+                <div class="sc-hint">同点目标公式得出 · 默认 2 弹</div>
+              </div>
+
+              <div class="sc-field">
+                <div class="sc-flbl">
+                  <span class="sc-flbl-cn">备份架数</span>
+                  <span class="sc-flbl-en">BACKUP UAVS</span>
+                </div>
+                <div class="num-input">
+                  <button class="ni-btn" data-op="-" data-target="bk2">−</button>
+                  <input type="number" class="ni-val" id="in-bk2" value="2" step="1" min="0" max="5">
+                  <button class="ni-btn" data-op="+" data-target="bk2">+</button>
+                  <span class="ni-tag">区域目标建议 2</span>
+                </div>
+                <div class="sc-hint">区域目标不确定性更高，备份相应增加</div>
+              </div>
+            </div>
+
+            <!-- RIGHT: PROCESS -->
+            <div class="sc-process">
+              <div class="sc-title">▌ 计算过程 · COMPUTATION</div>
+
+              <div class="proc-step">
+                <div class="ps-num">①</div>
+                <div class="ps-body">
+                  <div class="ps-title">覆盖需求 N<sub>搜</sub></div>
+                  <div class="ps-formula">N<sub>搜</sub> = ⌈ 区域面积 / 单机搜索面积 ⌉</div>
+                  <div class="ps-trace">
+                    <span class="t-tok">面积 = <span id="t-area">78</span> km²</span>
+                    <span>÷</span>
+                    <span class="t-tok">单机覆盖 = 25 km²</span>
+                    <span>=</span>
+                    <span class="t-result amber" id="t-Ns">4 架</span>
+                  </div>
+                  <div class="ps-note">▸ 单机搜索面积按武器手册取 25 km²（速度×搜索时长×扫描带宽）</div>
+                </div>
+              </div>
+
+              <div class="proc-step">
+                <div class="ps-num">②</div>
+                <div class="ps-body">
+                  <div class="ps-title">打击需求 N<sub>打</sub></div>
+                  <div class="ps-formula">N<sub>打</sub> = 估计目标数 × 每目标弹数</div>
+                  <div class="ps-trace">
+                    <span class="t-tok">M = <span id="t-m">3</span> 部</span>
+                    <span>×</span>
+                    <span class="t-tok">n = <span id="t-nper">2</span> 弹/部</span>
+                    <span>=</span>
+                    <span class="t-result amber" id="t-Nk">6 架</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="proc-step">
+                <div class="ps-num">③</div>
+                <div class="ps-body">
+                  <div class="ps-title">综合需求 N（取大者 + 备份）</div>
+                  <div class="ps-formula">N = max(N<sub>搜</sub>, N<sub>打</sub>) + 备份</div>
+                  <div class="ps-trace big">
+                    <span class="t-tok">max(<span id="t-Ns2">4</span>, <span id="t-Nk2">6</span>) = <span id="t-max">6</span></span>
+                    <span>+</span>
+                    <span class="t-tok">备份 = <span id="t-bk2">2</span></span>
+                    <span>=</span>
+                    <span class="t-result big" id="t-Nar">8 架</span>
+                  </div>
+                  <div class="ps-note" id="t-driver">▸ <span style="color:var(--amber);">打击需求</span>是瓶颈（6 > 4），区域里目标偏多</div>
+                </div>
+              </div>
+
+              <!-- FINAL OUTPUT -->
+              <div class="final-out ar">
+                <div class="fo-row">
+                  <span class="fo-lbl">建议出动</span>
+                  <span class="fo-val"><span id="out-N-ar">8</span><span class="fo-unit">架</span></span>
+                </div>
+                <div class="fo-sub">
+                  分 <span id="out-fan">3</span> 路扇形扫描区域，先到先攻，余机就近补打或转入备选区域
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ FORCE SUMMARY ============ -->
+        <div class="section bracket" style="margin-top:18px;">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">2.E</span>全任务兵力汇总</div>
+            <div class="section-tag">FORCE SUMMARY</div>
+          </div>
+          <div class="section-body">
+            <table class="force-table">
+              <thead>
+                <tr>
+                  <th>目标</th>
+                  <th>类型</th>
+                  <th>毁伤要求</th>
+                  <th>P<sub>k</sub> / 估目标</th>
+                  <th>计算依据</th>
+                  <th>建议架次</th>
+                  <th>匹配机型</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="target-id">PT-01</span><br><span class="ft-sub">东郊制导雷达</span></td>
+                  <td><span class="tt-tag pt">点</span></td>
+                  <td>P̄ = 0.90</td>
+                  <td>P<sub>k</sub> = 0.70</td>
+                  <td>2 弹 + 1 备份</td>
+                  <td class="ft-final">3</td>
+                  <td><span class="band-tag">200A</span></td>
+                </tr>
+                <tr>
+                  <td><span class="target-id">PT-02</span><br><span class="ft-sub">东郊火控雷达</span></td>
+                  <td><span class="tt-tag pt">点</span></td>
+                  <td>P̄ = 0.85</td>
+                  <td>P<sub>k</sub> = 0.65</td>
+                  <td>2 弹 + 1 备份</td>
+                  <td class="ft-final">3</td>
+                  <td><span class="band-tag">200A</span></td>
+                </tr>
+                <tr>
+                  <td><span class="target-id">PT-03</span><br><span class="ft-sub">北山警戒雷达</span></td>
+                  <td><span class="tt-tag pt">点</span></td>
+                  <td>P̄ = 0.75</td>
+                  <td>P<sub>k</sub> = 0.75</td>
+                  <td>1 弹 + 1 备份</td>
+                  <td class="ft-final">2</td>
+                  <td><span class="band-tag">200B</span></td>
+                </tr>
+                <tr style="background:rgba(255,182,39,0.04);">
+                  <td><span class="target-id">AR-01</span><br><span class="ft-sub">巢北防空集群区</span></td>
+                  <td><span class="tt-tag ar">区</span></td>
+                  <td>覆盖+打击</td>
+                  <td>78km² / 3部</td>
+                  <td>max(4,6) + 2 备份</td>
+                  <td class="ft-final">8</td>
+                  <td><span class="band-tag">200A</span></td>
+                </tr>
+                <tr style="background:rgba(255,182,39,0.04);">
+                  <td><span class="target-id">AR-02</span><br><span class="ft-sub">店埠雷达走廊</span></td>
+                  <td><span class="tt-tag ar">区</span></td>
+                  <td>覆盖+打击</td>
+                  <td>24km² / 2部</td>
+                  <td>max(1,4) + 2 备份</td>
+                  <td class="ft-final">6</td>
+                  <td><span class="band-tag">200B</span></td>
+                </tr>
+                <tr class="ft-total">
+                  <td colspan="5" style="text-align:right; padding-right:14px;">合计建议出动 / TOTAL</td>
+                  <td class="ft-final" style="font-size:16px;">22</td>
+                  <td>架次</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="inv-check">
+              <div class="inv-title">▌ 库存校验</div>
+              <div class="inv-row">
+                <span class="inv-name">HF-ARM-200A</span>
+                <div class="inv-bar"><div class="inv-fill" style="width:67%;"></div></div>
+                <span class="inv-stat">需 14 / 库存 21 ✓</span>
+              </div>
+              <div class="inv-row">
+                <span class="inv-name">HF-ARM-200B</span>
+                <div class="inv-bar"><div class="inv-fill" style="width:50%;"></div></div>
+                <span class="inv-stat">需 8 / 库存 16 ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 3: ASSIGNMENT (ALGORITHM-DRIVEN) ===== -->
+      <div class="step-content" id="step-3">
+
+        <div class="hint">▎ 协同任务分配由算法自动求解：① 配置算法参数与协同约束 → ② 一键求解 → ③ 查看分配方案与编队组织 → ④ 可手动微调或重新求解。</div>
+
+        <!-- ============ 3.1 ALGORITHM CONFIG ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">3.1</span>算法配置 · 协同约束</div>
+            <div class="section-tag">SOLVER CONFIG</div>
+          </div>
+          <div class="section-body">
+
+            <div class="alg-grid">
+              <!-- LEFT: ALGORITHM SELECTION -->
+              <div class="alg-block">
+                <div class="alg-block-title">▌ 求解算法</div>
+                <div class="alg-options">
+                  <label class="alg-opt active">
+                    <input type="radio" name="alg" checked>
+                    <div class="alg-opt-body">
+                      <div class="alg-opt-name">匈牙利算法 · Hungarian</div>
+                      <div class="alg-opt-desc">指派问题最优解 · 适用于无人机数 ≈ 目标数</div>
+                    </div>
+                    <span class="alg-badge fast">FAST</span>
+                  </label>
+                  <label class="alg-opt">
+                    <input type="radio" name="alg">
+                    <div class="alg-opt-body">
+                      <div class="alg-opt-name">遗传算法 · GA</div>
+                      <div class="alg-opt-desc">多约束启发式 · 适合复杂场景与多波次</div>
+                    </div>
+                    <span class="alg-badge slow">SLOW</span>
+                  </label>
+                  <label class="alg-opt">
+                    <input type="radio" name="alg">
+                    <div class="alg-opt-body">
+                      <div class="alg-opt-name">合同网协议 · CNP</div>
+                      <div class="alg-opt-desc">分布式投标 · 适合动态重分配场景</div>
+                    </div>
+                    <span class="alg-badge dist">DIST</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- MIDDLE: OBJECTIVE WEIGHTS -->
+              <div class="alg-block">
+                <div class="alg-block-title">▌ 目标函数权重</div>
+                <div class="alg-objective">
+                  <div class="obj-formula">
+                    F = w₁·毁伤 + w₂·时效 − w₃·成本 − w₄·风险
+                  </div>
+
+                  <div class="weight-row">
+                    <span class="weight-lbl">毁伤效能 w₁</span>
+                    <div class="weight-bar">
+                      <div class="weight-fill" style="width:80%; background:var(--green);"></div>
+                    </div>
+                    <span class="weight-val">0.40</span>
+                  </div>
+                  <div class="weight-row">
+                    <span class="weight-lbl">时效优先 w₂</span>
+                    <div class="weight-bar">
+                      <div class="weight-fill" style="width:60%; background:var(--cyan);"></div>
+                    </div>
+                    <span class="weight-val">0.30</span>
+                  </div>
+                  <div class="weight-row">
+                    <span class="weight-lbl">兵力成本 w₃</span>
+                    <div class="weight-bar">
+                      <div class="weight-fill" style="width:40%; background:var(--amber);"></div>
+                    </div>
+                    <span class="weight-val">0.20</span>
+                  </div>
+                  <div class="weight-row">
+                    <span class="weight-lbl">突防风险 w₄</span>
+                    <div class="weight-bar">
+                      <div class="weight-fill" style="width:20%; background:var(--red);"></div>
+                    </div>
+                    <span class="weight-val">0.10</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RIGHT: HARD CONSTRAINTS -->
+              <div class="alg-block">
+                <div class="alg-block-title">▌ 协同硬约束</div>
+                <div class="constraints">
+                  <label class="cs-item checked">
+                    <span class="cs-box">✓</span>
+                    <div class="cs-body">
+                      <div class="cs-name">导引头频段匹配</div>
+                      <div class="cs-desc">UAV 导引头频段必须覆盖目标雷达频段</div>
+                    </div>
+                  </label>
+                  <label class="cs-item checked">
+                    <span class="cs-box">✓</span>
+                    <div class="cs-body">
+                      <div class="cs-name">航程可达</div>
+                      <div class="cs-desc">UAV 剩余航程 ≥ 出发→目标航路距离</div>
+                    </div>
+                  </label>
+                  <label class="cs-item checked">
+                    <span class="cs-box">✓</span>
+                    <div class="cs-body">
+                      <div class="cs-name">同时到达约束</div>
+                      <div class="cs-desc">同一目标的多机攻击时刻误差 ≤ 3s</div>
+                    </div>
+                  </label>
+                  <label class="cs-item checked">
+                    <span class="cs-box">✓</span>
+                    <div class="cs-body">
+                      <div class="cs-name">P1 目标优先满足</div>
+                      <div class="cs-desc">高优先级目标先分配，剩余兵力给 P2</div>
+                    </div>
+                  </label>
+                  <label class="cs-item">
+                    <span class="cs-box"></span>
+                    <div class="cs-body">
+                      <div class="cs-name">不分配同型机扎堆</div>
+                      <div class="cs-desc">同一目标避免全是同批次 UAV</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- SOLVE BUTTON -->
+            <div class="solve-bar">
+              <button class="btn-solve" id="btn-solve">▶ 求解最优分配 / SOLVE</button>
+              <div class="solve-meta">
+                <span class="sm-item">输入维度：<span class="sm-v">12 UAV × 5 TGT</span></span>
+                <span class="sm-item">求解空间：<span class="sm-v">5.95 × 10⁸</span></span>
+                <span class="sm-item">预计耗时：<span class="sm-v">< 200 ms</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ 3.2 SOLVER OUTPUT ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">3.2</span>求解过程 · 实时</div>
+            <div class="section-tag">SOLVER LOG</div>
+          </div>
+          <div class="section-body">
+
+            <div class="solver-grid">
+              <!-- LEFT: LOG -->
+              <div class="solver-log">
+                <div class="log-header">▌ 求解日志</div>
+                <div class="log-body" id="solve-log">
+                  <div class="log-line"><span class="lt">14:23:42.012</span><span class="lv ok">[INFO]</span><span class="lm">读取 5 个目标，12 架可用 UAV</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.024</span><span class="lv ok">[CONST]</span><span class="lm">硬约束：4 项启用 / 1 项禁用</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.041</span><span class="lv ok">[FILTER]</span><span class="lm">频段匹配过滤后剩余可行解 3.2 × 10⁵</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.078</span><span class="lv ok">[FILTER]</span><span class="lm">航程过滤后剩余可行解 8.7 × 10³</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.103</span><span class="lv ok">[ALG]</span><span class="lm">启动匈牙利算法 · 维度 12×5 · 代价矩阵已构建</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.118</span><span class="lv ok">[ITER]</span><span class="lm">迭代 1 / 12 · 当前 F = 0.642</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.124</span><span class="lv ok">[ITER]</span><span class="lm">迭代 6 / 12 · 当前 F = 0.871</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.131</span><span class="lv ok">[ITER]</span><span class="lm">迭代 12 / 12 · 当前 F = 0.943</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.139</span><span class="lv ok">[OPT]</span><span class="lm">收敛 · 找到最优分配方案</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.142</span><span class="lv warn">[CHECK]</span><span class="lm">PT-02 仅 1 架满足 H 频段，触发备份不足告警</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.156</span><span class="lv ok">[SYNC]</span><span class="lm">协同时序求解 · TOT 同步精度 ±2.4s</span></div>
+                  <div class="log-line"><span class="lt">14:23:42.162</span><span class="lv done">[DONE]</span><span class="lm">分配完成 · 11 架已派遣 · 1 架备用 · 总耗时 150ms</span></div>
+                </div>
+              </div>
+
+              <!-- RIGHT: METRICS -->
+              <div class="solver-metrics">
+                <div class="log-header">▌ 求解指标</div>
+                <div class="metric-grid">
+                  <div class="metric-card">
+                    <div class="mc-lbl">目标函数值</div>
+                    <div class="mc-val cyan">0.943</div>
+                    <div class="mc-tag">较初始 +47%</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="mc-lbl">分配覆盖率</div>
+                    <div class="mc-val green">100<span class="mc-unit">%</span></div>
+                    <div class="mc-tag">5/5 目标</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="mc-lbl">硬约束满足</div>
+                    <div class="mc-val green">4/4</div>
+                    <div class="mc-tag">无冲突</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="mc-lbl">使用兵力</div>
+                    <div class="mc-val amber">11<span class="mc-unit">架</span></div>
+                    <div class="mc-tag">需求 22 / 已派 11</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="mc-lbl">综合代价</div>
+                    <div class="mc-val">2.84</div>
+                    <div class="mc-tag">兵力 + 风险</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="mc-lbl">求解耗时</div>
+                    <div class="mc-val">150<span class="mc-unit">ms</span></div>
+                    <div class="mc-tag">12 次迭代</div>
+                  </div>
+                </div>
+
+                <!-- ALT SOLUTIONS -->
+                <div class="alt-title">▌ 候选方案对比</div>
+                <table class="alt-table">
+                  <thead>
+                    <tr><th>方案</th><th>F 值</th><th>架次</th><th>风险</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr class="alt-current">
+                      <td>方案 1 · 当前</td><td class="amber">0.943</td><td>11</td><td>低</td>
+                      <td><span class="tag-on">已选</span></td>
+                    </tr>
+                    <tr>
+                      <td>方案 2 · 节省兵力</td><td>0.891</td><td>9</td><td>中</td>
+                      <td><span class="tag-pick">选用</span></td>
+                    </tr>
+                    <tr>
+                      <td>方案 3 · 高冗余</td><td>0.967</td><td>14</td><td>极低</td>
+                      <td><span class="tag-pick">选用</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ============ 3.3 ALLOCATION RESULT ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">3.3</span>分配方案 · 编队组织</div>
+            <div class="section-tag">ALLOCATION RESULT</div>
+          </div>
+          <div class="section-body">
+
+            <div class="alloc-flow">
+              <!-- 5 target groups, each with assigned UAVs -->
+              <div class="alloc-group p1">
+                <div class="ag-header">
+                  <span class="ag-tgt">PT-01</span>
+                  <span class="ag-name">东郊制导雷达</span>
+                  <span class="priority p1">P1</span>
+                  <span class="ag-tot">TOT 14:42:18</span>
+                </div>
+                <div class="ag-uavs">
+                  <div class="uav-chip primary">
+                    <span class="uc-id">UAV-A01</span>
+                    <span class="uc-role">主攻 1</span>
+                    <span class="uc-meta">I-band · 62km</span>
+                  </div>
+                  <div class="uav-chip primary">
+                    <span class="uc-id">UAV-A02</span>
+                    <span class="uc-role">主攻 2</span>
+                    <span class="uc-meta">I-band · 62km</span>
+                  </div>
+                  <div class="uav-chip backup">
+                    <span class="uc-id">UAV-A03</span>
+                    <span class="uc-role">备份</span>
+                    <span class="uc-meta">I-band · 64km</span>
+                  </div>
+                </div>
+                <div class="ag-coord">
+                  <span class="cd-tag">协同方式</span>
+                  <span class="cd-val">3 机同时到达 · 误差 ±2s · 三向夹角 60°</span>
+                </div>
+              </div>
+
+              <div class="alloc-group p1">
+                <div class="ag-header">
+                  <span class="ag-tgt">PT-02</span>
+                  <span class="ag-name">东郊火控雷达</span>
+                  <span class="priority p1">P1</span>
+                  <span class="ag-tot">TOT 14:42:18</span>
+                </div>
+                <div class="ag-uavs">
+                  <div class="uav-chip primary">
+                    <span class="uc-id">UAV-A04</span>
+                    <span class="uc-role">主攻 1</span>
+                    <span class="uc-meta">H-band · 71km</span>
+                  </div>
+                  <div class="uav-chip primary">
+                    <span class="uc-id">UAV-A05</span>
+                    <span class="uc-role">主攻 2</span>
+                    <span class="uc-meta">H-band · 71km</span>
+                  </div>
+                  <div class="uav-chip warn">
+                    <span class="uc-id">UAV-A06</span>
+                    <span class="uc-role">备份 ⚠</span>
+                    <span class="uc-meta">H-band · 73km</span>
+                  </div>
+                </div>
+                <div class="ag-coord">
+                  <span class="cd-tag">协同方式</span>
+                  <span class="cd-val">3 机同时到达 · 与 PT-01 同步压制（防止互预警）</span>
+                </div>
+              </div>
+
+              <div class="alloc-group p2">
+                <div class="ag-header">
+                  <span class="ag-tgt">PT-03</span>
+                  <span class="ag-name">北山警戒雷达</span>
+                  <span class="priority p2">P2</span>
+                  <span class="ag-tot">TOT 14:43:05</span>
+                </div>
+                <div class="ag-uavs">
+                  <div class="uav-chip primary">
+                    <span class="uc-id">UAV-B01</span>
+                    <span class="uc-role">主攻</span>
+                    <span class="uc-meta">D/E-band · 89km</span>
+                  </div>
+                  <div class="uav-chip backup">
+                    <span class="uc-id">UAV-B02</span>
+                    <span class="uc-role">备份</span>
+                    <span class="uc-meta">D/E-band · 89km</span>
+                  </div>
+                </div>
+                <div class="ag-coord">
+                  <span class="cd-tag">协同方式</span>
+                  <span class="cd-val">序贯打击 · 主攻 → 评估 → 备份补打</span>
+                </div>
+              </div>
+
+              <div class="alloc-group ar">
+                <div class="ag-header">
+                  <span class="ag-tgt">AR-01</span>
+                  <span class="ag-name">▢ 巢北防空集群区</span>
+                  <span class="priority p1">P1</span>
+                  <span class="ag-tot">窗口 14:44:00 ~ 14:46:00</span>
+                </div>
+                <div class="ag-uavs">
+                  <div class="uav-chip area">
+                    <span class="uc-id">UAV-A07</span>
+                    <span class="uc-role">扇区 N</span>
+                    <span class="uc-meta">扫描 ±60°</span>
+                  </div>
+                  <div class="uav-chip area">
+                    <span class="uc-id">UAV-A08</span>
+                    <span class="uc-role">扇区 SE</span>
+                    <span class="uc-meta">扫描 ±60°</span>
+                  </div>
+                  <div class="uav-chip area">
+                    <span class="uc-id">UAV-A09</span>
+                    <span class="uc-role">扇区 SW</span>
+                    <span class="uc-meta">扫描 ±60°</span>
+                  </div>
+                </div>
+                <div class="ag-coord">
+                  <span class="cd-tag">协同方式</span>
+                  <span class="cd-val">扇形分区并行搜索 · 截获即攻 · 首机锁定后广播退出，余机转扇区/补打</span>
+                </div>
+              </div>
+
+              <div class="alloc-group ar">
+                <div class="ag-header">
+                  <span class="ag-tgt">AR-02</span>
+                  <span class="ag-name">▢ 店埠雷达走廊</span>
+                  <span class="priority p2">P2</span>
+                  <span class="ag-tot">窗口 14:45:10 ~ 14:46:40</span>
+                </div>
+                <div class="ag-uavs">
+                  <div class="uav-chip area">
+                    <span class="uc-id">UAV-B03</span>
+                    <span class="uc-role">走廊东</span>
+                    <span class="uc-meta">沿走廊扫描</span>
+                  </div>
+                  <div class="uav-chip area">
+                    <span class="uc-id">UAV-B04</span>
+                    <span class="uc-role">走廊西</span>
+                    <span class="uc-meta">沿走廊扫描</span>
+                  </div>
+                </div>
+                <div class="ag-coord">
+                  <span class="cd-tag">协同方式</span>
+                  <span class="cd-val">双机相向横扫 · 相遇后绕环再扫一遍</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="alloc-actions">
+              <button class="action-btn">↻ 重新求解</button>
+              <button class="action-btn">✎ 手动调整</button>
+              <button class="action-btn">⇄ 切换方案</button>
+              <button class="action-btn" style="border-color:var(--amber); color:var(--amber);">✓ 确认并下一步</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ============ 3.4 SYNC TIMELINE ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">3.4</span>协同时序 · 同时到达验证</div>
+            <div class="section-tag">SYNC TIMELINE</div>
+          </div>
+          <div class="section-body">
+            <div class="timeline">
+              <div class="timeline-axis">
+                <div class="tick" style="left:0%">T+00:00</div>
+                <div class="tick" style="left:20%">T+02:24</div>
+                <div class="tick" style="left:40%">T+04:48</div>
+                <div class="tick" style="left:60%">T+07:12</div>
+                <div class="tick" style="left:80%">T+09:36</div>
+                <div class="tick" style="left:100%">T+12:00</div>
+              </div>
+
+              <div class="tl-row"><div class="tl-label">A01 ▸ PT-01</div><div class="tl-track"><div class="tl-bar" style="left:0%; width:96%;">爬升 → 巡航 → 突防 → 攻击</div><div class="tl-marker" style="left:96%;"></div></div></div>
+              <div class="tl-row"><div class="tl-label">A02 ▸ PT-01</div><div class="tl-track"><div class="tl-bar" style="left:1%; width:95%;">爬升 → 巡航 → 突防 → 攻击</div><div class="tl-marker" style="left:96%;"></div></div></div>
+              <div class="tl-row"><div class="tl-label">A03 ▸ PT-01</div><div class="tl-track"><div class="tl-bar" style="left:2%; width:94.5%;">爬升 → 巡航 → 突防 → 攻击</div><div class="tl-marker" style="left:96.5%;"></div></div></div>
+              <div class="tl-row"><div class="tl-label">A04 ▸ PT-02</div><div class="tl-track"><div class="tl-bar" style="left:0%; width:96%;">爬升 → 巡航 → 突防 → 待机 → 攻击</div><div class="tl-marker" style="left:96%;"></div></div></div>
+              <div class="tl-row"><div class="tl-label">A05 ▸ PT-02</div><div class="tl-track"><div class="tl-bar" style="left:0%; width:96%;">爬升 → 巡航 → 突防 → 待机 → 攻击</div><div class="tl-marker" style="left:96%;"></div></div></div>
+              <div class="tl-row"><div class="tl-label">B01 ▸ PT-03</div><div class="tl-track"><div class="tl-bar" style="left:5%; width:97%;">爬升 → 高空巡航 → 搜索 → 攻击</div><div class="tl-marker" style="left:97%;"></div></div></div>
+              <div class="tl-row" style="background:rgba(255,182,39,0.04); padding:2px 0;"><div class="tl-label">A07 ▸ AR-01</div><div class="tl-track"><div class="tl-bar" style="left:8%; width:90%; background: linear-gradient(90deg, var(--cyan-dim), rgba(255,182,39,0.6)); border-color:var(--amber); border-style:dashed;">爬升 → 巡航 → 区域搜索 → 截获即攻</div></div></div>
+              <div class="tl-row" style="background:rgba(255,182,39,0.04); padding:2px 0;"><div class="tl-label">A08 ▸ AR-01</div><div class="tl-track"><div class="tl-bar" style="left:8%; width:90%; background: linear-gradient(90deg, var(--cyan-dim), rgba(255,182,39,0.6)); border-color:var(--amber); border-style:dashed;">爬升 → 巡航 → 区域搜索 → 截获即攻</div></div></div>
+
+              <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); display:flex; justify-content:space-between; font-size:10px; flex-wrap:wrap; gap:10px;">
+                <div style="color: var(--cyan);">▸ PT-01/02 饱和窗口：T+09:36 ~ T+09:42 · 6 弹同时打击</div>
+                <div style="color: var(--amber);">▸ 同时到达精度：±2.4s（约束 ±3s ✓）</div>
+                <div style="color: var(--green);">▸ 验证通过 · 无时序冲突</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== STEP 4: ROUTE PLANNING (4-PHASE) ===== -->
+      <div class="step-content" id="step-4">
+        <div class="hint">▎ 航路规划按四阶段进行：① 爬升 → ② 巡航突防 → ③ 搜索 → ④ 打击。设置限制参数后一键自动规划，可对每个航路点人工微调。</div>
+
+        <!-- ============ 4.1 PLANNING PARAMETERS ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">4.1</span>规划参数 · 限制条件</div>
+            <div class="section-tag">PLANNING CONSTRAINTS</div>
+          </div>
+          <div class="section-body">
+
+            <div class="rp-grid">
+              <!-- A. CLIMB PHASE -->
+              <div class="rp-phase">
+                <div class="rp-ph-head">
+                  <span class="rp-ph-num">①</span>
+                  <span class="rp-ph-cn">爬升阶段</span>
+                  <span class="rp-ph-en">CLIMB</span>
+                </div>
+                <div class="rp-ph-body">
+                  <div class="rp-row">
+                    <span class="rp-lbl">爬升率</span>
+                    <select class="rp-sel">
+                      <option>标准 · 5 m/s</option>
+                      <option>快速 · 8 m/s</option>
+                    </select>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">爬升至高度</span>
+                    <span class="rp-num">800 m</span>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">起飞方位角</span>
+                    <span class="rp-num">090° E</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- B. CRUISE PHASE -->
+              <div class="rp-phase">
+                <div class="rp-ph-head">
+                  <span class="rp-ph-num">②</span>
+                  <span class="rp-ph-cn">巡航突防</span>
+                  <span class="rp-ph-en">CRUISE</span>
+                </div>
+                <div class="rp-ph-body">
+                  <div class="rp-row">
+                    <span class="rp-lbl">巡航方式</span>
+                    <select class="rp-sel">
+                      <option selected>低空突防 · 100m AGL</option>
+                      <option>地形跟随</option>
+                      <option>中空 · 3000m</option>
+                    </select>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">巡航速度</span>
+                    <span class="rp-num">320 km/h</span>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">绕避策略</span>
+                    <select class="rp-sel">
+                      <option selected>避开威胁圈</option>
+                      <option>低空穿越</option>
+                      <option>地形遮蔽</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- C. SEARCH PHASE -->
+              <div class="rp-phase active">
+                <div class="rp-ph-head">
+                  <span class="rp-ph-num">③</span>
+                  <span class="rp-ph-cn">搜索阶段</span>
+                  <span class="rp-ph-en">SEARCH</span>
+                  <span class="rp-key">关键</span>
+                </div>
+                <div class="rp-ph-body">
+                  <div class="rp-row">
+                    <span class="rp-lbl">点目标·搜索形式</span>
+                    <select class="rp-sel">
+                      <option selected>直飞归向 · STRAIGHT</option>
+                      <option>盘旋待机 · LOITER</option>
+                      <option>"8"字搜索 · FIG-8</option>
+                    </select>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">区域目标·搜索形式</span>
+                    <select class="rp-sel">
+                      <option selected>螺旋扫描 · SPIRAL</option>
+                      <option>平行线扫描 · PARALLEL</option>
+                      <option>扇形分区 · SECTOR</option>
+                      <option>蜂群分布 · SWARM</option>
+                    </select>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">搜索高度</span>
+                    <span class="rp-num">500 m</span>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">最大搜索时长</span>
+                    <span class="rp-num">180 s</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- D. STRIKE PHASE -->
+              <div class="rp-phase">
+                <div class="rp-ph-head">
+                  <span class="rp-ph-num">④</span>
+                  <span class="rp-ph-cn">打击阶段</span>
+                  <span class="rp-ph-en">STRIKE</span>
+                </div>
+                <div class="rp-ph-body">
+                  <div class="rp-row">
+                    <span class="rp-lbl">攻击方式</span>
+                    <select class="rp-sel">
+                      <option selected>俯冲攻击 · DIVE</option>
+                      <option>水平自杀 · LEVEL</option>
+                    </select>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">俯冲角</span>
+                    <span class="rp-num">45°</span>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">同时到达精度</span>
+                    <span class="rp-num">±3 s</span>
+                  </div>
+                  <div class="rp-row">
+                    <span class="rp-lbl">攻击方位</span>
+                    <select class="rp-sel">
+                      <option selected>多向夹击</option>
+                      <option>同向编队</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GLOBAL CONSTRAINTS -->
+            <div class="rp-global">
+              <div class="rp-global-title">▌ 全局约束 · GLOBAL</div>
+              <div class="rp-global-grid">
+                <label class="rp-tog active"><span class="rp-tg-box">✓</span><span>避开禁飞区</span></label>
+                <label class="rp-tog active"><span class="rp-tg-box">✓</span><span>避开防空威胁圈</span></label>
+                <label class="rp-tog active"><span class="rp-tg-box">✓</span><span>地形碰撞检测</span></label>
+                <label class="rp-tog active"><span class="rp-tg-box">✓</span><span>燃油裕度 ≥ 10%</span></label>
+                <label class="rp-tog"><span class="rp-tg-box"></span><span>使用气象修正</span></label>
+                <label class="rp-tog"><span class="rp-tg-box"></span><span>启用通信中继约束</span></label>
+              </div>
+            </div>
+
+            <!-- AUTO-PLAN BUTTON -->
+            <div class="rp-action-bar">
+              <button class="btn-plan" id="btn-autoplan">▶ 一键自动规划全部航路 / AUTO-PLAN ALL</button>
+              <div class="rp-meta">
+                <span class="rp-mi">编队 <span class="rp-mv">2</span></span>
+                <span class="rp-mi">无人机 <span class="rp-mv">11</span></span>
+                <span class="rp-mi">目标 <span class="rp-mv">5</span></span>
+                <span class="rp-mi">预计耗时 <span class="rp-mv">~ 1.2s</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ 4.2 PLANNING RESULT - MAP ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">4.2</span>航路态势图 · 四阶段可视化</div>
+            <div class="section-tag">TACTICAL OVERVIEW</div>
+          </div>
+          <div class="section-body">
+            <div class="map-wrap">
+              <div class="map-legend">
+                <div class="map-legend-item"><span class="phase-mark p1"></span>① 爬升</div>
+                <div class="map-legend-item"><span class="phase-mark p2"></span>② 巡航</div>
+                <div class="map-legend-item"><span class="phase-mark p3"></span>③ 搜索</div>
+                <div class="map-legend-item"><span class="phase-mark p4"></span>④ 打击</div>
+                <div class="map-legend-item" style="border-top:1px dashed var(--border); padding-top:4px; margin-top:4px;"><span class="map-legend-mark" style="background:var(--red); border-radius:50%; height:8px; width:8px;"></span>点目标</div>
+                <div class="map-legend-item"><span class="map-legend-mark" style="background:rgba(255,182,39,0.15); border:1px dashed var(--amber); height:8px; width:14px;"></span>区域目标</div>
+                <div class="map-legend-item"><span class="map-legend-mark" style="background:var(--red); height:6px;"></span>威胁圈</div>
+                <div class="map-legend-item"><span class="map-legend-mark" style="background:transparent; border:1px dashed var(--text-dim); height:6px;"></span>禁飞区</div>
+              </div>
+              <div class="coord-readout">CURSOR · 31.8932°N · 117.2419°E · ELEV 124m</div>
+
+              <svg class="map-svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <pattern id="grid4" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(79, 209, 197, 0.06)" stroke-width="0.5"/>
+                  </pattern>
+                  <pattern id="dots4" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="10" cy="10" r="0.5" fill="rgba(79, 209, 197, 0.15)"/>
+                  </pattern>
+                  <radialGradient id="threat4" cx="50%" cy="50%">
+                    <stop offset="0%" stop-color="rgba(255, 77, 77, 0.25)"/>
+                    <stop offset="70%" stop-color="rgba(255, 77, 77, 0.08)"/>
+                    <stop offset="100%" stop-color="rgba(255, 77, 77, 0)"/>
+                  </radialGradient>
+                  <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff4d4d"/>
+                  </marker>
+                </defs>
+
+                <rect width="800" height="450" fill="url(#grid4)"/>
+                <rect width="800" height="450" fill="url(#dots4)"/>
+
+                <!-- contour -->
+                <g stroke="rgba(79, 209, 197, 0.08)" fill="none" stroke-width="0.7">
+                  <path d="M 100 380 Q 200 350 300 360 T 500 340 T 700 320"/>
+                  <path d="M 80 320 Q 200 280 350 295 T 600 270 T 760 260"/>
+                </g>
+
+                <!-- River -->
+                <path d="M 50 200 Q 200 240 350 220 T 600 250 T 800 240"
+                      stroke="rgba(79, 209, 197, 0.25)" stroke-width="3" fill="none" opacity="0.6"/>
+
+                <!-- No-fly -->
+                <polygon points="380,80 480,70 510,140 420,160 370,120"
+                  fill="rgba(255, 255, 255, 0.02)" stroke="rgba(168, 189, 196, 0.5)" stroke-width="1" stroke-dasharray="4 3"/>
+                <text x="395" y="115" fill="rgba(168, 189, 196, 0.6)" font-size="9" font-family="Orbitron">NFZ-01</text>
+
+                <!-- Threats -->
+                <circle cx="540" cy="280" r="80" fill="url(#threat4)" stroke="var(--red)" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+                <text x="540" y="285" text-anchor="middle" fill="var(--red)" font-size="9" font-family="Orbitron">SAM-1 · 35km</text>
+
+                <circle cx="640" cy="200" r="60" fill="url(#threat4)" stroke="var(--red)" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+                <text x="640" y="205" text-anchor="middle" fill="var(--red)" font-size="9" font-family="Orbitron">SAM-2</text>
+
+                <!-- Launch site -->
+                <g transform="translate(80, 360)">
+                  <rect x="-12" y="-12" width="24" height="24" fill="none" stroke="var(--cyan)" stroke-width="1.5"/>
+                  <rect x="-6" y="-6" width="12" height="12" fill="var(--cyan)"/>
+                  <text x="0" y="-18" text-anchor="middle" fill="var(--cyan)" font-size="9" font-family="Orbitron">LP-A</text>
+                </g>
+
+                <!-- TARGET AR-01 (area) -->
+                <circle cx="350" cy="380" r="55" fill="rgba(255, 182, 39, 0.10)" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="5 3"/>
+                <text x="350" y="375" text-anchor="middle" fill="var(--amber)" font-size="10" font-weight="700" font-family="Orbitron">AR-01</text>
+
+                <!-- TARGET AR-02 (rectangle) -->
+                <rect x="475" y="105" width="120" height="45" fill="rgba(255, 182, 39, 0.10)" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="5 3" transform="rotate(15 535 127)"/>
+                <text x="535" y="100" text-anchor="middle" fill="var(--amber)" font-size="10" font-weight="700" font-family="Orbitron">AR-02</text>
+
+                <!-- TARGET PT-01 -->
+                <g transform="translate(560, 290)">
+                  <circle r="8" fill="var(--red)" stroke="var(--red)"/>
+                  <text x="0" y="-14" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700" font-family="Orbitron">PT-01</text>
+                </g>
+
+                <!-- TARGET PT-02 -->
+                <g transform="translate(660, 320)">
+                  <circle r="8" fill="var(--red)" stroke="var(--red)"/>
+                  <text x="0" y="-14" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700" font-family="Orbitron">PT-02</text>
+                </g>
+
+                <!-- TARGET PT-03 -->
+                <g transform="translate(620, 200)">
+                  <circle r="8" fill="var(--red)" stroke="var(--red)"/>
+                  <text x="0" y="-14" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700" font-family="Orbitron">PT-03</text>
+                </g>
+
+                <!-- ====== ROUTE A1 to PT-01 — 4 PHASES ====== -->
+                <!-- ① CLIMB (green) -->
+                <path d="M 80 360 L 130 340" stroke="var(--green)" stroke-width="3" fill="none"/>
+                <!-- ② CRUISE (cyan) -->
+                <path d="M 130 340 L 230 322 L 330 308 Q 410 300 470 290" stroke="var(--cyan)" stroke-width="2.5" fill="none"/>
+                <!-- ③ SEARCH (yellow dashed) -->
+                <path d="M 470 290 L 520 285 L 540 285" stroke="#ffd54f" stroke-width="2" stroke-dasharray="5 3" fill="none"/>
+                <!-- ④ STRIKE (red, with arrow) -->
+                <path d="M 540 285 L 558 290" stroke="var(--red)" stroke-width="2.5" fill="none" marker-end="url(#arr4)"/>
+
+                <!-- WAYPOINTS A1 -->
+                <g class="wp-set">
+                  <g transform="translate(130, 340)" class="wp-grp" data-wp="A1-W1" data-phase="climb">
+                    <circle r="5" fill="var(--green)" stroke="#0a0e0f" stroke-width="2"/>
+                    <text x="8" y="-6" fill="var(--green)" font-size="8" font-family="Orbitron">W1·爬升顶</text>
+                  </g>
+                  <g transform="translate(230, 322)" class="wp-grp" data-wp="A1-W2" data-phase="cruise">
+                    <circle r="5" fill="var(--cyan)" stroke="#0a0e0f" stroke-width="2"/>
+                    <text x="8" y="-6" fill="var(--cyan)" font-size="8" font-family="Orbitron">W2</text>
+                  </g>
+                  <g transform="translate(330, 308)" class="wp-grp" data-wp="A1-W3" data-phase="cruise">
+                    <circle r="5" fill="var(--cyan)" stroke="#0a0e0f" stroke-width="2"/>
+                    <text x="8" y="-6" fill="var(--cyan)" font-size="8" font-family="Orbitron">W3·绕避</text>
+                  </g>
+                  <g transform="translate(470, 290)" class="wp-grp" data-wp="A1-W4" data-phase="search">
+                    <circle r="5" fill="#ffd54f" stroke="#0a0e0f" stroke-width="2"/>
+                    <text x="8" y="-6" fill="#ffd54f" font-size="8" font-family="Orbitron">W4·入搜</text>
+                  </g>
+                  <g transform="translate(540, 285)" class="wp-grp" data-wp="A1-W5" data-phase="strike">
+                    <circle r="5" fill="var(--red)" stroke="#0a0e0f" stroke-width="2"/>
+                    <text x="8" y="-6" fill="var(--red)" font-size="8" font-family="Orbitron">W5·攻击</text>
+                  </g>
+                </g>
+
+                <!-- ====== ROUTE A2 to PT-02 ====== -->
+                <path d="M 80 360 L 135 365" stroke="var(--green)" stroke-width="3" fill="none"/>
+                <path d="M 135 365 L 235 365 L 360 358 Q 460 350 555 340" stroke="var(--cyan)" stroke-width="2.5" fill="none" opacity="0.85"/>
+                <path d="M 555 340 L 620 330 L 650 322" stroke="#ffd54f" stroke-width="2" stroke-dasharray="5 3" fill="none" opacity="0.85"/>
+                <path d="M 650 322 L 658 320" stroke="var(--red)" stroke-width="2.5" fill="none" marker-end="url(#arr4)"/>
+
+                <!-- ====== ROUTE B1 to AR-02 (area target — spiral) ====== -->
+                <path d="M 80 360 L 100 320" stroke="var(--green)" stroke-width="3" fill="none"/>
+                <path d="M 100 320 L 200 250 L 320 200 Q 400 180 460 165" stroke="var(--amber)" stroke-width="2.5" fill="none" opacity="0.85"/>
+                <!-- search pattern: parallel lines inside AR-02 -->
+                <g stroke="#ffd54f" stroke-width="1.5" fill="none" stroke-dasharray="3 2">
+                  <path d="M 460 165 L 590 130"/>
+                  <path d="M 590 130 L 595 145"/>
+                  <path d="M 595 145 L 470 178"/>
+                  <path d="M 470 178 L 478 192"/>
+                  <path d="M 478 192 L 600 158"/>
+                </g>
+                <text x="610" y="120" fill="#ffd54f" font-size="8" font-family="Orbitron">平行线扫描</text>
+
+                <!-- compass -->
+                <g transform="translate(750, 60)">
+                  <circle r="22" fill="rgba(15, 21, 24, 0.8)" stroke="var(--border-bright)" stroke-width="1"/>
+                  <path d="M 0 -18 L 4 0 L 0 18 L -4 0 Z" fill="var(--amber)"/>
+                  <text y="-26" text-anchor="middle" fill="var(--amber)" font-size="9" font-family="Orbitron" font-weight="700">N</text>
+                </g>
+
+                <!-- scale -->
+                <g transform="translate(650, 420)">
+                  <line x1="0" y1="0" x2="100" y2="0" stroke="var(--text-dim)" stroke-width="1"/>
+                  <line x1="0" y1="-3" x2="0" y2="3" stroke="var(--text-dim)" stroke-width="1"/>
+                  <line x1="100" y1="-3" x2="100" y2="3" stroke="var(--text-dim)" stroke-width="1"/>
+                  <text x="50" y="14" text-anchor="middle" fill="var(--text-dim)" font-size="8" font-family="Orbitron">10 KM</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- ROUTE SELECTOR -->
+            <div class="route-selector">
+              <span class="rs-lbl">▌ 选择航路查看/编辑</span>
+              <div class="rs-pills">
+                <div class="rs-pill active" data-rt="A1">RT-A1 ▸ PT-01</div>
+                <div class="rs-pill" data-rt="A2">RT-A2 ▸ PT-02</div>
+                <div class="rs-pill" data-rt="A3">RT-A3 ▸ PT-03</div>
+                <div class="rs-pill" data-rt="B1">RT-B1 ▸ AR-01</div>
+                <div class="rs-pill" data-rt="B2">RT-B2 ▸ AR-02</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ 4.3 4-PHASE BREAKDOWN ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">4.3</span>四阶段分段 · RT-A1 ▸ PT-01</div>
+            <div class="section-tag">PHASE BREAKDOWN</div>
+          </div>
+          <div class="section-body">
+
+            <!-- altitude profile -->
+            <div class="alt-profile">
+              <div class="ap-title">▌ 航迹剖面 · 高度-距离图</div>
+              <svg viewBox="0 0 800 180" preserveAspectRatio="none" style="width:100%; height:160px;">
+                <defs>
+                  <pattern id="apgrid" width="40" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 20" fill="none" stroke="rgba(79,209,197,0.05)" stroke-width="0.5"/>
+                  </pattern>
+                </defs>
+                <rect width="800" height="180" fill="url(#apgrid)"/>
+
+                <!-- ground -->
+                <path d="M 0 165 L 800 160" stroke="var(--border-bright)" stroke-width="1"/>
+                <text x="5" y="178" fill="var(--text-dim)" font-size="9" font-family="Orbitron">GROUND</text>
+
+                <!-- altitude lines -->
+                <g stroke="var(--border-dim)" stroke-dasharray="2 4" stroke-width="0.5">
+                  <line x1="0" y1="120" x2="800" y2="120"/>
+                  <line x1="0" y1="80" x2="800" y2="80"/>
+                  <line x1="0" y1="40" x2="800" y2="40"/>
+                </g>
+                <text x="5" y="124" fill="var(--text-dim)" font-size="8" font-family="Orbitron">300m</text>
+                <text x="5" y="84" fill="var(--text-dim)" font-size="8" font-family="Orbitron">600m</text>
+                <text x="5" y="44" fill="var(--text-dim)" font-size="8" font-family="Orbitron">900m</text>
+
+                <!-- ① CLIMB (green) -->
+                <path d="M 50 165 L 130 50" stroke="var(--green)" stroke-width="2.5" fill="none"/>
+                <rect x="50" y="0" width="80" height="180" fill="rgba(93,222,133,0.04)"/>
+                <text x="90" y="14" fill="var(--green)" text-anchor="middle" font-size="9" font-family="Orbitron">① CLIMB</text>
+
+                <!-- ② CRUISE (cyan, low alt) -->
+                <path d="M 130 50 L 200 130 L 480 130" stroke="var(--cyan)" stroke-width="2.5" fill="none"/>
+                <rect x="130" y="0" width="350" height="180" fill="rgba(79,209,197,0.04)"/>
+                <text x="305" y="14" fill="var(--cyan)" text-anchor="middle" font-size="9" font-family="Orbitron">② CRUISE · LOW-ALT 100m AGL</text>
+
+                <!-- ③ SEARCH (yellow, climb to search alt) -->
+                <path d="M 480 130 L 550 90 L 650 90" stroke="#ffd54f" stroke-width="2.5" fill="none" stroke-dasharray="4 2"/>
+                <rect x="480" y="0" width="170" height="180" fill="rgba(255,213,79,0.04)"/>
+                <text x="565" y="14" fill="#ffd54f" text-anchor="middle" font-size="9" font-family="Orbitron">③ SEARCH · 500m</text>
+
+                <!-- ④ STRIKE (red, dive) -->
+                <path d="M 650 90 L 750 160" stroke="var(--red)" stroke-width="2.5" fill="none"/>
+                <rect x="650" y="0" width="100" height="180" fill="rgba(255,77,77,0.05)"/>
+                <text x="700" y="14" fill="var(--red)" text-anchor="middle" font-size="9" font-family="Orbitron">④ STRIKE · 45° DIVE</text>
+
+                <!-- waypoints -->
+                <g>
+                  <circle cx="50" cy="165" r="4" fill="var(--green)"/>
+                  <text x="50" y="-2" fill="var(--green)" text-anchor="middle" font-size="8" font-family="Orbitron" dy="170">起飞</text>
+                  <circle cx="130" cy="50" r="4" fill="var(--green)"/>
+                  <circle cx="480" cy="130" r="4" fill="var(--cyan)"/>
+                  <circle cx="650" cy="90" r="4" fill="#ffd54f"/>
+                  <circle cx="750" cy="160" r="4" fill="var(--red)"/>
+                  <text x="750" y="178" fill="var(--red)" text-anchor="middle" font-size="8" font-family="Orbitron">目标</text>
+                </g>
+              </svg>
+              <div class="ap-axis">
+                <span>0 km</span><span>15 km</span><span>30 km</span><span>45 km</span><span>62.4 km</span>
+              </div>
+            </div>
+
+            <!-- 4 PHASE SUMMARY CARDS -->
+            <div class="phase-cards">
+
+              <div class="phase-card climb">
+                <div class="pc-head">
+                  <span class="pc-num">①</span>
+                  <span class="pc-name">爬升 CLIMB</span>
+                  <span class="pc-time">00:00 ~ 00:32</span>
+                </div>
+                <div class="pc-stats">
+                  <div class="pc-stat"><span class="pcs-l">距离</span><span class="pcs-v">2.8 km</span></div>
+                  <div class="pc-stat"><span class="pcs-l">爬升至</span><span class="pcs-v">800 m</span></div>
+                  <div class="pc-stat"><span class="pcs-l">爬升率</span><span class="pcs-v">5 m/s</span></div>
+                  <div class="pc-stat"><span class="pcs-l">油耗</span><span class="pcs-v">3.2%</span></div>
+                </div>
+                <div class="pc-note">▸ 出场后向 E 直线爬升至安全高度</div>
+              </div>
+
+              <div class="phase-card cruise">
+                <div class="pc-head">
+                  <span class="pc-num">②</span>
+                  <span class="pc-name">巡航 CRUISE</span>
+                  <span class="pc-time">00:32 ~ 09:14</span>
+                </div>
+                <div class="pc-stats">
+                  <div class="pc-stat"><span class="pcs-l">距离</span><span class="pcs-v">46.2 km</span></div>
+                  <div class="pc-stat"><span class="pcs-l">高度</span><span class="pcs-v">100m AGL</span></div>
+                  <div class="pc-stat"><span class="pcs-l">速度</span><span class="pcs-v">320 km/h</span></div>
+                  <div class="pc-stat"><span class="pcs-l">航点数</span><span class="pcs-v">3 WP</span></div>
+                </div>
+                <div class="pc-note">▸ 低空突防，沿 W2-W3 绕避 SAM-1 威胁圈北侧</div>
+              </div>
+
+              <div class="phase-card search">
+                <div class="pc-head">
+                  <span class="pc-num">③</span>
+                  <span class="pc-name">搜索 SEARCH</span>
+                  <span class="pc-time">09:14 ~ 11:08</span>
+                </div>
+                <div class="pc-stats">
+                  <div class="pc-stat"><span class="pcs-l">距离</span><span class="pcs-v">10.4 km</span></div>
+                  <div class="pc-stat"><span class="pcs-l">爬升至</span><span class="pcs-v">500 m</span></div>
+                  <div class="pc-stat"><span class="pcs-l">搜索形式</span><span class="pcs-v">直飞归向</span></div>
+                  <div class="pc-stat"><span class="pcs-l">最长</span><span class="pcs-v">180 s</span></div>
+                </div>
+                <div class="pc-note">▸ 拉升至搜索高度，导引头开机捕获 PT-01 信号</div>
+              </div>
+
+              <div class="phase-card strike">
+                <div class="pc-head">
+                  <span class="pc-num">④</span>
+                  <span class="pc-name">打击 STRIKE</span>
+                  <span class="pc-time">11:08 ~ 11:42</span>
+                </div>
+                <div class="pc-stats">
+                  <div class="pc-stat"><span class="pcs-l">距离</span><span class="pcs-v">3.0 km</span></div>
+                  <div class="pc-stat"><span class="pcs-l">俯冲角</span><span class="pcs-v">45°</span></div>
+                  <div class="pc-stat"><span class="pcs-l">攻击方位</span><span class="pcs-v">SE 135°</span></div>
+                  <div class="pc-stat"><span class="pcs-l">TOT</span><span class="pcs-v">14:42:18</span></div>
+                </div>
+                <div class="pc-note">▸ 与 A02/A03 三向夹击，同时到达精度 ±2.4s</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ============ 4.4 WAYPOINT TABLE — MANUAL EDIT ============ -->
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">4.4</span>航路点编辑 · 人工微调</div>
+            <div class="section-tag">WAYPOINT EDITOR</div>
+          </div>
+          <div class="section-body">
+            <div class="wp-tip">▸ 双击航路点可在地图上拖动调整 · 修改下表数值后点击"应用"重新生成航路 · 支持插入/删除航路点</div>
+
+            <table class="wp-table">
+              <thead>
+                <tr>
+                  <th>WP</th>
+                  <th>阶段</th>
+                  <th>纬度</th>
+                  <th>经度</th>
+                  <th>高度 (m)</th>
+                  <th>速度 (km/h)</th>
+                  <th>到达 T+</th>
+                  <th>动作</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="wp-id">W0</td>
+                  <td><span class="ph-tag climb">① 起飞</span></td>
+                  <td><input class="wp-in" value="31.9500"></td>
+                  <td><input class="wp-in" value="117.0500"></td>
+                  <td><input class="wp-in" value="100"></td>
+                  <td><input class="wp-in" value="180"></td>
+                  <td>00:00</td>
+                  <td>起飞 · 加速</td>
+                  <td><button class="wp-btn">⇕</button></td>
+                </tr>
+                <tr>
+                  <td class="wp-id">W1</td>
+                  <td><span class="ph-tag climb">① 爬升顶</span></td>
+                  <td><input class="wp-in" value="31.9420"></td>
+                  <td><input class="wp-in" value="117.1080"></td>
+                  <td><input class="wp-in" value="800"></td>
+                  <td><input class="wp-in" value="320"></td>
+                  <td>00:32</td>
+                  <td>爬升完成 · 转入巡航</td>
+                  <td><button class="wp-btn">⇕</button></td>
+                </tr>
+                <tr>
+                  <td class="wp-id">W2</td>
+                  <td><span class="ph-tag cruise">② 巡航</span></td>
+                  <td><input class="wp-in" value="31.9210"></td>
+                  <td><input class="wp-in" value="117.2105"></td>
+                  <td><input class="wp-in" value="100"></td>
+                  <td><input class="wp-in" value="320"></td>
+                  <td>03:14</td>
+                  <td>下降至低空</td>
+                  <td><button class="wp-btn">⇕</button></td>
+                </tr>
+                <tr style="background:rgba(255,182,39,0.04);">
+                  <td class="wp-id">W3</td>
+                  <td><span class="ph-tag cruise">② 绕避</span></td>
+                  <td><input class="wp-in" value="31.9080"></td>
+                  <td><input class="wp-in" value="117.3030"></td>
+                  <td><input class="wp-in" value="100"></td>
+                  <td><input class="wp-in" value="320"></td>
+                  <td>06:42</td>
+                  <td>北绕 SAM-1 威胁圈</td>
+                  <td><button class="wp-btn warn">⚠</button></td>
+                </tr>
+                <tr>
+                  <td class="wp-id">W4</td>
+                  <td><span class="ph-tag search">③ 入搜</span></td>
+                  <td><input class="wp-in" value="31.8745"></td>
+                  <td><input class="wp-in" value="117.3650"></td>
+                  <td><input class="wp-in" value="500"></td>
+                  <td><input class="wp-in" value="280"></td>
+                  <td>09:14</td>
+                  <td>拉升 · 导引头开机</td>
+                  <td><button class="wp-btn">⇕</button></td>
+                </tr>
+                <tr>
+                  <td class="wp-id">W5</td>
+                  <td><span class="ph-tag strike">④ 攻击</span></td>
+                  <td><input class="wp-in" value="31.8642"></td>
+                  <td><input class="wp-in" value="117.3851"></td>
+                  <td><input class="wp-in" value="0"></td>
+                  <td><input class="wp-in" value="350"></td>
+                  <td>11:42</td>
+                  <td>俯冲 · 起爆</td>
+                  <td><button class="wp-btn">⇕</button></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="wp-actions">
+              <button class="action-btn">+ 插入航路点</button>
+              <button class="action-btn">↻ 重新规划本航路</button>
+              <button class="action-btn">⊕ 撤销修改</button>
+              <button class="action-btn" style="border-color:var(--green); color:var(--green);">✓ 应用修改</button>
+            </div>
+
+            <!-- ROUTES SUMMARY TABLE -->
+            <div class="rt-summary-title">▌ 全部航路汇总 · ALL ROUTES</div>
+            <table class="route-table">
+              <thead>
+                <tr>
+                  <th>编号</th>
+                  <th>无人机</th>
+                  <th>目标</th>
+                  <th>WP</th>
+                  <th>总航程</th>
+                  <th>飞行时间</th>
+                  <th>燃油裕度</th>
+                  <th>风险</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background:rgba(255,182,39,0.06);"><td>RT-A1</td><td>UAV-A01</td><td>PT-01</td><td>6</td><td>62.4 km</td><td>11:42</td><td>+18%</td><td style="color:var(--green);">低</td><td><span class="rt-stat ok">已规划</span></td></tr>
+                <tr><td>RT-A2</td><td>UAV-A04</td><td>PT-02</td><td>7</td><td>78.2 km</td><td>12:08</td><td>+12%</td><td style="color:var(--amber);">中</td><td><span class="rt-stat ok">已规划</span></td></tr>
+                <tr><td>RT-A3</td><td>UAV-B01</td><td>PT-03</td><td>5</td><td>71.5 km</td><td>10:55</td><td>+22%</td><td style="color:var(--green);">低</td><td><span class="rt-stat ok">已规划</span></td></tr>
+                <tr><td>RT-B1</td><td>UAV-A07</td><td>AR-01</td><td>9</td><td>52.8 km</td><td>14:30</td><td>+15%</td><td style="color:var(--green);">低</td><td><span class="rt-stat ok">已规划</span></td></tr>
+                <tr><td>RT-B2</td><td>UAV-B03</td><td>AR-02</td><td>11</td><td>68.4 km</td><td>16:10</td><td>+10%</td><td style="color:var(--amber);">中</td><td><span class="rt-stat warn">待复核</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- ===== STEP 5: PARAMETER LOADING ===== -->
+      <div class="step-content" id="step-5">
+        <div class="hint">▎ 参数装订将完整任务数据打包加载至各无人机机载计算机。装订完成后即可下发执行。</div>
+
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">5.1</span>装订参数清单 · UAV-A01</div>
+            <div class="section-tag">PAYLOAD · 1.42 MB</div>
+          </div>
+          <div class="section-body">
+            <div class="param-grid">
+              <div class="param-row amber">
+                <div class="param-name">
+                  <div class="param-name-cn">导引头工作频段</div>
+                  <div class="param-name-en">SEEKER BAND</div>
+                </div>
+                <div class="param-val">8.5 ~ 10.0 GHz</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">主目标位置</div>
+                  <div class="param-name-en">PRIMARY TGT</div>
+                </div>
+                <div class="param-val">31.8642°N 117.3851°E</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">备选目标位置</div>
+                  <div class="param-name-en">SECONDARY TGT</div>
+                </div>
+                <div class="param-val">31.8421°N 117.4203°E</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">航路点数</div>
+                  <div class="param-name-en">WAYPOINTS</div>
+                </div>
+                <div class="param-val">8 WP</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">巡航速度</div>
+                  <div class="param-name-en">CRUISE SPEED</div>
+                </div>
+                <div class="param-val">320 km/h</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">巡航高度</div>
+                  <div class="param-name-en">CRUISE ALT</div>
+                </div>
+                <div class="param-val">100 m AGL</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">攻击俯冲角</div>
+                  <div class="param-name-en">DIVE ANGLE</div>
+                </div>
+                <div class="param-val">45°</div>
+              </div>
+              <div class="param-row amber">
+                <div class="param-name">
+                  <div class="param-name-cn">预定攻击时刻</div>
+                  <div class="param-name-en">TIME-ON-TARGET</div>
+                </div>
+                <div class="param-val">14:42:18 UTC</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">引信延时</div>
+                  <div class="param-name-en">FUSE DELAY</div>
+                </div>
+                <div class="param-val">0 ms · 触发</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">
+                  <div class="param-name-cn">数据链频道</div>
+                  <div class="param-name-en">DATA LINK CH</div>
+                </div>
+                <div class="param-val">CH-17 · 加密</div>
+              </div>
+              <div class="param-row red">
+                <div class="param-name">
+                  <div class="param-name-cn">应急自毁条件</div>
+                  <div class="param-name-en">SELF-DESTRUCT</div>
+                </div>
+                <div class="param-val">超时 +5min / 失控</div>
+              </div>
+              <div class="param-row red">
+                <div class="param-name">
+                  <div class="param-name-cn">敌我识别码</div>
+                  <div class="param-name-en">IFF CODE</div>
+                </div>
+                <div class="param-val">IFF-7423-A</div>
+              </div>
+            </div>
+
+            <div class="upload-zone">
+              <div class="upload-zone-title">▌ 装订状态 · UPLOAD STATUS</div>
+              <div class="upload-zone-desc">已就绪 8 架次 · 等待统一下发</div>
+              <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+                <button class="action-btn" style="border-color:var(--cyan); color:var(--cyan);">校验参数 VERIFY</button>
+                <button class="action-btn" style="background:var(--amber); color:var(--bg-base); border-color:var(--amber); font-weight:700;">下发装订 UPLOAD ALL</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section bracket">
+          <div class="section-header">
+            <div class="section-title"><span class="section-num">5.2</span>装订进度</div>
+            <div class="section-tag">PROGRESS</div>
+          </div>
+          <div class="section-body">
+            <div class="bar-row" style="border:none;">
+              <div class="lbl">UAV-A01</div>
+              <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+              <div class="val">已完成</div>
+            </div>
+            <div class="bar-row" style="border:none;">
+              <div class="lbl">UAV-A02</div>
+              <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+              <div class="val">已完成</div>
+            </div>
+            <div class="bar-row" style="border:none;">
+              <div class="lbl">UAV-A03</div>
+              <div class="bar-track"><div class="bar-fill" style="width:78%"></div></div>
+              <div class="val">装订中</div>
+            </div>
+            <div class="bar-row" style="border:none;">
+              <div class="lbl">UAV-A04</div>
+              <div class="bar-track"><div class="bar-fill" style="width:35%"></div></div>
+              <div class="val">装订中</div>
+            </div>
+            <div class="bar-row" style="border:none;">
+              <div class="lbl">UAV-A05</div>
+              <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+              <div class="val" style="color:var(--text-dim);">等待</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== RIGHT PANEL ===== -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">资源 / 态势</div>
+      <div class="panel-badge">LIVE</div>
+    </div>
+
+    <div class="right-section">
+      <div class="right-title">关键指标 / KPI</div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">点目标</div>
+          <div class="kpi-val">3</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">区域目标</div>
+          <div class="kpi-val">2</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">出动架次</div>
+          <div class="kpi-val">12</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">预期毁伤率</div>
+          <div class="kpi-val">91<span class="kpi-unit">%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-section">
+      <div class="right-title">可用兵力 / ASSETS</div>
+      <div class="uav-card">
+        <div class="uav-icon"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+        <div class="uav-info">
+          <div class="uav-name">HF-ARM-200A</div>
+          <div class="uav-spec">G/H/I 频段 · 12 架可用</div>
+        </div>
+        <div class="uav-status status-asg">已分配 6</div>
+      </div>
+      <div class="uav-card">
+        <div class="uav-icon"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+        <div class="uav-info">
+          <div class="uav-name">HF-ARM-200B</div>
+          <div class="uav-spec">D/E/F 频段 · 8 架可用</div>
+        </div>
+        <div class="uav-status status-asg">已分配 2</div>
+      </div>
+      <div class="uav-card">
+        <div class="uav-icon"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+        <div class="uav-info">
+          <div class="uav-name">HF-ARM-300</div>
+          <div class="uav-spec">宽频 · 4 架可用</div>
+        </div>
+        <div class="uav-status status-rdy">就绪</div>
+      </div>
+      <div class="uav-card">
+        <div class="uav-icon" style="border-color:var(--text-dim);"><svg viewBox="0 0 24 24" style="fill:var(--text-dim);"><path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+        <div class="uav-info">
+          <div class="uav-name" style="color:var(--text-dim);">HF-EW-100</div>
+          <div class="uav-spec">电子战 · 维护中</div>
+        </div>
+        <div class="uav-status status-mnt">维护</div>
+      </div>
+    </div>
+
+    <div class="right-section">
+      <div class="right-title">威胁清单 / THREATS</div>
+      <div class="threat-item">
+        <span class="threat-name">SAM-1 中程地空</span>
+        <span class="threat-rng">35 KM</span>
+      </div>
+      <div class="threat-item">
+        <span class="threat-name">SAM-2 末端防御</span>
+        <span class="threat-rng">25 KM</span>
+      </div>
+      <div class="threat-item">
+        <span class="threat-name">AAA 高炮阵地</span>
+        <span class="threat-rng">8 KM</span>
+      </div>
+      <div class="threat-item">
+        <span class="threat-name">EW 干扰源</span>
+        <span class="threat-rng">FREQ G/H</span>
+      </div>
+    </div>
+
+    <div class="right-section">
+      <div class="right-title">气象简报 / WX</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size:10px;">
+        <div style="background:var(--bg-base); padding:8px 10px; border-left:2px solid var(--cyan);">
+          <div style="color:var(--text-dim); font-size:9px;">风向 / 风速</div>
+          <div style="color:var(--amber); font-family:Orbitron; margin-top:3px;">SW · 4.2 m/s</div>
+        </div>
+        <div style="background:var(--bg-base); padding:8px 10px; border-left:2px solid var(--cyan);">
+          <div style="color:var(--text-dim); font-size:9px;">能见度</div>
+          <div style="color:var(--amber); font-family:Orbitron; margin-top:3px;">12 KM</div>
+        </div>
+        <div style="background:var(--bg-base); padding:8px 10px; border-left:2px solid var(--cyan);">
+          <div style="color:var(--text-dim); font-size:9px;">云底高</div>
+          <div style="color:var(--amber); font-family:Orbitron; margin-top:3px;">2400 M</div>
+        </div>
+        <div style="background:var(--bg-base); padding:8px 10px; border-left:2px solid var(--cyan);">
+          <div style="color:var(--text-dim); font-size:9px;">温度</div>
+          <div style="color:var(--amber); font-family:Orbitron; margin-top:3px;">18 °C</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== STATUS BAR ===== -->
+<div class="statusbar">
+  <div class="sb-left">
+    <div class="sb-item">SYS<span class="v">NORMAL</span></div>
+    <div class="sb-item">DATA LINK<span class="v">100%</span></div>
+    <div class="sb-item">GPS<span class="v">SAT 12</span></div>
+    <div class="sb-item">CONSOLE<span class="v">CMD-072</span></div>
+  </div>
+  <div class="sb-right">
+    <div class="sb-item">CPU<span class="v">23%</span></div>
+    <div class="sb-item">MEM<span class="v">4.8/16 GB</span></div>
+    <div class="sb-item">PING<span class="v">12 ms</span></div>
+    <div class="sb-item">© AME LAB · 2026</div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// Step navigation
+const steps = document.querySelectorAll('.step');
+const contents = document.querySelectorAll('.step-content');
+steps.forEach(step => {
+  step.addEventListener('click', () => {
+    const n = step.dataset.step;
+    steps.forEach(s => s.classList.remove('active'));
+    contents.forEach(c => c.classList.remove('active'));
+    step.classList.add('active');
+    document.getElementById('step-' + n).classList.add('active');
+    // mark previous as completed
+    steps.forEach(s => {
+      if (parseInt(s.dataset.step) < parseInt(n)) s.classList.add('completed');
+      else s.classList.remove('completed');
+    });
+  });
+});
+
+// Task list selection
+document.querySelectorAll('.task-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.task-item').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+  });
+});
+
+// Target type tabs (point / area)
+document.querySelectorAll('.tgt-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const type = tab.dataset.tgt;
+    document.querySelectorAll('.tgt-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tgt-pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tgt-' + type).classList.add('active');
+  });
+});
+
+// ============== FORCE CALCULATION ==============
+
+// Target selector → switch between point / area calc
+document.querySelectorAll('.ts-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const type = pill.dataset.ttype;
+    const id = pill.dataset.tcalc;
+    document.querySelectorAll('.ts-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    document.querySelectorAll('.calc-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('calc-' + type).classList.add('active');
+
+    // load preset values per target
+    const presets = {
+      'PT-01': { pk: 0.70, pbar: 0.90, bk: 1 },
+      'PT-02': { pk: 0.65, pbar: 0.85, bk: 1 },
+      'PT-03': { pk: 0.75, pbar: 0.75, bk: 1 },
+      'AR-01': { area: 78, m: 3, n: 2, bk2: 2 },
+      'AR-02': { area: 24, m: 2, n: 2, bk2: 2 }
+    };
+    const p = presets[id];
+    if (!p) return;
+    if (type === 'point') {
+      document.getElementById('in-pk').value = p.pk;
+      document.getElementById('in-bk').value = p.bk;
+      // set pbar segment
+      document.querySelectorAll('.seg-ctrl[data-target="pbar"] .seg').forEach(s => {
+        s.classList.toggle('active', parseFloat(s.dataset.val) === p.pbar);
+      });
+      calcPoint();
+    } else {
+      document.getElementById('in-area').value = p.area;
+      document.getElementById('in-m').value = p.m;
+      document.getElementById('in-n').value = p.n;
+      document.getElementById('in-bk2').value = p.bk2;
+      calcArea();
+    }
+  });
+});
+
+// Segment control click
+document.querySelectorAll('.seg-ctrl .seg').forEach(seg => {
+  seg.addEventListener('click', () => {
+    const parent = seg.closest('.seg-ctrl');
+    parent.querySelectorAll('.seg').forEach(s => s.classList.remove('active'));
+    seg.classList.add('active');
+    if (parent.dataset.target === 'pbar') calcPoint();
+  });
+});
+
+// +/- buttons
+document.querySelectorAll('.ni-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.target;
+    const map = {
+      pk: 'in-pk', bk: 'in-bk',
+      area: 'in-area', m: 'in-m', n: 'in-n', bk2: 'in-bk2'
+    };
+    const input = document.getElementById(map[target]);
+    if (!input) return;
+    const step = parseFloat(input.step) || 1;
+    let v = parseFloat(input.value) || 0;
+    v = btn.dataset.op === '+' ? v + step : v - step;
+    const min = parseFloat(input.min);
+    const max = parseFloat(input.max);
+    if (!isNaN(min)) v = Math.max(v, min);
+    if (!isNaN(max)) v = Math.min(v, max);
+    input.value = step < 1 ? v.toFixed(2) : Math.round(v);
+    if (['pk', 'bk'].includes(target)) calcPoint();
+    else calcArea();
+  });
+});
+
+// Direct input changes
+['in-pk','in-bk'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', calcPoint);
+});
+['in-area','in-m','in-n','in-bk2'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', calcArea);
+});
+
+// Point target calculation
+function calcPoint() {
+  const pk = parseFloat(document.getElementById('in-pk').value);
+  const bk = parseInt(document.getElementById('in-bk').value);
+  const pbarSeg = document.querySelector('.seg-ctrl[data-target="pbar"] .seg.active');
+  const pbar = pbarSeg ? parseFloat(pbarSeg.dataset.val) : 0.9;
+
+  const logPbar = Math.log(1 - pbar);
+  const logPk = Math.log(1 - pk);
+  const nRaw = logPbar / logPk;
+  const n = Math.ceil(nRaw);
+  const N = n + bk;
+
+  // update trace
+  document.getElementById('t-pbar').textContent = pbar.toFixed(2);
+  document.getElementById('t-logpb').textContent = logPbar.toFixed(3);
+  document.getElementById('t-pk').textContent = pk.toFixed(2);
+  document.getElementById('t-logpk').textContent = logPk.toFixed(3);
+  document.getElementById('t-nraw').textContent = nRaw.toFixed(2);
+  document.getElementById('t-n').textContent = n + ' 弹';
+  document.getElementById('t-n2').textContent = n;
+  document.getElementById('t-bk').textContent = bk;
+  document.getElementById('t-N').textContent = N + ' 架';
+
+  // update final output
+  document.getElementById('out-N-pt').textContent = N;
+  document.getElementById('out-n-pt').textContent = n;
+  document.getElementById('out-bk-pt').textContent = bk;
+  document.getElementById('out-pbar-pt').textContent = pbar.toFixed(2);
+}
+
+// Area target calculation
+function calcArea() {
+  const area = parseFloat(document.getElementById('in-area').value);
+  const m = parseInt(document.getElementById('in-m').value);
+  const nPer = parseInt(document.getElementById('in-n').value);
+  const bk = parseInt(document.getElementById('in-bk2').value);
+  const SUAV = 25; // 单机搜索面积常数
+
+  const Ns = Math.ceil(area / SUAV);
+  const Nk = m * nPer;
+  const Nmax = Math.max(Ns, Nk);
+  const N = Nmax + bk;
+
+  document.getElementById('t-area').textContent = area;
+  document.getElementById('t-Ns').textContent = Ns + ' 架';
+  document.getElementById('t-m').textContent = m;
+  document.getElementById('t-nper').textContent = nPer;
+  document.getElementById('t-Nk').textContent = Nk + ' 架';
+  document.getElementById('t-Ns2').textContent = Ns;
+  document.getElementById('t-Nk2').textContent = Nk;
+  document.getElementById('t-max').textContent = Nmax;
+  document.getElementById('t-bk2').textContent = bk;
+  document.getElementById('t-Nar').textContent = N + ' 架';
+
+  document.getElementById('out-N-ar').textContent = N;
+  document.getElementById('out-fan').textContent = Math.max(2, Math.min(4, Math.ceil(N / 2)));
+
+  // bottleneck explanation
+  const driver = document.getElementById('t-driver');
+  if (Nk > Ns) {
+    driver.innerHTML = '▸ <span style="color:var(--amber);">打击需求</span>是瓶颈（' + Nk + ' > ' + Ns + '），区域里目标偏多';
+  } else if (Ns > Nk) {
+    driver.innerHTML = '▸ <span style="color:var(--amber);">覆盖需求</span>是瓶颈（' + Ns + ' > ' + Nk + '），区域较大需多机扫描';
+  } else {
+    driver.innerHTML = '▸ 覆盖与打击需求平衡（' + Ns + ' = ' + Nk + '）';
+  }
+}
+
+// initial calc
+calcPoint();
+calcArea();
+
+// ============== ASSIGNMENT SOLVER ==============
+
+// Solve button — re-animate log
+const btnSolve = document.getElementById('btn-solve');
+if (btnSolve) {
+  btnSolve.addEventListener('click', () => {
+    const logBody = document.getElementById('solve-log');
+    if (!logBody) return;
+    const lines = Array.from(logBody.children);
+    lines.forEach(l => l.style.display = 'none');
+    btnSolve.disabled = true;
+    btnSolve.textContent = '◌ 求解中... / SOLVING';
+
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= lines.length) {
+        clearInterval(interval);
+        btnSolve.disabled = false;
+        btnSolve.textContent = '▶ 重新求解 / RE-SOLVE';
+        return;
+      }
+      lines[i].style.display = 'grid';
+      logBody.scrollTop = logBody.scrollHeight;
+      i++;
+    }, 110);
+  });
+}
+
+// Algorithm option toggle
+document.querySelectorAll('.alg-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.alg-opt').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+    const radio = opt.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
+  });
+});
+
+// Constraint checkbox toggle
+document.querySelectorAll('.cs-item').forEach(item => {
+  item.addEventListener('click', (e) => {
+    e.preventDefault();
+    item.classList.toggle('checked');
+    const box = item.querySelector('.cs-box');
+    if (box) box.textContent = item.classList.contains('checked') ? '✓' : '';
+  });
+});
+
+// Alt solution pick
+document.querySelectorAll('.tag-pick').forEach(tag => {
+  tag.addEventListener('click', () => {
+    document.querySelectorAll('.alt-table tr').forEach(r => r.classList.remove('alt-current'));
+    document.querySelectorAll('.alt-table .tag-on').forEach(t => {
+      t.className = 'tag-pick';
+      t.textContent = '选用';
+    });
+    const row = tag.closest('tr');
+    row.classList.add('alt-current');
+    tag.className = 'tag-on';
+    tag.textContent = '已选';
+  });
+});
+
+// ============== ROUTE PLANNING ==============
+
+// auto-plan button
+const btnPlan = document.getElementById('btn-autoplan');
+if (btnPlan) {
+  btnPlan.addEventListener('click', () => {
+    btnPlan.disabled = true;
+    btnPlan.textContent = '◌ 规划中... / PLANNING';
+
+    // simulate progress
+    let pct = 0;
+    const interval = setInterval(() => {
+      pct += 8;
+      btnPlan.textContent = '◌ 规划中... ' + pct + '% / PLANNING';
+      if (pct >= 100) {
+        clearInterval(interval);
+        btnPlan.disabled = false;
+        btnPlan.textContent = '✓ 规划完成 · 重新规划 / RE-PLAN';
+        setTimeout(() => {
+          btnPlan.textContent = '▶ 一键自动规划全部航路 / AUTO-PLAN ALL';
+        }, 2500);
+      }
+    }, 100);
+  });
+}
+
+// global constraint toggles
+document.querySelectorAll('.rp-tog').forEach(t => {
+  t.addEventListener('click', (e) => {
+    e.preventDefault();
+    t.classList.toggle('active');
+    const box = t.querySelector('.rp-tg-box');
+    if (box) box.textContent = t.classList.contains('active') ? '✓' : '';
+  });
+});
+
+// route selector
+document.querySelectorAll('.rs-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.rs-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+  });
+});
+
+// phase highlight on hover
+document.querySelectorAll('.rp-phase').forEach(p => {
+  p.addEventListener('mouseenter', () => {
+    document.querySelectorAll('.rp-phase').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+  });
+});
+
+// Live clock
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const t = `${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())} ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
+  const el = document.getElementById('clock');
+  if (el) el.textContent = t;
+}
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+
+</body>
+</html>
