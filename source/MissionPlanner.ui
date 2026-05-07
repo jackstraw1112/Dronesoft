@@ -289,8 +289,7 @@
                </property>
                <property name="text">
                 <string notr="true">01
-任务创建
-TASK CREATION</string>
+任务创建</string>
                </property>
               </widget>
              </item>
@@ -320,8 +319,7 @@ TASK CREATION</string>
                </property>
                <property name="text">
                 <string notr="true">02
-兵力需求计算
-FORCE CALCULATION</string>
+兵力需求计算</string>
                </property>
               </widget>
              </item>
@@ -351,8 +349,7 @@ FORCE CALCULATION</string>
                </property>
                <property name="text">
                 <string notr="true">03
-协同任务分配
-TASK ASSIGNMENT</string>
+协同任务分配</string>
                </property>
               </widget>
              </item>
@@ -382,8 +379,7 @@ TASK ASSIGNMENT</string>
                </property>
                <property name="text">
                 <string notr="true">04
-航路规划
-ROUTE PLANNING</string>
+航路规划</string>
                </property>
               </widget>
              </item>
@@ -413,8 +409,7 @@ ROUTE PLANNING</string>
                </property>
                <property name="text">
                 <string notr="true">05
-参数装订
-PARAMETER LOADING</string>
+参数装订</string>
                </property>
               </widget>
              </item>
