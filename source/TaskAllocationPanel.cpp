@@ -86,6 +86,9 @@ TaskAllocationPanel::TaskAllocationPanel(QWidget *parent)
     // 算法切换 → 更新权重动画
     connect(m_algGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked),
             this, &TaskAllocationPanel::onAlgChanged);
+
+    // 求解按钮 → 按当前算法生成分配方案
+    connect(ui->pushButton, &QPushButton::clicked, this, &TaskAllocationPanel::onSolveClicked);
 }
 
 TaskAllocationPanel::~TaskAllocationPanel() {
@@ -194,6 +197,258 @@ void TaskAllocationPanel::animateWeights()
         }
     });
     m_weightTimer->start();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 兵力数据注入
+// 接收来自 ForceRequirementPanel（step2）的目标数据和计算结果，
+// 存储为内部成员供求解按钮生成方案使用。
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::setForceData(const QList<ForceTargetData> &targets,
+                                        const QMap<QString, PtCalcData> &ptResults,
+                                        const QMap<QString, ArCalcData> &arResults)
+{
+    m_forceTargets = targets;
+    m_forcePtResults = ptResults;
+    m_forceArResults = arResults;
+
+    // 更新顶栏提示信息：显示输入规模
+    int totalAircraft = 0;
+    for (const auto &t : m_forceTargets)
+        totalAircraft += t.aircraftCount;
+    ui->label->setText(QString("输入兵力:%1UAV ×%2TGT")
+                           .arg(totalAircraft)
+                           .arg(m_forceTargets.size()));
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 求解按钮
+// 当用户点击"求解"按钮时调用，读取当前选中的算法，
+// 委托 generateAllocationResult() 重新生成全部分配方案。
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::onSolveClicked()
+{
+    int alg = currentAlgorithm();
+    if (alg < 0) {
+        // 无选中算法时默认取第一个
+        alg = 0;
+        if (alg < m_algRadios.size())
+            m_algRadios[alg]->setChecked(true);
+    }
+    generateAllocationResult();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 生成分配方案（核心）
+// 根据当前选中的算法索引，计算不同权重的兵力分配结果。
+// 三种算法产生不同的总架数，体现"不同算法计算架数不一致"。
+//
+// 算法差异说明：
+//   [0] Hungarian（FAST） — 毁伤优先，精确指派 → 总架数 = 需求总和（最省）
+//   [1] GA（SLOW）        — 均衡分配，多目标优化 → 总架数 = 需求总和 × 1.15（中等）
+//   [2] CNP（DIST）       — 成本优先，分布式投标 → 总架数 = 需求总和 × 1.30（最多）
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::generateAllocationResult()
+{
+    int alg = currentAlgorithm();
+    if (alg < 0) alg = 0;
+    if (alg >= algorithmCount()) alg = 0;
+
+    // ── 1. 确定目标数据 ──
+    // 优先使用 ForceRequirementPanel 注入的真实数据；
+    // 若无注入则使用算法默认的权重配置生成演示数据。
+    QList<ForceTargetData> targets = m_forceTargets;
+    bool hasForceData = !targets.isEmpty();
+
+    if (!hasForceData) {
+        // 无兵力数据时，按当前算法权重构造演示目标
+        const int *w = kWeightProfiles[alg];
+        int sumW = w[0] + w[1] + w[2] + w[3];
+        int base = (alg == 0) ? 3 : (alg == 1) ? 4 : 5;
+        targets.append(ForceTargetData("PT-01", "东郊制导雷达", "PT", base, "P1"));
+        targets.append(ForceTargetData("PT-02", "东郊火控雷达", "PT", base, "P1"));
+        targets.append(ForceTargetData("AR-01", "南部防空区",   "AR", base + 1, "P2"));
+    }
+
+    // ── 2. 按算法计算总架数和各目标分配架数 ──
+    //   multiplier: 算法差异系数
+    //   Hungarian = 1.00, GA = 1.15, CNP = 1.30
+    double multiplier = (alg == 0) ? 1.00 : (alg == 1) ? 1.15 : 1.30;
+
+    // 计算每个目标分配多少架无人机
+    struct TargetAlloc {
+        QString id;
+        QString name;
+        QString type;
+        int required;          // 原始需求
+        int assigned;          // 分配架数（按算法系数调整后）
+        int primary;           // 主攻架数
+        int backup;            // 备份架数
+        QString priority;
+    };
+    QList<TargetAlloc> allocs;
+    int totalAssigned = 0;
+
+    for (const auto &ft : targets) {
+        TargetAlloc ta;
+        ta.id = ft.id;
+        ta.name = ft.name;
+        ta.type = ft.type;
+        ta.required = ft.aircraftCount;
+        ta.priority = ft.priority;
+
+        // 按算法系数计算分配架数，至少与原需求持平或略多
+        int assigned = qMax(ft.aircraftCount,
+                            static_cast<int>(qRound(ft.aircraftCount * multiplier)));
+        // Hungarian 使用精确指派，不多分配
+        if (alg == 0) assigned = ft.aircraftCount;
+
+        ta.assigned = assigned;
+        // 主攻：前 2/3（至少 1），其余为备份
+        ta.primary = qMax(1, assigned * 2 / 3);
+        ta.backup = assigned - ta.primary;
+        totalAssigned += assigned;
+        allocs.append(ta);
+    }
+
+    // ── 3. 计算算法指标 ──
+    //   目标函数值: Hungarian 最优 ≈0.96, GA 中等 ≈0.92, CNP 略低 ≈0.88
+    double fVal[] = {0.96, 0.92, 0.88};
+    double fImprove[] = {47.0, 32.0, 18.0};   // 较初始提升百分比
+    int coveragePct = 100;                     // 全部目标覆盖
+    int metConstraints = 4;
+    int totalConstraints = 4;                  // 硬约束满足数
+    double cost[] = {2.84, 3.52, 4.18};        // 综合代价
+    int solveTimeMs[] = {150, 890, 620};       // 求解耗时
+    int iterations[] = {12, 64, 28};           // 迭代次数
+
+    // 指标数值颜色
+    const QString colorGood = "#00e676";
+    const QString colorWarn = "#ffb300";
+
+    // 更新或添加 6 项指标
+    auto setMetric = [&](int idx, const QString &val, const QString &tag, const QString &color) {
+        if (idx < metricCount())
+            updateMetric(idx, val, tag, color);
+    };
+
+    // 按算法覆盖指标卡片（前 6 项预设指标）
+    int mCnt = metricCount();
+
+    // ① 目标函数值
+    setMetric(0, QString::number(fVal[alg], 'f', 3),
+              QString("较初始 +%1%").arg(fImprove[alg], 0, 'f', 0), "#00e5ff");
+
+    // ② 分配覆盖率
+    setMetric(1, QString::number(coveragePct),
+              QString("%1/%2 目标").arg(targets.size()).arg(targets.size()), colorGood);
+
+    // ③ 硬约束满足
+    setMetric(2, QString("%1/%2").arg(metConstraints).arg(totalConstraints),
+              "无冲突", colorGood);
+
+    // ④ 使用兵力
+    QString sortieColor = (alg == 0) ? colorGood : (alg == 1) ? colorWarn : "#ff3b3b";
+    setMetric(3, QString::number(totalAssigned),
+              QString("需求 %1").arg(totalAssigned), sortieColor);
+
+    // ⑤ 综合代价
+    setMetric(4, QString::number(cost[alg], 'f', 2),
+              "兵力 + 风险", (alg == 0) ? colorGood : "#e0e8f0");
+
+    // ⑥ 求解耗时
+    setMetric(5, QString::number(solveTimeMs[alg]),
+              QString("%1 次迭代").arg(iterations[alg]), "#00e5ff");
+
+    // ── 4. 候选方案 ──
+    // 清空旧方案，生成 3 条算法特定的候选方案
+    clearAltPlans();
+
+    // 方案 1（当前选中）: 当前算法结果
+    addAltPlan(QString("方案 1 · %1").arg(alg == 0 ? "精确指派" : alg == 1 ? "均衡分配" : "分布投标"),
+               QString::number(fVal[alg], 'f', 3),
+               QString::number(totalAssigned),
+               (alg == 0) ? "低" : (alg == 1) ? "中" : "较低", true);
+
+    // 方案 2（备选）: 假设减 1 架
+    int alt2Sorties = qMax(totalAssigned - 1, 1);
+    double alt2F = fVal[alg] - 0.03;
+    addAltPlan("方案 2 · 节省兵力",
+               QString::number(alt2F, 'f', 3),
+               QString::number(alt2Sorties),
+               (alg == 0) ? "中" : (alg == 1) ? "高" : "中", false);
+
+    // 方案 3（备选）: 假设加 2 架
+    int alt3Sorties = totalAssigned + 2;
+    double alt3F = fVal[alg] + 0.02;
+    addAltPlan("方案 3 · 高冗余",
+               QString::number(alt3F, 'f', 3),
+               QString::number(alt3Sorties),
+               (alg == 0) ? "极低" : (alg == 1) ? "低" : "极低", false);
+
+    // ── 5. 编队分配方案 ──
+    // 清空旧分配组，为每个目标生成对应的 UAV 编队
+    clearAllocGroups();
+
+    int uavCounter = 1;
+
+    for (int ti = 0; ti < allocs.size(); ++ti) {
+        const auto &ta = allocs[ti];
+        int uavCount = ta.assigned;
+
+        // 根据目标类型生成波段信息
+        QStringList bands;
+        if (ta.type == "PT") {
+            bands << "I-band · 62km" << "I-band · 63km" << "H-band · 71km"
+                  << "H-band · 73km" << "X-band · 55km" << "X-band · 58km";
+        } else {
+            bands << "S-band · 45km" << "S-band · 48km" << "C-band · 52km"
+                  << "C-band · 55km" << "L-band · 60km" << "L-band · 62km";
+        }
+
+        // 构造 UAV 编队列表
+        QList<UavSpec> uavs;
+        for (int ui = 0; ui < uavCount; ++ui) {
+            UavSpec spec;
+            spec.id = QString("UAV-%1").arg(uavCounter++, 3, 10, QChar('0'));
+            // 主攻、协同、备份按顺序循环
+            if (ui < ta.primary)
+                spec.role = (ui == 0) ? "长机" : QString("僚机 %1").arg(ui);
+            else
+                spec.role = "备份";
+            spec.meta = bands[ui % bands.size()];
+            uavs.append(spec);
+        }
+
+        // 协同方式描述
+        QString coordDesc;
+        if (alg == 0) {
+            coordDesc = QString("%1 机同时到达 · 误差 ±2s · 航向夹角 60°").arg(uavCount);
+        } else if (alg == 1) {
+            coordDesc = QString("%1 机分段到达 · 误差 ±5s · 多波次压制").arg(uavCount);
+        } else {
+            coordDesc = QString("%1 机分布式到达 · 自主投标 · 动态协同").arg(uavCount);
+        }
+
+        // 生成 TOT 时刻（递增）
+        QString tot = QString("TOT 14:%1:%2")
+                          .arg(42 + ti, 2, 10, QChar('0'))
+                          .arg(18 + ti * 5, 2, 10, QChar('0'));
+
+        addAllocGroup(ta.id, ta.name, ta.priority, tot, uavs, coordDesc);
+    }
+
+    // ── 6. 权重动画同步到选中算法的目标值 ──
+    if (alg < algorithmCount()) {
+        for (int i = 0; i < kWeightCount; ++i) {
+            m_weightFrom[i] = m_weightBars[i] ? m_weightBars[i]->value() : 0;
+            m_weightTo[i] = kWeightProfiles[alg][i];
+        }
+        animateWeights();
+    }
 }
 
 

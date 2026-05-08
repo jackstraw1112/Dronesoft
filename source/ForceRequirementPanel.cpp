@@ -996,6 +996,27 @@ int ForceRequirementPanel::targetCount() const
     return m_targetPills.size();
 }
 
+// 获取指定索引的目标 ID
+QString ForceRequirementPanel::targetId(int index) const
+{
+    if (index < 0 || index >= m_targetIds.size()) return QString();
+    return m_targetIds[index];
+}
+
+// 获取指定索引的目标名称
+QString ForceRequirementPanel::targetName(int index) const
+{
+    if (index < 0 || index >= m_targetNames.size()) return QString();
+    return m_targetNames[index];
+}
+
+// 获取指定索引的目标类型
+QString ForceRequirementPanel::targetType(int index) const
+{
+    if (index < 0 || index >= m_targetTypes.size()) return QString();
+    return m_targetTypes[index];
+}
+
 // 保存当前选中目标的输入参数到映射表
 void ForceRequirementPanel::saveCurrentInput()
 {

@@ -99,6 +99,20 @@ public:
     // 选中指定索引的计算目标
     void selectTarget(int index);
 
+    // ═══════════════════════════════════════════
+    // 数据查询（供 MissionPlanner / TaskAllocationPanel 读取）
+    // ═══════════════════════════════════════════
+    // 获取指定索引的目标 ID
+    QString targetId(int index) const;
+    // 获取指定索引的目标名称
+    QString targetName(int index) const;
+    // 获取指定索引的目标类型
+    QString targetType(int index) const;
+    // 获取点目标计算结果映射表（仅供读取，非 const 引用）
+    const QMap<QString, PtCalcData> &ptResults() const { return m_ptResults; }
+    // 获取区域目标计算结果映射表（仅供读取，非 const 引用）
+    const QMap<QString, ArCalcData> &arResults() const { return m_arResults; }
+
 private slots:
     // 计算过程按钮点击响应
     void onCalculateProcessClicked();
