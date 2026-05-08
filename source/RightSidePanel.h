@@ -9,9 +9,8 @@
 #ifndef RIGHTSIDEPANEL_H
 #define RIGHTSIDEPANEL_H
 
-#include <QWidget>
-#include <QLabel>
 #include <QFrame>
+#include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -27,7 +26,7 @@
 //   - 显示威胁清单：敌方防空、干扰源等威胁信息
 //   - 显示气象简报：风向、能见度、云底高、温度等气象数据
 // ============================================================================
-class RightSidePanel : public QWidget
+class RightSidePanel : public QFrame
 {
     Q_OBJECT
 
@@ -79,6 +78,7 @@ private:
     
     void setupUi();                     // 初始化UI界面
     void setupHeader();                 // 设置头部区域
+    void applyTechStyle();              // 应用暗色科技风格
     void setupKpiSection();             // 设置KPI指标区域
     void setupAssetsSection();          // 设置可用兵力区域
     void setupThreatsSection();         // 设置威胁清单区域

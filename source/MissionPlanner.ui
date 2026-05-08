@@ -118,19 +118,6 @@
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
         <widget class="QWidget" name="rightInfoWidget" native="true">
          <property name="minimumSize">
           <size>
@@ -469,19 +456,19 @@
           <widget class="QWidget" name="widget_Center" native="true">
            <layout class="QVBoxLayout" name="verticalLayout">
             <property name="spacing">
-             <number>0</number>
+             <number>10</number>
             </property>
             <property name="leftMargin">
-             <number>0</number>
+             <number>5</number>
             </property>
             <property name="topMargin">
-             <number>0</number>
+             <number>5</number>
             </property>
             <property name="rightMargin">
-             <number>0</number>
+             <number>5</number>
             </property>
             <property name="bottomMargin">
-             <number>0</number>
+             <number>5</number>
             </property>
             <item>
              <widget class="QStackedWidget" name="contentStackedWidget">
@@ -713,6 +700,11 @@
    <container>1</container>
   </customwidget>
   <customwidget>
+<<<<<<< HEAD
+   <class>AddOrEditTaskplan</class>
+   <extends>QWidget</extends>
+   <header location="global">AddOrEditTaskplan.h</header>
+=======
    <class>RZSetTaskPlan</class>
    <extends>QWidget</extends>
    <header>RZSetTaskPlan.h</header>
@@ -722,6 +714,7 @@
    <class>RZTaskListWidget</class>
    <extends>QWidget</extends>
    <header>RZTaskListWidget.h</header>
+>>>>>>> f18b2aacc4dd0c690feeb24333d8b981fd8b0e69
    <container>1</container>
   </customwidget>
  </customwidgets>

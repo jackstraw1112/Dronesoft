@@ -5,14 +5,14 @@
 #ifndef RZSIM_ANTI_RADIATION_UAV_ROUTEPLANNING_H
 #define RZSIM_ANTI_RADIATION_UAV_ROUTEPLANNING_H
 
-#include <QWidget>
+#include <QFrame>
 
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class RoutePlanning; }
 QT_END_NAMESPACE
 
-class RoutePlanning : public QWidget {
+class RoutePlanning : public QFrame {
 Q_OBJECT
 
 public:
@@ -21,6 +21,8 @@ public:
     ~RoutePlanning() override;
 
 private:
+    void applyTechStyle();
+
     Ui::RoutePlanning *ui;
 };
 

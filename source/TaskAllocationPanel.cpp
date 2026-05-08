@@ -6,13 +6,1103 @@
 
 #include "TaskAllocationPanel.h"
 #include "ui_TaskAllocationPanel.h"
+#include <QLabel>
+#include <QGroupBox>
+#include <QLineEdit>
+#include <QProgressBar>
+#include <QRadioButton>
+#include <QCheckBox>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QButtonGroup>
+#include <QScrollArea>
+#include <QFrame>
 
 
-TaskAllocationPanel::TaskAllocationPanel(QWidget *parent) :
-        QWidget(parent), ui(new Ui::TaskAllocationPanel) {
+// ═══════════════════════════════════════════════════════════
+// 颜色常量
+// 定义深色科技风 UI 的统一调色板，各方法通过引用这些常量
+// 保持全局色彩一致性，避免硬编码颜色值散落各处
+// ═══════════════════════════════════════════════════════════
+static const char *kBaseBg       = "#0a0e1a";   // 最底层背景色（面板外）
+static const char *kPanelBg      = "#0d1326";   // 面板背景色
+static const char *kBorderColor  = "#1a3a6a";   // 默认边框色
+static const char *kAccentBlue   = "#00b4ff";   // 蓝色强调色
+static const char *kAccentCyan   = "#00e5ff";   // 青色强调色（高亮）
+static const char *kTextPrimary  = "#e0e8f0";   // 主文字色
+static const char *kTextSec      = "#7a8ba8";   // 次要文字色
+static const char *kInputBg      = "#0f1a2e";   // 输入控件背景
+static const char *kInputBorder  = "#1a3a6a";   // 输入控件边框
+static const char *kHoverBorder  = "#00b4ff";   // 悬停高亮边框
+static const char *kGroupBoxBg   = "#0b1124";   // GroupBox 背景
+static const char *kGroupBoxTitle= "#00b4ff";   // GroupBox 标题色
+
+
+// ═══════════════════════════════════════════════════════════
+// 算法权重配置
+// 3 种求解算法对应的 4 项目标函数权重
+// 排列顺序：W₁ 毁伤效能, W₂ 时效优先, W₃ 兵力成本, W₄ 突防风险
+// ═══════════════════════════════════════════════════════════
+static const int kWeightProfiles[][4] = {
+    {40, 30, 20, 10},   // [0] Hungarian — 毁伤优先，精确指派
+    {25, 25, 25, 25},   // [1] GA — 均衡分配，多目标优化
+    {15, 25, 40, 20},   // [2] CNP — 成本优先，分布式投标
+};
+static const int kWeightCount = 4;          // 权重个数
+static const int kAnimDuration = 1500;       // 动画持续毫秒数（缓慢过渡）
+static const int kAnimInterval = 16;          // 定时器间隔 ms（≈60fps 平滑更新）
+
+
+// ═══════════════════════════════════════════════════════════
+// 构造 / 析构
+// ═══════════════════════════════════════════════════════════
+TaskAllocationPanel::TaskAllocationPanel(QWidget *parent)
+    : QFrame(parent)
+    , ui(new Ui::TaskAllocationPanel)
+    , m_algGroup(new QButtonGroup(this))           // 算法 radio 互斥组
+    , m_weightTimer(nullptr)
+    , m_weightElapsed(0)
+    , m_weightBars{}
+    , m_weightLabels{}
+    , m_metricGrid(nullptr)
+    , m_altPlanLayout(nullptr)
+    , m_allocLayout(nullptr)
+{
+    // 加载 .ui 文件定义的静态控件
     ui->setupUi(this);
+
+    // 应用全局深色科技风样式
+    applyTechStyle();
+
+    // 初始化各动态组合控件组（调用公共 API 填入默认数据）
+    setupAlgorithmGroup();
+    setupConstraintGroup();
+    setupMetricsGroup();
+    setupAllocationResult();
+
+    setupWeightControls();
+
+    // 算法切换 → 更新权重动画
+    connect(m_algGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked),
+            this, &TaskAllocationPanel::onAlgChanged);
 }
 
 TaskAllocationPanel::~TaskAllocationPanel() {
     delete ui;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 权重控件初始化
+// 修正 .ui 中目标函数权重相关控件的文本和样式
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::setupWeightControls()
+{
+    // 顶栏编辑框设为只读
+    ui->lineEdit->setReadOnly(true);
+
+    // 修正权重名称标签：.ui 文件中 label_2 ~ label_5 的 text 均为
+    // "毁伤效能W1"，需要替换为正确的带下标的名称
+    QStringList weightNames = {"毁伤效能 W₁", "时效优先 W₂", "兵力成本 W₃", "突防风险 W₄"};
+    QStringList weightLabels = {"label_2", "label_3", "label_4", "label_5"};
+    for (int i = 0; i < weightLabels.size(); ++i) {
+        QLabel *lbl = findChild<QLabel*>(weightLabels[i]);
+        if (lbl) lbl->setText(weightNames[i]);
+    }
+
+    // 为每个进度条设置不同颜色和值，同时缓存指针供动画使用
+    // 权重值分别为 0.40, 0.30, 0.20, 0.10
+    // 颜色：毁伤→绿, 时效→青, 成本→琥珀, 风险→红
+    QStringList progressColors = {"#00e676", "#00e5ff", "#ffb300", "#ff3b3b"};
+    QStringList progressNames;
+    progressNames << "progressBar_4" << "progressBar_3" << "progressBar_2" << "progressBar";
+    QStringList weightValues = {"0.40", "0.30", "0.20", "0.10"};
+    QStringList valueLabels = {"label_6", "label_7", "label_8", "label_9"};
+    for (int i = 0; i < progressNames.size(); ++i) {
+        m_weightBars[i] = findChild<QProgressBar*>(progressNames[i]);
+        if (m_weightBars[i]) {
+            m_weightBars[i]->setStyleSheet(QString(R"(
+                QProgressBar {
+                    background-color: %1;
+                    border: 1px solid %2;
+                    border-radius: 3px;
+                    text-align: center;
+                    color: %3;
+                    font-size: 11px;
+                    min-height: 18px;
+                }
+                QProgressBar::chunk {
+                    background-color: %4;
+                    border-radius: 2px;
+                }
+            )").arg(kInputBg).arg(kBorderColor).arg(kTextPrimary).arg(progressColors[i]));
+            m_weightBars[i]->setValue(weightValues[i].remove('.').toInt());
+        }
+        m_weightLabels[i] = findChild<QLabel*>(valueLabels[i]);
+        if (m_weightLabels[i]) m_weightLabels[i]->setText(weightValues[i]);
+    }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 算法切换
+// 当用户点选不同算法 radio 时触发，启动权重平滑过渡
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::onAlgChanged(int id)
+{
+    if (id < 0 || id >= algorithmCount()) return;
+
+    // 从缓存指针读取当前进度条值作为动画起始点，零 findChild
+    for (int i = 0; i < kWeightCount; ++i) {
+        m_weightFrom[i] = m_weightBars[i] ? m_weightBars[i]->value() : 0;
+        m_weightTo[i] = kWeightProfiles[id][i];
+    }
+
+    animateWeights();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 权重平滑动画
+// 使用 QTimer (60fps) 驱动，在 kAnimDuration 毫秒内
+// 从 m_weightFrom[] 经 OutQuad 缓出插值到 m_weightTo[]
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::animateWeights()
+{
+    if (m_weightTimer) {
+        m_weightTimer->stop();
+        m_weightTimer->deleteLater();
+        m_weightTimer = nullptr;
+    }
+    m_weightElapsed = 0;
+
+    m_weightTimer = new QTimer(this);
+    m_weightTimer->setInterval(kAnimInterval);
+    connect(m_weightTimer, &QTimer::timeout, this, [this]() {
+        m_weightElapsed += kAnimInterval;
+        double t = qMin(1.0, static_cast<double>(m_weightElapsed) / kAnimDuration);
+        double eased = t * (2.0 - t);  // OutQuad 缓出
+        for (int i = 0; i < kWeightCount; ++i) {
+            int cur = qRound(m_weightFrom[i] + (m_weightTo[i] - m_weightFrom[i]) * eased);
+            if (m_weightBars[i]) m_weightBars[i]->setValue(cur);
+            if (m_weightLabels[i]) m_weightLabels[i]->setText(QString::number(cur / 100.0, 'f', 2));
+        }
+        if (t >= 1.0) {
+            m_weightTimer->stop();
+            m_weightTimer->deleteLater();
+            m_weightTimer = nullptr;
+        }
+    });
+    m_weightTimer->start();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 样式
+// 对整个面板及其子控件应用深色科技风 QSS
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::applyTechStyle()
+{
+    // 面板自身：深色背景 + 蓝色边框
+    setStyleSheet(QString(R"(
+        TaskAllocationPanel {
+            background-color: %1;
+            border: 2px solid %2;
+            border-radius: 6px;
+        }
+        QWidget {
+            color: %3;
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        }
+    )").arg(kBaseBg).arg(kBorderColor).arg(kTextPrimary));
+
+    // 顶部工具栏
+    ui->widget->setStyleSheet(QString(R"(
+        QWidget#widget {
+            background-color: %1;
+            border-bottom: 1px solid %2;
+        }
+    )").arg(kPanelBg).arg(kBorderColor));
+
+    // 滚动区域容器
+    ui->widget_3->setStyleSheet(QString(R"(
+        QWidget#widget_3 {
+            background-color: transparent;
+        }
+    )"));
+
+    // 分配结果容器
+    ui->widget_2->setStyleSheet(QString(R"(
+        QWidget#widget_2 {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 6px;
+        }
+    )").arg(kGroupBoxBg).arg(kBorderColor));
+
+    // QGroupBox 通用样式
+    // 注：margin-top: 20px 为标题留出空间；
+    // ::title 子控件使标题呈现按钮式标签效果
+    QString groupBoxTechStyle = QString(R"(
+        QGroupBox {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 6px;
+            margin-top: 20px;
+            padding: 14px 8px 8px 8px;
+            font-weight: bold;
+            color: %3;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            padding: 2px 10px;
+            color: %3;
+            font-size: 12px;
+            background-color: %4;
+            border: 1px solid %2;
+            border-radius: 3px;
+            margin-left: 0px;
+            margin-top: 6px;
+        }
+    )").arg(kGroupBoxBg).arg(kBorderColor).arg(kGroupBoxTitle).arg(kInputBg);
+
+    for (QGroupBox* gb : findChildren<QGroupBox*>()) {
+        gb->setStyleSheet(groupBoxTechStyle);
+    }
+
+    // QPushButton 通用样式
+    QString buttonTechStyle = QString(R"(
+        QPushButton {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            color: %3;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            min-height: 28px;
+        }
+        QPushButton:hover {
+            background-color: %4;
+            border: 1px solid %5;
+            color: %6;
+        }
+        QPushButton:pressed {
+            background-color: %7;
+            border: 1px solid %5;
+        }
+    )").arg(kInputBg).arg(kBorderColor).arg(kTextPrimary)
+       .arg("#0f1a3e").arg(kHoverBorder).arg(kAccentCyan)
+       .arg("#081020");
+
+    for (QPushButton* btn : findChildren<QPushButton*>()) {
+        btn->setStyleSheet(buttonTechStyle);
+    }
+
+    // 求解按钮（主按钮）：更大字号 + 更醒目的边框
+    ui->pushButton->setStyleSheet(QString(R"(
+        QPushButton {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            color: %3;
+            padding: 6px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 36px;
+        }
+        QPushButton:hover {
+            background-color: %4;
+            border: 1px solid %5;
+            color: %6;
+        }
+        QPushButton:pressed {
+            background-color: %7;
+        }
+    )").arg("#0a1628").arg(kAccentBlue).arg(kAccentCyan)
+       .arg("#0f1a3e").arg(kAccentCyan).arg("#ffffff")
+       .arg("#060e1a"));
+
+    // QLineEdit 输入框样式
+    QString lineEditStyle = QString(R"(
+        QLineEdit {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            color: %3;
+            padding: 2px 8px;
+            font-size: 12px;
+            min-height: 26px;
+        }
+        QLineEdit:focus {
+            border: 1px solid %4;
+            background-color: %5;
+        }
+        QLineEdit:disabled {
+            background-color: %6;
+            color: %7;
+        }
+    )").arg(kInputBg).arg(kInputBorder).arg(kTextPrimary)
+       .arg(kHoverBorder).arg("#0a1428")
+       .arg("#060a14").arg(kTextSec);
+
+    for (QLineEdit* le : findChildren<QLineEdit*>()) {
+        le->setStyleSheet(lineEditStyle);
+    }
+
+    // 静态标签（label ~ label_9）分角色着色
+    // label    → 顶栏标题，青色加粗 13px
+    // label_2~5 → 权重名称，主色加粗 12px
+    // label_6~9 → 权重数值，青色加粗 12px
+    QStringList labelNames = {
+        "label", "label_2", "label_3", "label_4", "label_5",
+        "label_6", "label_7", "label_8", "label_9"
+    };
+
+    for (const QString& name : labelNames) {
+        QLabel* label = findChild<QLabel*>(name);
+        if (!label) continue;
+
+        QString color = kTextSec;
+        int fontSize = 12;
+        bool isBold = false;
+
+        if (name == "label") {
+            color = kAccentCyan;
+            fontSize = 13;
+            isBold = true;
+        } else if (name == "label_2" || name == "label_3" ||
+                   name == "label_4" || name == "label_5") {
+            color = kTextPrimary;
+            fontSize = 12;
+            isBold = true;
+        } else if (name == "label_6" || name == "label_7" ||
+                   name == "label_8" || name == "label_9") {
+            color = kAccentCyan;
+            fontSize = 12;
+            isBold = true;
+        }
+
+        label->setStyleSheet(QString(R"(
+            QLabel {
+                color: %1;
+                font-size: %2px;
+                font-weight: %3;
+                background: transparent;
+                border: none;
+                padding: 1px 2px;
+            }
+        )").arg(color).arg(fontSize).arg(isBold ? "bold" : "normal"));
+    }
+
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+// 初始设置
+// 各 setup 函数通过调用公共 API 方法填入默认数据，
+// 外部使用者也可以直接调用 API 进行动态增删改
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::setupAlgorithmGroup()
+{
+    QGroupBox *gb = ui->groupBox;
+    QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(gb->layout());
+    if (!layout) {
+        layout = new QVBoxLayout(gb);
+        gb->setLayout(layout);
+    }
+    layout->setContentsMargins(8, 6, 8, 6);
+    layout->setSpacing(6);
+
+    // 添加 3 种默认求解算法
+    addAlgorithm("匈牙利算法 · Hungarian", "指派问题最优解 · 适用于无人机数 ≈ 目标数", "FAST", "#00e676");
+    addAlgorithm("遗传算法 · GA",          "多约束启发式 · 适合复杂场景与多波次",    "SLOW", "#ffb300");
+    addAlgorithm("合同网协议 · CNP",        "分布式投标 · 适合动态重分配场景",       "DIST", "#00b4ff");
+
+    layout->addStretch();
+
+    // 默认选中第一个算法
+    if (!m_algRadios.isEmpty())
+        m_algRadios.first()->setChecked(true);
+}
+
+void TaskAllocationPanel::setupConstraintGroup()
+{
+    QGroupBox *gb = ui->groupBox_3;
+    QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(gb->layout());
+    if (!layout) {
+        layout = new QVBoxLayout(gb);
+        gb->setLayout(layout);
+    }
+    layout->setContentsMargins(8, 6, 8, 6);
+    layout->setSpacing(5);
+
+    // 添加 5 条默认协同硬约束
+    addConstraint("导引头频段匹配", "UAV 导引头频段必须覆盖目标雷达频段", true);
+    addConstraint("航程可达",       "UAV 剩余航程 ≥ 出发→目标航路距离",  true);
+    addConstraint("同时到达约束",   "同一目标的多机攻击时刻误差 ≤ 3s",    true);
+    addConstraint("P1 目标优先满足", "高优先级目标先分配，剩余兵力给 P2", true);
+    addConstraint("不分配同型机扎堆","同一目标避免全是同批次 UAV",       false);
+
+    layout->addStretch();
+}
+
+void TaskAllocationPanel::setupMetricsGroup()
+{
+    QGroupBox *gb = ui->groupBox_4;
+    QVBoxLayout *outer = qobject_cast<QVBoxLayout*>(gb->layout());
+    if (!outer) {
+        outer = new QVBoxLayout(gb);
+        gb->setLayout(outer);
+    }
+    outer->setContentsMargins(8, 6, 8, 6);
+    outer->setSpacing(6);
+
+    // 指标卡片网格（3 列布局）
+    m_metricGrid = new QGridLayout();
+    m_metricGrid->setContentsMargins(0, 0, 0, 0);
+    m_metricGrid->setSpacing(6);
+    outer->addLayout(m_metricGrid);
+
+    // 分隔线
+    QLabel *sep = new QLabel(gb);
+    sep->setStyleSheet(QString("background-color: %1; max-height: 1px; min-height: 1px; border: none;").arg(kBorderColor));
+    outer->addWidget(sep);
+
+    // 候选方案标题
+    QLabel *altTitle = new QLabel("▌ 候选方案对比", gb);
+    altTitle->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: bold; background: transparent; border: none;").arg(kAccentCyan));
+    outer->addWidget(altTitle);
+
+    // 候选方案容器布局（动态行列表）
+    m_altPlanLayout = new QVBoxLayout();
+    m_altPlanLayout->setContentsMargins(0, 0, 0, 0);
+    m_altPlanLayout->setSpacing(4);
+    outer->addLayout(m_altPlanLayout);
+    outer->addStretch();
+
+    // 添加 6 项默认求解指标
+    addMetric("目标函数值", "0.943", "",  "较初始 +47%", kAccentCyan);
+    addMetric("分配覆盖率", "100",   "%", "5/5 目标",   "#00e676");
+    addMetric("硬约束满足", "4/4",   "",  "无冲突",      "#00e676");
+    addMetric("使用兵力",   "11",    "架","需求 22",     "#ffb300");
+    addMetric("综合代价",   "2.84",  "",  "兵力 + 风险", kTextPrimary);
+    addMetric("求解耗时",   "150",   "ms","12 次迭代",   kAccentCyan);
+
+    // 添加 3 条默认候选方案
+    addAltPlan("方案 1 · 当前",    "0.943", "11", "低",   true);
+    addAltPlan("方案 2 · 节省兵力","0.891", "9",  "中",   false);
+    addAltPlan("方案 3 · 高冗余",  "0.967", "14", "极低", false);
+}
+
+void TaskAllocationPanel::setupAllocationResult()
+{
+    QWidget *container = ui->widget_2;
+    m_allocLayout = qobject_cast<QVBoxLayout*>(container->layout());
+    if (!m_allocLayout) {
+        m_allocLayout = new QVBoxLayout(container);
+        container->setLayout(m_allocLayout);
+    }
+    m_allocLayout->setContentsMargins(6, 4, 6, 4);
+    m_allocLayout->setSpacing(6);
+
+    // 分区标题
+    QLabel *title = new QLabel("▌ 分配方案 · 编队组织", container);
+    title->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold; background: transparent; border: none; padding: 2px 0;").arg(kAccentCyan));
+    m_allocLayout->addWidget(title);
+
+    // 添加 2 个默认编队分配组（PT-01 制导雷达、PT-02 火控雷达）
+    addAllocGroup("PT-01", "东郊制导雷达", "P1", "TOT 14:42:18",
+                  {{"UAV-A01","主攻 1","I-band · 62km"}, {"UAV-A02","主攻 2","I-band · 62km"}, {"UAV-A03","备份","I-band · 64km"}},
+                  "3 机同时到达 · 误差 ±2s · 三向夹角 60°");
+
+    addAllocGroup("PT-02", "东郊火控雷达", "P1", "TOT 14:42:18",
+                  {{"UAV-A04","主攻 1","H-band · 71km"}, {"UAV-A05","主攻 2","H-band · 71km"}, {"UAV-A06","备份","H-band · 73km"}},
+                  "3 机同时到达 · 与 PT-01 同步压制");
+
+    m_allocLayout->addStretch();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 控件工厂
+// 负责创建单个可视化控件并返回指针，但不负责生命周期管理
+// 和列表维护，由公共 API 方法调用并管理
+// ═══════════════════════════════════════════════════════════
+QFrame *TaskAllocationPanel::createAlgCard(const QString &name, const QString &desc,
+                                            const QString &badge, const QString &badgeColor, int id)
+{
+    QGroupBox *gb = ui->groupBox;
+    QFrame *card = new QFrame(gb);
+    card->setCursor(Qt::PointingHandCursor);
+    card->setObjectName("algCard");
+    card->setStyleSheet(QString(R"(
+        QFrame#algCard {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            padding: 0px;
+        }
+        QFrame#algCard:hover {
+            border: 1px solid %3;
+            background-color: #0a1428;
+        }
+    )").arg(kInputBg).arg(kBorderColor).arg(kHoverBorder));
+
+    QHBoxLayout *row = new QHBoxLayout(card);
+    row->setContentsMargins(8, 6, 8, 6);
+    row->setSpacing(8);
+
+    QRadioButton *radio = new QRadioButton(card);
+    radio->setStyleSheet(QString(R"(
+        QRadioButton {
+            color: %1;
+            font-size: 11px;
+            font-weight: bold;
+            spacing: 6px;
+        }
+        QRadioButton::indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 7px;
+            border: 2px solid %2;
+            background-color: %3;
+        }
+        QRadioButton::indicator:checked {
+            background-color: %4;
+            border: 2px solid %4;
+        }
+    )").arg(kTextPrimary).arg(kBorderColor).arg(kBaseBg).arg(kAccentCyan));
+
+    m_algGroup->addButton(radio, id);
+    m_algRadios.append(radio);
+    row->addWidget(radio);
+
+    QVBoxLayout *textCol = new QVBoxLayout();
+    textCol->setSpacing(1);
+    QLabel *nameLabel = new QLabel(name, card);
+    nameLabel->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: bold; background: transparent; border: none;").arg(kTextPrimary));
+    textCol->addWidget(nameLabel);
+    QLabel *descLabel = new QLabel(desc, card);
+    descLabel->setStyleSheet(QString("color: %1; font-size: 10px; background: transparent; border: none;").arg(kTextSec));
+    textCol->addWidget(descLabel);
+    row->addLayout(textCol, 1);
+
+    QLabel *badgeLbl = new QLabel(badge, card);
+    badgeLbl->setAlignment(Qt::AlignCenter);
+    badgeLbl->setStyleSheet(QString(R"(
+        QLabel {
+            color: #000000;
+            background-color: %1;
+            border-radius: 3px;
+            padding: 1px 6px;
+            font-size: 9px;
+            font-weight: bold;
+            font-family: 'Consolas', monospace;
+            min-width: 32px;
+        }
+    )").arg(badgeColor));
+    row->addWidget(badgeLbl);
+
+    return card;
+}
+
+QFrame *TaskAllocationPanel::createConstraintRow(const QString &name, const QString &desc,
+                                                  bool checked, int /*id*/)
+{
+    QGroupBox *gb = ui->groupBox_3;
+    QFrame *rowFrame = new QFrame(gb);
+    rowFrame->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 4px; }")
+                                .arg(kInputBg).arg(kBorderColor));
+
+    QHBoxLayout *row = new QHBoxLayout(rowFrame);
+    row->setContentsMargins(8, 6, 8, 6);
+    row->setSpacing(8);
+
+    QCheckBox *check = new QCheckBox(rowFrame);
+    check->setStyleSheet(QString(R"(
+        QCheckBox {
+            color: %1;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 2px solid %2;
+            background-color: %3;
+        }
+        QCheckBox::indicator:checked {
+            background-color: %4;
+            border: 2px solid %4;
+        }
+    )").arg(kTextPrimary).arg(kBorderColor).arg(kBaseBg).arg(kAccentCyan));
+    check->setChecked(checked);
+    m_constraintChecks.append(check);
+    row->addWidget(check);
+
+    QVBoxLayout *textCol = new QVBoxLayout();
+    textCol->setSpacing(1);
+    QLabel *nameLabel = new QLabel(name, rowFrame);
+    nameLabel->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: bold; background: transparent; border: none;").arg(kTextPrimary));
+    textCol->addWidget(nameLabel);
+    QLabel *descLabel = new QLabel(desc, rowFrame);
+    descLabel->setStyleSheet(QString("color: %1; font-size: 10px; background: transparent; border: none;").arg(kTextSec));
+    textCol->addWidget(descLabel);
+    row->addLayout(textCol, 1);
+
+    return rowFrame;
+}
+
+QFrame *TaskAllocationPanel::createMetricCard(const QString &label, const QString &value,
+                                               const QString &unit, const QString &tag,
+                                               const QString &color)
+{
+    QGroupBox *gb = ui->groupBox_4;
+    QFrame *card = new QFrame(gb);
+    card->setStyleSheet(QString(R"(
+        QFrame {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            padding: 0px;
+        }
+    )").arg(kInputBg).arg(kBorderColor));
+
+    QVBoxLayout *col = new QVBoxLayout(card);
+    col->setContentsMargins(8, 6, 8, 6);
+    col->setSpacing(2);
+
+    QLabel *lbl = new QLabel(label, card);
+    lbl->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: none; letter-spacing: 1px;").arg(kTextSec));
+    col->addWidget(lbl);
+
+    QHBoxLayout *valRow = new QHBoxLayout();
+    valRow->setSpacing(2);
+    QLabel *valLabel = new QLabel(value, card);
+    valLabel->setStyleSheet(QString("color: %1; font-size: 20px; font-weight: bold; background: transparent; border: none; font-family: 'Consolas', monospace;").arg(color));
+    valRow->addWidget(valLabel);
+
+    QLabel *unitLabel = nullptr;
+    if (!unit.isEmpty()) {
+        unitLabel = new QLabel(unit, card);
+        unitLabel->setStyleSheet(QString("color: %1; font-size: 11px; background: transparent; border: none; font-family: 'Consolas', monospace;").arg(color));
+        valRow->addWidget(unitLabel);
+    }
+    valRow->addStretch();
+    col->addLayout(valRow);
+
+    QLabel *tagLabel = new QLabel(tag, card);
+    tagLabel->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: none;").arg(kTextSec));
+    col->addWidget(tagLabel);
+
+    // 保存子控件指针，供 updateMetric 后续更新数值/颜色使用
+    m_metricValues.append(valLabel);
+    m_metricUnits.append(unitLabel);
+    m_metricTags.append(tagLabel);
+
+    return card;
+}
+
+QFrame *TaskAllocationPanel::createAltPlanRow(const QString &name, const QString &fval,
+                                               const QString &sorties, const QString &risk,
+                                               bool isCurrent)
+{
+    QGroupBox *gb = ui->groupBox_4;
+    QFrame *planRow = new QFrame(gb);
+    planRow->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 3px; }").arg(kInputBg).arg(kBorderColor));
+
+    QHBoxLayout *planLayout = new QHBoxLayout(planRow);
+    planLayout->setContentsMargins(8, 4, 8, 4);
+    planLayout->setSpacing(10);
+
+    QLabel *nameP = new QLabel(name, planRow);
+    nameP->setStyleSheet(QString("color: %1; font-size: 10px; background: transparent; border: none; font-weight: bold;").arg(kTextPrimary));
+    planLayout->addWidget(nameP);
+
+    QString fcolor = isCurrent ? "#ffb300" : kTextPrimary;
+    QLabel *fvalP = new QLabel(QString("F = %1").arg(fval), planRow);
+    fvalP->setStyleSheet(QString("color: %1; font-size: 10px; background: transparent; border: none; font-family: 'Consolas', monospace;").arg(fcolor));
+    planLayout->addWidget(fvalP);
+
+    QLabel *sortieP = new QLabel(QString("%1 架次").arg(sorties), planRow);
+    sortieP->setStyleSheet(QString("color: %1; font-size: 10px; background: transparent; border: none;").arg(kTextSec));
+    planLayout->addWidget(sortieP);
+
+    QLabel *riskP = new QLabel(risk, planRow);
+    riskP->setStyleSheet(QString("color: %1; font-size: 10px; background: transparent; border: none;").arg(kTextSec));
+    planLayout->addWidget(riskP);
+    planLayout->addStretch();
+
+    QLabel *statusP = new QLabel(isCurrent ? "已选" : "选用", planRow);
+    QString statusColor = isCurrent ? "#ffb300" : kAccentCyan;
+    statusP->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: 1px solid %1; border-radius: 3px; padding: 1px 6px;").arg(statusColor));
+    planLayout->addWidget(statusP);
+
+    return planRow;
+}
+
+QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const QString &name,
+                                                    const QString &priority, const QString &tot,
+                                                    const QList<UavSpec> &uavs,
+                                                    const QString &coordDesc)
+{
+    QWidget *container = ui->widget_2;
+    QFrame *groupFrame = new QFrame(container);
+    groupFrame->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 4px; }").arg(kInputBg).arg(kBorderColor));
+
+    QVBoxLayout *groupCol = new QVBoxLayout(groupFrame);
+    groupCol->setContentsMargins(8, 6, 8, 6);
+    groupCol->setSpacing(4);
+
+    // 表头行：目标编号 + 名称 + 优先级标签 + TOT 时刻
+    QHBoxLayout *headerRow = new QHBoxLayout();
+    headerRow->setSpacing(8);
+
+    QLabel *tgtLabel = new QLabel(target, groupFrame);
+    tgtLabel->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: bold; font-family: 'Consolas', monospace; background: transparent; border: none;").arg(kAccentCyan));
+    headerRow->addWidget(tgtLabel);
+
+    QLabel *nameLabel = new QLabel(name, groupFrame);
+    nameLabel->setStyleSheet(QString("color: %1; font-size: 11px; background: transparent; border: none;").arg(kTextPrimary));
+    headerRow->addWidget(nameLabel);
+
+    // 优先级：P1 红色、P2 琥珀色
+    QString priColor = (priority == "P1") ? "#ff3b3b" : "#ffb300";
+    QLabel *priLabel = new QLabel(priority, groupFrame);
+    priLabel->setAlignment(Qt::AlignCenter);
+    priLabel->setStyleSheet(QString("color: #ffffff; background-color: %1; border-radius: 3px; padding: 0 6px; font-size: 9px; font-weight: bold;").arg(priColor));
+    headerRow->addWidget(priLabel);
+    headerRow->addStretch();
+
+    QLabel *totLabel = new QLabel(tot, groupFrame);
+    totLabel->setStyleSheet(QString("color: %1; font-size: 9px; font-family: 'Consolas', monospace; background: transparent; border: none;").arg(kTextSec));
+    headerRow->addWidget(totLabel);
+    groupCol->addLayout(headerRow);
+
+    // 无人机芯片行：每架 UAV 用一个小芯片展示角色 + 编号 + 元信息
+    QHBoxLayout *uavRow = new QHBoxLayout();
+    uavRow->setSpacing(6);
+    for (int u = 0; u < uavs.size(); ++u) {
+        const UavSpec &spec = uavs[u];
+        QFrame *chip = new QFrame(groupFrame);
+        // 前两架为主攻，其余为备份（深色背景 + 红色边框）
+        bool isPrimary = (u < 2);
+        QString chipBg = isPrimary ? kInputBg : "#1a0a0a";
+        QString chipBorder = isPrimary ? kBorderColor : "#5a1a1a";
+        chip->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 3px; }").arg(chipBg).arg(chipBorder));
+
+        QVBoxLayout *chipCol = new QVBoxLayout(chip);
+        chipCol->setContentsMargins(6, 4, 6, 4);
+        chipCol->setSpacing(1);
+
+        QString roleColor = isPrimary ? kAccentCyan : "#ff6b35";
+        QLabel *roleLbl = new QLabel(spec.role, chip);
+        roleLbl->setAlignment(Qt::AlignCenter);
+        roleLbl->setStyleSheet(QString("color: %1; font-size: 9px; font-weight: bold; background: transparent; border: none;").arg(roleColor));
+        chipCol->addWidget(roleLbl);
+
+        QLabel *idLbl = new QLabel(spec.id, chip);
+        idLbl->setAlignment(Qt::AlignCenter);
+        idLbl->setStyleSheet(QString("color: %1; font-size: 10px; font-family: 'Consolas', monospace; background: transparent; border: none;").arg(kTextPrimary));
+        chipCol->addWidget(idLbl);
+
+        QLabel *metaLbl = new QLabel(spec.meta, chip);
+        metaLbl->setAlignment(Qt::AlignCenter);
+        metaLbl->setStyleSheet(QString("color: %1; font-size: 8px; background: transparent; border: none;").arg(kTextSec));
+        chipCol->addWidget(metaLbl);
+
+        uavRow->addWidget(chip);
+    }
+    groupCol->addLayout(uavRow);
+
+    // 协同方式条：描述编队中无人机之间的协同关系
+    QFrame *coordFrame = new QFrame(groupFrame);
+    coordFrame->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 3px; }").arg(kBaseBg).arg(kBorderColor));
+    QHBoxLayout *coordRow = new QHBoxLayout(coordFrame);
+    coordRow->setContentsMargins(6, 3, 6, 3);
+    coordRow->setSpacing(6);
+
+    QLabel *coordTag = new QLabel("协同方式", coordFrame);
+    coordTag->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: none; padding: 0 4px;").arg(kAccentCyan));
+    coordRow->addWidget(coordTag);
+
+    QLabel *coordVal = new QLabel(coordDesc, coordFrame);
+    coordVal->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: none;").arg(kTextSec));
+    coordRow->addWidget(coordVal, 1);
+    coordRow->addStretch();
+
+    groupCol->addWidget(coordFrame);
+    return groupFrame;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 求解算法 API 实现
+// ═══════════════════════════════════════════════════════════
+int TaskAllocationPanel::addAlgorithm(const QString &name, const QString &desc,
+                                       const QString &badge, const QString &badgeColor)
+{
+    int id = m_algCards.size();
+    QFrame *card = createAlgCard(name, desc, badge, badgeColor, id);
+    m_algCards.append(card);
+
+    QGroupBox *gb = ui->groupBox;
+    QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(gb->layout());
+    if (layout) {
+        // 插入到 stretch 之前（layout->count() - 1 为 stretch 的索引）
+        int insertPos = layout->count() - 1;
+        if (insertPos < 0) insertPos = 0;
+        layout->insertWidget(insertPos, card);
+    }
+    return id;
+}
+
+void TaskAllocationPanel::removeAlgorithm(int index)
+{
+    if (index < 0 || index >= m_algCards.size()) return;
+    QFrame *card = m_algCards.takeAt(index);
+    QRadioButton *radio = m_algRadios.takeAt(index);
+    m_algGroup->removeButton(radio);
+    card->deleteLater();
+
+    // 删除中间项后，后续 radio 的 id 需要重新对齐
+    for (int i = index; i < m_algRadios.size(); ++i)
+        m_algGroup->setId(m_algRadios[i], i);
+}
+
+void TaskAllocationPanel::clearAlgorithms()
+{
+    for (QFrame *card : m_algCards) card->deleteLater();
+    m_algCards.clear();
+    m_algRadios.clear();
+    for (QAbstractButton *btn : m_algGroup->buttons())
+        m_algGroup->removeButton(btn);
+}
+
+void TaskAllocationPanel::setCurrentAlgorithm(int index)
+{
+    if (index >= 0 && index < m_algRadios.size())
+        m_algRadios[index]->setChecked(true);
+}
+
+int TaskAllocationPanel::currentAlgorithm() const
+{
+    return m_algGroup->checkedId();
+}
+
+int TaskAllocationPanel::algorithmCount() const
+{
+    return m_algCards.size();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 协同硬约束 API 实现
+// ═══════════════════════════════════════════════════════════
+int TaskAllocationPanel::addConstraint(const QString &name, const QString &desc, bool checked)
+{
+    int id = m_constraintRows.size();
+    QFrame *row = createConstraintRow(name, desc, checked, id);
+    m_constraintRows.append(row);
+
+    QGroupBox *gb = ui->groupBox_3;
+    QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(gb->layout());
+    if (layout) {
+        int insertPos = layout->count() - 1; // stretch 前
+        if (insertPos < 0) insertPos = 0;
+        layout->insertWidget(insertPos, row);
+    }
+    return id;
+}
+
+void TaskAllocationPanel::removeConstraint(int index)
+{
+    if (index < 0 || index >= m_constraintRows.size()) return;
+    QFrame *row = m_constraintRows.takeAt(index);
+    QCheckBox *check = m_constraintChecks.takeAt(index);
+    delete check;
+    row->deleteLater();
+}
+
+void TaskAllocationPanel::clearConstraints()
+{
+    for (QFrame *row : m_constraintRows) row->deleteLater();
+    m_constraintRows.clear();
+    m_constraintChecks.clear();
+}
+
+void TaskAllocationPanel::setConstraintChecked(int index, bool checked)
+{
+    if (index >= 0 && index < m_constraintChecks.size())
+        m_constraintChecks[index]->setChecked(checked);
+}
+
+bool TaskAllocationPanel::isConstraintChecked(int index) const
+{
+    if (index >= 0 && index < m_constraintChecks.size())
+        return m_constraintChecks[index]->isChecked();
+    return false;
+}
+
+int TaskAllocationPanel::constraintCount() const
+{
+    return m_constraintRows.size();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 求解指标 API 实现
+// ═══════════════════════════════════════════════════════════
+int TaskAllocationPanel::addMetric(const QString &label, const QString &value,
+                                    const QString &unit, const QString &tag,
+                                    const QString &color)
+{
+    int id = m_metricCards.size();
+    QFrame *card = createMetricCard(label, value, unit, tag, color);
+    m_metricCards.append(card);
+
+    if (m_metricGrid) {
+        // 每 3 个指标换行（3 列网格）
+        int row = id / 3;
+        int col = id % 3;
+        m_metricGrid->addWidget(card, row, col);
+    }
+    return id;
+}
+
+void TaskAllocationPanel::updateMetric(int index, const QString &value,
+                                        const QString &tag, const QString &color)
+{
+    if (index < 0 || index >= m_metricCards.size()) return;
+
+    // 更新数值文本和颜色
+    if (index < m_metricValues.size() && m_metricValues[index]) {
+        m_metricValues[index]->setText(value);
+        if (!color.isEmpty())
+            m_metricValues[index]->setStyleSheet(
+                QString("color: %1; font-size: 20px; font-weight: bold; background: transparent; border: none; font-family: 'Consolas', monospace;").arg(color));
+    }
+    // 更新标记文本
+    if (!tag.isEmpty() && index < m_metricTags.size() && m_metricTags[index]) {
+        m_metricTags[index]->setText(tag);
+    }
+    // 更新单位颜色
+    if (!color.isEmpty() && index < m_metricUnits.size() && m_metricUnits[index]) {
+        m_metricUnits[index]->setStyleSheet(
+            QString("color: %1; font-size: 11px; background: transparent; border: none; font-family: 'Consolas', monospace;").arg(color));
+    }
+}
+
+void TaskAllocationPanel::removeMetric(int index)
+{
+    if (index < 0 || index >= m_metricCards.size()) return;
+    QFrame *card = m_metricCards.takeAt(index);
+    m_metricValues.takeAt(index);
+    m_metricUnits.takeAt(index);
+    m_metricTags.takeAt(index);
+    card->deleteLater();
+
+    // 重新排布网格：清空后按新顺序逐项重新 addWidget
+    if (m_metricGrid) {
+        QLayoutItem *item;
+        while ((item = m_metricGrid->takeAt(0)) != nullptr) {}
+        for (int i = 0; i < m_metricCards.size(); ++i) {
+            int r = i / 3;
+            int c = i % 3;
+            m_metricGrid->addWidget(m_metricCards[i], r, c);
+        }
+    }
+}
+
+void TaskAllocationPanel::clearMetrics()
+{
+    for (QFrame *card : m_metricCards) card->deleteLater();
+    m_metricCards.clear();
+    m_metricValues.clear();
+    m_metricUnits.clear();
+    m_metricTags.clear();
+}
+
+int TaskAllocationPanel::metricCount() const
+{
+    return m_metricCards.size();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 候选方案 API 实现
+// ═══════════════════════════════════════════════════════════
+int TaskAllocationPanel::addAltPlan(const QString &name, const QString &fval,
+                                     const QString &sorties, const QString &risk,
+                                     bool isCurrent)
+{
+    int id = m_altPlanRows.size();
+    QFrame *row = createAltPlanRow(name, fval, sorties, risk, isCurrent);
+    m_altPlanRows.append(row);
+
+    if (m_altPlanLayout)
+        m_altPlanLayout->addWidget(row);
+    return id;
+}
+
+void TaskAllocationPanel::removeAltPlan(int index)
+{
+    if (index < 0 || index >= m_altPlanRows.size()) return;
+    QFrame *row = m_altPlanRows.takeAt(index);
+    row->deleteLater();
+}
+
+void TaskAllocationPanel::clearAltPlans()
+{
+    for (QFrame *row : m_altPlanRows) row->deleteLater();
+    m_altPlanRows.clear();
+}
+
+int TaskAllocationPanel::altPlanCount() const
+{
+    return m_altPlanRows.size();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 编队分配方案 API 实现
+// ═══════════════════════════════════════════════════════════
+int TaskAllocationPanel::addAllocGroup(const QString &target, const QString &name,
+                                        const QString &priority, const QString &tot,
+                                        const QList<UavSpec> &uavs,
+                                        const QString &coordDesc)
+{
+    int id = m_allocFrames.size();
+    QFrame *frame = createAllocGroupFrame(target, name, priority, tot, uavs, coordDesc);
+    m_allocFrames.append(frame);
+
+    if (m_allocLayout) {
+        // 插入到 stretch 之前
+        int insertPos = m_allocLayout->count() - 1;
+        if (insertPos < 0) insertPos = 0;
+        m_allocLayout->insertWidget(insertPos, frame);
+    }
+    return id;
+}
+
+void TaskAllocationPanel::removeAllocGroup(int index)
+{
+    if (index < 0 || index >= m_allocFrames.size()) return;
+    QFrame *frame = m_allocFrames.takeAt(index);
+    frame->deleteLater();
+}
+
+void TaskAllocationPanel::clearAllocGroups()
+{
+    for (QFrame *frame : m_allocFrames) frame->deleteLater();
+    m_allocFrames.clear();
+}
+
+int TaskAllocationPanel::allocGroupCount() const
+{
+    return m_allocFrames.size();
 }
