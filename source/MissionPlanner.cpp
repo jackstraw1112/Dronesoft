@@ -181,6 +181,33 @@ void MissionPlanner::onStepChanged(int index)
 {
     // 切换到对应的步骤页面
     ui->contentStackedWidget->setCurrentIndex(index);
+
+    // 步骤 3（协同任务分配）：从兵力需求面板读取数据，注入到分配面板
+    if (index == 2) {
+        ForceRequirementPanel *forcePanel = ui->step2Page;
+        TaskAllocationPanel *allocPanel = ui->step3Page;
+
+        QList<ForceTargetData> targets;
+        int n = forcePanel->targetCount();
+        for (int i = 0; i < n; ++i) {
+            QString id = forcePanel->targetId(i);
+            QString name = forcePanel->targetName(i);
+            QString type = forcePanel->targetType(i);
+            int count = 0;
+            // 从计算结果中读取总架数
+            if (type == "PT" && forcePanel->ptResults().contains(id))
+                count = forcePanel->ptResults().value(id).total;
+            else if (type == "AR" && forcePanel->arResults().contains(id))
+                count = forcePanel->arResults().value(id).total;
+            // 优先级：P1 / P2（简单按索引前 3 个为 P1）
+            QString pri = (i < 3) ? "P1" : "P2";
+            if (!id.isEmpty())
+                targets.append(ForceTargetData(id, name, type, count, pri));
+        }
+        allocPanel->setForceData(targets,
+                                 forcePanel->ptResults(),
+                                 forcePanel->arResults());
+    }
 }
 
 void MissionPlanner::setRuntimeStage(TaskPlanStage stage, uint simTimestampSec)

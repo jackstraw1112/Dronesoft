@@ -13,6 +13,8 @@
 #include <QRadioButton>
 #include <QProgressBar>
 #include <QTimer>
+#include <QMap>
+#include "StructData.h"
 
 class QVBoxLayout;
 class QGridLayout;
@@ -22,12 +24,38 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class TaskAllocationPanel; }
 QT_END_NAMESPACE
 
+
+// 兵力需求汇总：从 ForceRequirementPanel 传递到 TaskAllocationPanel 的每个目标数据
+struct ForceTargetData {
+    QString id;              // 目标编号（如 "PT-01"）
+    QString name;            // 目标名称（如 "东郊制导雷达"）
+    QString type;            // 目标类型（"PT" / "AR"）
+    int aircraftCount = 0;   // 该目标所需总架数（来自兵力需求计算结果）
+    QString priority = "P1"; // 优先级（"P1" / "P2"）
+
+    ForceTargetData() = default;
+    ForceTargetData(const QString &i, const QString &n, const QString &t, int cnt, const QString &pri = "P1")
+        : id(i), name(n), type(t), aircraftCount(cnt), priority(pri) {}
+};
+
+
 class TaskAllocationPanel : public QFrame {
 Q_OBJECT
 
 public:
     explicit TaskAllocationPanel(QWidget *parent = nullptr);
     ~TaskAllocationPanel() override;
+
+    // ═══════════════════════════════════════════
+    // 兵力数据注入（由 MissionPlanner 在步骤切换时调用）
+    // ═══════════════════════════════════════════
+    // 设置从兵力需求面板传入的目标列表和计算结果
+    // @param targets       目标列表（id / name / type / aircraftCount）
+    // @param ptResults     点目标计算结果映射表
+    // @param arResults     区域目标计算结果映射表
+    void setForceData(const QList<ForceTargetData> &targets,
+                      const QMap<QString, PtCalcData> &ptResults = QMap<QString, PtCalcData>(),
+                      const QMap<QString, ArCalcData> &arResults = QMap<QString, ArCalcData>());
 
     // ═══════════════════════════════════════════
     // 求解算法 API
@@ -172,6 +200,9 @@ public:
     int allocGroupCount() const;
 
 private slots:
+    // 求解按钮点击：按当前选中算法重新生成分配方案
+    void onSolveClicked();
+
     // 求解算法切换时更新目标函数权重
     void onAlgChanged(int id);
 
@@ -187,6 +218,9 @@ private:
 
     // 修正 .ui 中目标函数权重控件的文本和样式
     void setupWeightControls();
+
+    // 根据当前选中算法和兵力数据生成分配方案
+    void generateAllocationResult();
 
     // 根据算法索引启动权重平滑动画
     void animateWeights();
@@ -250,6 +284,11 @@ private:
     // ─── 编队分配成员 ───
     QVBoxLayout *m_allocLayout;     // 编队分配容器布局
     QList<QFrame*> m_allocFrames;   // 所有编队分配组
+
+    // ─── 兵力数据成员（来自 ForceRequirementPanel） ───
+    QList<ForceTargetData> m_forceTargets;           // 目标列表
+    QMap<QString, PtCalcData> m_forcePtResults;     // 点目标计算结果
+    QMap<QString, ArCalcData> m_forceArResults;     // 区域目标计算结果
 };
 
 

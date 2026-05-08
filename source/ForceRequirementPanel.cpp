@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by Administrator on 2026/5/6.
 //
 // 兵力需求计算面板 - 实现文件
@@ -23,14 +23,8 @@ ForceRequirementPanel::ForceRequirementPanel(QWidget *parent) : QFrame(parent), 
 {
     ui->setupUi(this);
 
-    // 获取 groupBox_Target 已有网格布局
-    m_targetGrid = qobject_cast<QGridLayout*>(ui->groupBox_Target->layout());
-    if (!m_targetGrid) {
-        qDebug() << "[ERROR] gridLayout not found on groupBox_Target!";
-    } else {
-        m_targetGrid->setSpacing(6);
-        m_targetGrid->setContentsMargins(6, 6, 6, 6);
-    }
+    // 初始化雷达目标选择区（scroll area + pill 网格布局 + 布局约束）
+    initTargetScrollArea();
 
     // 初始显示点目标模型页面
     ui->stackedWidget->setCurrentIndex(0);
@@ -58,6 +52,52 @@ ForceRequirementPanel::~ForceRequirementPanel()
     delete ui;
 }
 
+// 初始化雷达目标选择区：配置 scroll area + pill 网格布局 + 布局约束
+void ForceRequirementPanel::initTargetScrollArea()
+{
+    m_scrollArea = ui->scrollArea_Target;
+    m_scrollArea->setFrameShape(QFrame::NoFrame);
+    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scrollArea->setWidgetResizable(true);
+    m_scrollArea->setStyleSheet(
+        "QScrollArea { background: transparent; border: none; }"
+        "QScrollBar:vertical {"
+        "   background: #0a0e1a;"
+        "   width: 6px;"
+        "   border: none;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "   background: #1a3a6a;"
+        "   border-radius: 3px;"
+        "   min-height: 20px;"
+        "}"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
+        "   height: 0px;"
+        "}"
+    );
+
+    m_scrollWidget = ui->scrollAreaWidgetContents;
+    m_scrollWidget->setStyleSheet(
+        "background: #0b1124;"
+        "border: 1px solid #1a3a6a;"
+        "border-radius: 4px;"
+    );
+    m_targetGrid = ui->gridLayout;
+    m_targetGrid->setSpacing(6);
+    m_targetGrid->setContentsMargins(6, 6, 6, 6);
+
+    QVBoxLayout *outer = qobject_cast<QVBoxLayout*>(layout());
+    if (outer) {
+        outer->setStretch(2, 1);
+        outer->setSizeConstraint(QLayout::SetMinimumSize);
+    }
+    QVBoxLayout *widgetLayout = qobject_cast<QVBoxLayout*>(ui->widget->layout());
+    if (widgetLayout) {
+        widgetLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    }
+}
+
 // 初始化信号槽连接：绑定计算过程和兵力汇总按钮的点击事件
 void ForceRequirementPanel::setupConnections()
 {
@@ -68,16 +108,29 @@ void ForceRequirementPanel::setupConnections()
 // 初始化点目标输入参数信号槽：毁伤要求按钮、单弹毁伤概率、备份架数变化时重新计算
 void ForceRequirementPanel::setupPtInputConnections()
 {
+    ui->btn_DamageLevel_Low->setCheckable(true);
+    ui->btn_DamageLevel_Mid->setCheckable(true);
+    ui->btn_DamageLevel_High->setCheckable(true);
+
     connect(ui->btn_DamageLevel_Low, &QPushButton::clicked, this, [this]() {
         m_currentDamageLevel = 0.7;
+        ui->btn_DamageLevel_Low->setChecked(true);
+        ui->btn_DamageLevel_Mid->setChecked(false);
+        ui->btn_DamageLevel_High->setChecked(false);
         updatePtCalculation();
     });
     connect(ui->btn_DamageLevel_Mid, &QPushButton::clicked, this, [this]() {
         m_currentDamageLevel = 0.8;
+        ui->btn_DamageLevel_Low->setChecked(false);
+        ui->btn_DamageLevel_Mid->setChecked(true);
+        ui->btn_DamageLevel_High->setChecked(false);
         updatePtCalculation();
     });
     connect(ui->btn_DamageLevel_High, &QPushButton::clicked, this, [this]() {
         m_currentDamageLevel = 0.9;
+        ui->btn_DamageLevel_Low->setChecked(false);
+        ui->btn_DamageLevel_Mid->setChecked(false);
+        ui->btn_DamageLevel_High->setChecked(true);
         updatePtCalculation();
     });
     connect(ui->spinBox_SingleShotProb, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this]() {
@@ -559,9 +612,17 @@ void ForceRequirementPanel::applyTechStyle()
             border: none;
         }
     )").arg(baseBg));
+
+    ui->widget_Model->setStyleSheet(QString(R"(
+        QWidget#widget_Model {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+        }
+    )").arg(groupBoxBg).arg(borderColor));
 }
 
-// 计算过程按钮响应：根据当前目标类型显示对应计算页面
+// 计算过程按钮响应：切换到当前选中目标的模型计算页面，刷新计算结果
 void ForceRequirementPanel::onCalculateProcessClicked()
 {
     if (m_currentTargetId.isEmpty()) {
@@ -571,8 +632,10 @@ void ForceRequirementPanel::onCalculateProcessClicked()
 
     if (m_currentTargetType == "PT") {
         ui->stackedWidget->setCurrentIndex(0);
+        updatePtCalculation();
     } else if (m_currentTargetType == "AR") {
         ui->stackedWidget->setCurrentIndex(1);
+        updateArCalculation();
     }
 }
 
@@ -716,7 +779,7 @@ static void updatePillStyle(QPushButton *pill, bool selected)
 // pill 包含：类型色标 + 目标ID + 目标名称
 QPushButton *ForceRequirementPanel::createTargetPill(const QString &id, const QString &name, const QString &type)
 {
-    QPushButton *pill = new QPushButton(ui->groupBox_Target);
+    QPushButton *pill = new QPushButton(m_scrollWidget);
     pill->setFixedHeight(36);
     pill->setCursor(Qt::PointingHandCursor);
     pill->setFlat(true);
@@ -779,7 +842,46 @@ void ForceRequirementPanel::setupDefaultTargets()
     selectTarget(0);
 
     // 顶部对齐
-    updateGridRowStretch(m_targetGrid, m_targetPills.size(), 3);
+    updateGridRowStretch(m_targetGrid, m_targetPills.size(), 4);
+    updateTargetGroupHeight();
+}
+
+// ─────────────────────────────────────────────
+// 根据 pill 数量直接调整目标容器高度，驱动父布局重新分配空间
+// ─────────────────────────────────────────────
+void ForceRequirementPanel::updateTargetGroupHeight()
+{
+    int count = m_targetPills.size();
+    int rows = (count + 3) / 4;
+    if (rows < 1) rows = 1;
+
+    const int kPillHeight = 36;
+    const int kGridSpacing = 6;
+    const int kGridMargin = 6;
+
+    int contentHeight = rows * kPillHeight + (rows - 1) * kGridSpacing + 2 * kGridMargin;
+
+    // 三级同时设 minimumHeight，确保布局链每层都能感知高度变化
+    m_scrollWidget->setMinimumHeight(contentHeight);
+    m_scrollArea->setMinimumHeight(contentHeight);
+    // widget 容器内含标题(~30px) + 间距(~6px) + scrollArea
+    ui->widget->setMinimumHeight(36 + contentHeight);
+
+    // 强制整个布局链重新计算：panel → QStackedWidget → widget_Center → MissionPlanner
+    layout()->invalidate();
+    this->setMinimumHeight(layout()->minimumSize().height());
+    this->updateGeometry();
+
+    QWidget *p = parentWidget();
+    int levels = 0;
+    while (p && levels < 6) {
+        p->updateGeometry();
+        if (p->layout()) {
+            p->layout()->invalidate();
+        }
+        p = p->parentWidget();
+        ++levels;
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -794,8 +896,8 @@ int ForceRequirementPanel::addTarget(const QString &id, const QString &name, con
     int index = m_targetPills.size();
     QPushButton *pill = createTargetPill(id, name, type);
 
-    int row = index / 3;
-    int col = index % 3;
+    int row = index / 4;
+    int col = index % 4;
     m_targetGrid->addWidget(pill, row, col);
 
     // 保存到成员列表
@@ -803,11 +905,29 @@ int ForceRequirementPanel::addTarget(const QString &id, const QString &name, con
     m_targetIds.append(id);
     m_targetNames.append(name);
     m_targetTypes.append(type);
+
+    // 初始化输入参数记录（使用 UI 默认值）
+    if (type == "PT") {
+        PtInputData pt;
+        pt.damageLevel = 0.9;
+        pt.singleShotProb = 0.95;
+        pt.backupCount = 1;
+        m_ptInputs[id] = pt;
+    } else {
+        ArInputData ar;
+        ar.area = 100;
+        ar.estTargetCount = 3.0;
+        ar.shotsPerTarget = 2;
+        ar.backupCount = 2;
+        m_arInputs[id] = ar;
+    }
+
     // 点击事件：通过 eventFilter 捕获 mouse press
     pill->installEventFilter(this);
 
     // 更新顶部对齐
-    updateGridRowStretch(m_targetGrid, m_targetPills.size(), 3);
+    updateGridRowStretch(m_targetGrid, m_targetPills.size(), 4);
+    updateTargetGroupHeight();
 
     return index;
 }
@@ -819,6 +939,7 @@ void ForceRequirementPanel::removeTarget(int index)
 
     // 从网格布局中移除
     QPushButton *pill = m_targetPills[index];
+    QString removedId = m_targetIds[index];
     m_targetGrid->removeWidget(pill);
     delete pill;
     m_targetPills.removeAt(index);
@@ -826,15 +947,24 @@ void ForceRequirementPanel::removeTarget(int index)
     m_targetNames.removeAt(index);
     m_targetTypes.removeAt(index);
 
+    // 清理对应的输入参数和计算结果记录
+    m_ptInputs.remove(removedId);
+    m_arInputs.remove(removedId);
+    m_ptResults.remove(removedId);
+    m_arResults.remove(removedId);
+
     // 重新布局剩余 pill
     for (int i = 0; i < m_targetPills.size(); ++i) {
-        int row = i / 3;
-        int col = i % 3;
+        int row = i / 4;
+        int col = i % 4;
         m_targetGrid->addWidget(m_targetPills[i], row, col);
     }
 
     // 更新顶部对齐
-    updateGridRowStretch(m_targetGrid, m_targetPills.size(), 3);
+    updateGridRowStretch(m_targetGrid, m_targetPills.size(), 4);
+    updateTargetGroupHeight();
+
+    // 更新选择状态
 }
 
 // 清空所有计算目标
@@ -849,8 +979,15 @@ void ForceRequirementPanel::clearTargets()
     m_targetNames.clear();
     m_targetTypes.clear();
 
+    // 清理输入参数和计算结果记录
+    m_ptInputs.clear();
+    m_arInputs.clear();
+    m_ptResults.clear();
+    m_arResults.clear();
+
     // 更新顶部对齐
-    updateGridRowStretch(m_targetGrid, 0, 3);
+    updateGridRowStretch(m_targetGrid, 0, 4);
+    updateTargetGroupHeight();
 }
 
 // 获取计算目标总数
@@ -859,10 +996,78 @@ int ForceRequirementPanel::targetCount() const
     return m_targetPills.size();
 }
 
+// 获取指定索引的目标 ID
+QString ForceRequirementPanel::targetId(int index) const
+{
+    if (index < 0 || index >= m_targetIds.size()) return QString();
+    return m_targetIds[index];
+}
+
+// 获取指定索引的目标名称
+QString ForceRequirementPanel::targetName(int index) const
+{
+    if (index < 0 || index >= m_targetNames.size()) return QString();
+    return m_targetNames[index];
+}
+
+// 获取指定索引的目标类型
+QString ForceRequirementPanel::targetType(int index) const
+{
+    if (index < 0 || index >= m_targetTypes.size()) return QString();
+    return m_targetTypes[index];
+}
+
+// 保存当前选中目标的输入参数到映射表
+void ForceRequirementPanel::saveCurrentInput()
+{
+    if (m_currentTargetId.isEmpty()) return;
+
+    if (m_currentTargetType == "PT") {
+        PtInputData pt;
+        pt.damageLevel = m_currentDamageLevel;
+        pt.singleShotProb = ui->spinBox_SingleShotProb->value();
+        pt.backupCount = ui->spinBox_BackupCount->value();
+        m_ptInputs[m_currentTargetId] = pt;
+    } else if (m_currentTargetType == "AR") {
+        ArInputData ar;
+        ar.area = ui->spinBox_Area->value();
+        ar.estTargetCount = ui->spinBox_EstTargetCount->value();
+        ar.shotsPerTarget = ui->spinBox_ShotsPerTarget->value();
+        ar.backupCount = ui->spinBox_AreaBackupCount->value();
+        m_arInputs[m_currentTargetId] = ar;
+    }
+}
+
+// 从映射表恢复指定目标的输入参数到 UI 控件
+void ForceRequirementPanel::restoreInput(const QString &id, const QString &type)
+{
+    if (type == "PT") {
+        if (!m_ptInputs.contains(id)) return;
+        const PtInputData &pt = m_ptInputs[id];
+        m_currentDamageLevel = pt.damageLevel;
+        ui->spinBox_SingleShotProb->setValue(pt.singleShotProb);
+        ui->spinBox_BackupCount->setValue(pt.backupCount);
+        // 同步毁伤要求按钮选中状态
+        ui->btn_DamageLevel_Low->setChecked(pt.damageLevel == 0.7);
+        ui->btn_DamageLevel_Mid->setChecked(pt.damageLevel == 0.8);
+        ui->btn_DamageLevel_High->setChecked(pt.damageLevel == 0.9);
+    } else if (type == "AR") {
+        if (!m_arInputs.contains(id)) return;
+        const ArInputData &ar = m_arInputs[id];
+        ui->spinBox_Area->setValue(ar.area);
+        ui->spinBox_EstTargetCount->setValue(ar.estTargetCount);
+        ui->spinBox_ShotsPerTarget->setValue(ar.shotsPerTarget);
+        ui->spinBox_AreaBackupCount->setValue(ar.backupCount);
+    }
+}
+
 // 选中指定索引的计算目标
 void ForceRequirementPanel::selectTarget(int index)
 {
     if (index < 0 || index >= m_targetPills.size()) return;
+
+    // 保存当前选中目标的输入参数
+    saveCurrentInput();
 
     // 取消所有选中
     for (int i = 0; i < m_targetPills.size(); ++i) {
@@ -873,12 +1078,17 @@ void ForceRequirementPanel::selectTarget(int index)
     m_currentTargetId = m_targetIds[index];
     m_currentTargetType = m_targetTypes[index];
 
-    // 切换对应模型页面
+    // 从记录中恢复该目标的输入参数
+    restoreInput(m_currentTargetId, m_currentTargetType);
+
+    // 切换对应模型页面并刷新计算结果
     if (m_currentTargetType == "PT") {
         ui->label_PointModel->setText(QString("点目标模型 · POINT MODEL  [ %1 ]").arg(m_currentTargetId));
         ui->stackedWidget->setCurrentIndex(0);
+        updatePtCalculation();
     } else {
         ui->label_PointModel->setText(QString("区域目标模型 · AREA MODEL  [ %1 ]").arg(m_currentTargetId));
         ui->stackedWidget->setCurrentIndex(1);
+        updateArCalculation();
     }
 }
