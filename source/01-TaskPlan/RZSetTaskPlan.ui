@@ -27,7 +27,7 @@
     <number>3</number>
    </property>
    <item>
-    <widget class="QGroupBox" name="taskBasicInfoGb">
+    <widget class="QWidget" name="taskBasicInfoSection" native="true">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -40,15 +40,10 @@
        <height>340</height>
       </size>
      </property>
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
-     <property name="title">
-      <string>任务基本信息</string>
-     </property>
      <layout class="QVBoxLayout" name="basicInfoBoxLy">
+      <property name="spacing">
+       <number>8</number>
+      </property>
       <property name="leftMargin">
        <number>3</number>
       </property>
@@ -62,6 +57,63 @@
        <number>3</number>
       </property>
       <item>
+       <layout class="QHBoxLayout" name="basicInfoTitleLy">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="vlineBasicInfoTitle">
+          <property name="minimumSize">
+           <size>
+            <width>3</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>3</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblBasicInfoTitle">
+          <property name="font">
+           <font>
+            <family>Alimama ShuHeiTi</family>
+            <pointsize>12</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>任务基本信息</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="basicInfoTitleSpc">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
        <layout class="QVBoxLayout" name="basicInfoBodyLy">
         <item>
          <layout class="QGridLayout" name="basicInfoGridLy">
@@ -71,19 +123,48 @@
              <number>9</number>
             </property>
             <item>
-             <widget class="QLabel" name="lblTaskName">
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
+             <layout class="QHBoxLayout" name="taskNameHeaderLy">
+              <property name="spacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>任务名称</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-              </property>
-             </widget>
+              <item>
+               <widget class="QLabel" name="vlineTaskName">
+                <property name="minimumSize">
+                 <size>
+                  <width>3</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>3</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblTaskName">
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>任务名称</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QLineEdit" name="leTaskName">
@@ -111,19 +192,48 @@
              <number>9</number>
             </property>
             <item>
-             <widget class="QLabel" name="lblThreatLevelTitle">
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
+             <layout class="QHBoxLayout" name="threatLevelHeaderLy">
+              <property name="spacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>威胁等级</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-              </property>
-             </widget>
+              <item>
+               <widget class="QLabel" name="vlineThreatLevel">
+                <property name="minimumSize">
+                 <size>
+                  <width>3</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>3</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblThreatLevelTitle">
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>威胁等级</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QLineEdit" name="leThreatLevel">
@@ -154,19 +264,48 @@
              <number>9</number>
             </property>
             <item>
-             <widget class="QLabel" name="lblTaskType">
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
+             <layout class="QHBoxLayout" name="taskTypeHeaderLy">
+              <property name="spacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>任务类型</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-              </property>
-             </widget>
+              <item>
+               <widget class="QLabel" name="vlineTaskType">
+                <property name="minimumSize">
+                 <size>
+                  <width>3</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>3</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblTaskType">
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>任务类型</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QComboBox" name="cmbTaskType">
@@ -204,19 +343,48 @@
              <number>9</number>
             </property>
             <item>
-             <widget class="QLabel" name="lblPriority">
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
+             <layout class="QHBoxLayout" name="priorityHeaderLy">
+              <property name="spacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>优先级</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-              </property>
-             </widget>
+              <item>
+               <widget class="QLabel" name="vlinePriority">
+                <property name="minimumSize">
+                 <size>
+                  <width>3</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>3</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblPriority">
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>优先级</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QComboBox" name="cmbPriority">
@@ -266,19 +434,48 @@
           <item>
            <layout class="QVBoxLayout" name="startTimeColumnLy">
             <item>
-             <widget class="QLabel" name="lblStartTime">
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
+             <layout class="QHBoxLayout" name="startTimeHeaderLy">
+              <property name="spacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>开始时间</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-              </property>
-             </widget>
+              <item>
+               <widget class="QLabel" name="vlineStartTime">
+                <property name="minimumSize">
+                 <size>
+                  <width>3</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>3</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblStartTime">
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>开始时间</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QDateTimeEdit" name="dteStartTime">
@@ -303,19 +500,48 @@
           <item>
            <layout class="QVBoxLayout" name="endTimeColumnLy">
             <item>
-             <widget class="QLabel" name="lblEndTime">
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
+             <layout class="QHBoxLayout" name="endTimeHeaderLy">
+              <property name="spacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>结束时间</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-              </property>
-             </widget>
+              <item>
+               <widget class="QLabel" name="vlineEndTime">
+                <property name="minimumSize">
+                 <size>
+                  <width>3</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>3</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblEndTime">
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>结束时间</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QDateTimeEdit" name="dteEndTime">
@@ -347,19 +573,48 @@
          <number>9</number>
         </property>
         <item>
-         <widget class="QLabel" name="lblTaskRemark">
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
+         <layout class="QHBoxLayout" name="taskRemarkHeaderLy">
+          <property name="spacing">
+           <number>4</number>
           </property>
-          <property name="text">
-           <string>任务备注</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-          </property>
-         </widget>
+          <item>
+           <widget class="QLabel" name="vlineTaskRemark">
+            <property name="minimumSize">
+             <size>
+              <width>3</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>3</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblTaskRemark">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>任务备注</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QTextEdit" name="txeTaskRemark">
@@ -383,16 +638,11 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="targetListGb">
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
-     <property name="title">
-      <string>目标清单</string>
-     </property>
+    <widget class="QWidget" name="targetListSection" native="true">
      <layout class="QVBoxLayout" name="targetsBoxLy">
+      <property name="spacing">
+       <number>8</number>
+      </property>
       <property name="leftMargin">
        <number>3</number>
       </property>
@@ -406,6 +656,63 @@
        <number>3</number>
       </property>
       <item>
+       <layout class="QHBoxLayout" name="targetListTitleLy">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="vlineTargetListTitle">
+          <property name="minimumSize">
+           <size>
+            <width>3</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>3</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblTargetListTitle">
+          <property name="font">
+           <font>
+            <family>Alimama ShuHeiTi</family>
+            <pointsize>12</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>目标清单</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="targetListTitleSpc">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
        <widget class="QTabWidget" name="twTarget">
         <property name="font">
          <font>
@@ -417,7 +724,7 @@
         </property>
         <widget class="QWidget" name="wdPointTarget">
          <attribute name="title">
-          <string>点目标</string>
+          <string>▪ 点目标</string>
          </attribute>
          <layout class="QVBoxLayout" name="pointTargetPageLy">
           <property name="leftMargin">
@@ -500,7 +807,7 @@
                </font>
               </property>
               <property name="text">
-               <string>+添加点目标</string>
+               <string>＋ 添加点目标</string>
               </property>
              </widget>
             </item>
@@ -518,7 +825,7 @@
                </font>
               </property>
               <property name="text">
-               <string>编辑点目标</string>
+               <string>✎ 编辑点目标</string>
               </property>
              </widget>
             </item>
@@ -536,7 +843,7 @@
                </font>
               </property>
               <property name="text">
-               <string>删除点目标</string>
+               <string>✕ 删除点目标</string>
               </property>
              </widget>
             </item>
@@ -546,7 +853,7 @@
         </widget>
         <widget class="QWidget" name="wdAreaTarget">
          <attribute name="title">
-          <string>区域目标</string>
+          <string>▣ 区域目标</string>
          </attribute>
          <layout class="QVBoxLayout" name="areaTargetPageLy">
           <property name="leftMargin">
@@ -614,7 +921,7 @@
                </size>
               </property>
               <property name="text">
-               <string>+添加区域目标</string>
+               <string>＋ 添加区域目标</string>
               </property>
              </widget>
             </item>
@@ -627,7 +934,7 @@
                </size>
               </property>
               <property name="text">
-               <string>编辑区域目标</string>
+               <string>✎ 编辑区域目标</string>
               </property>
              </widget>
             </item>
@@ -640,7 +947,7 @@
                </size>
               </property>
               <property name="text">
-               <string>删除区域目标</string>
+               <string>✕ 删除区域目标</string>
               </property>
              </widget>
             </item>

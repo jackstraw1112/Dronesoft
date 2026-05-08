@@ -49,6 +49,11 @@
       </property>
       <item>
        <widget class="QLabel" name="lblTaskListTitle">
+        <property name="font">
+         <font>
+          <pointsize>13</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>任务列表</string>
         </property>

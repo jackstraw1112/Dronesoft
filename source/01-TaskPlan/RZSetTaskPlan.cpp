@@ -78,6 +78,8 @@ void RZSetTaskPlan::initObject()
     ui->tbwPointTarget->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tbwPointTarget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tbwPointTarget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tbwPointTarget->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
+    ui->tbwPointTarget->verticalHeader()->setVisible(false);
     ui->tbwPointTarget->setContextMenuPolicy(Qt::CustomContextMenu);
     updatePointTargetActionBtnState();
 
@@ -86,6 +88,8 @@ void RZSetTaskPlan::initObject()
     ui->tbwAreaTarget->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tbwAreaTarget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tbwAreaTarget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tbwAreaTarget->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
+    ui->tbwAreaTarget->verticalHeader()->setVisible(false);
     updateAreaTargetActionBtnState();
 
     // 默认只读，进入“新建/编辑”流程后再解锁
@@ -546,17 +550,21 @@ void RZSetTaskPlan::editPointTargetAtRow(int row)
 
 void RZSetTaskPlan::setPointTargetRow(int row, const PointTargetInfo &targetInfo)
 {
-    // 表格展示字段统一做格式化，保证列表信息可读。
     const QString coordinateAndCep = QStringLiteral("%1, %2")
                                              .arg(targetInfo.latitude, 0, 'f', 6)
                                              .arg(targetInfo.longitude, 0, 'f', 6);
 
-    // QTableWidget 接管 item 生命周期，这里按列逐项写入展示字段。
-    ui->tbwPointTarget->setItem(row, 0, new QTableWidgetItem(targetInfo.name));
-    ui->tbwPointTarget->setItem(row, 1, new QTableWidgetItem(targetTypeToChinese(targetInfo.type)));
-    ui->tbwPointTarget->setItem(row, 2, new QTableWidgetItem(coordinateAndCep));
-    ui->tbwPointTarget->setItem(row, 3, new QTableWidgetItem(targetInfo.priority));
-    ui->tbwPointTarget->setItem(row, 4, new QTableWidgetItem(QString::number(targetInfo.requiredPk, 'f', 2)));
+    auto setCell = [this, row](int col, const QString &text) {
+        QTableWidgetItem *item = new QTableWidgetItem(text);
+        item->setTextAlignment(Qt::AlignCenter);
+        ui->tbwPointTarget->setItem(row, col, item);
+    };
+
+    setCell(0, targetInfo.name);
+    setCell(1, targetTypeToChinese(targetInfo.type));
+    setCell(2, coordinateAndCep);
+    setCell(3, targetInfo.priority);
+    setCell(4, QString::number(targetInfo.requiredPk, 'f', 2));
 }
 
 void RZSetTaskPlan::onAddAreaTarget()
@@ -661,11 +669,16 @@ void RZSetTaskPlan::setAreaTargetRow(int row, const AreaTargetInfo &targetInfo)
 {
     const int vertexCount = targetInfo.vertices.size();
 
-    // QTableWidget 接管 item 生命周期，这里按列逐项写入展示字段。
-    ui->tbwAreaTarget->setItem(row, 0, new QTableWidgetItem(targetInfo.targetId));
-    ui->tbwAreaTarget->setItem(row, 1, new QTableWidgetItem(targetInfo.name));
-    ui->tbwAreaTarget->setItem(row, 2, new QTableWidgetItem(areaGeometryTypeToChinese(targetInfo.areaType)));
-    ui->tbwAreaTarget->setItem(row, 3, new QTableWidgetItem(QString::number(vertexCount)));
+    auto setCell = [this, row](int col, const QString &text) {
+        QTableWidgetItem *item = new QTableWidgetItem(text);
+        item->setTextAlignment(Qt::AlignCenter);
+        ui->tbwAreaTarget->setItem(row, col, item);
+    };
+
+    setCell(0, targetInfo.targetId);
+    setCell(1, targetInfo.name);
+    setCell(2, areaGeometryTypeToChinese(targetInfo.areaType));
+    setCell(3, QString::number(vertexCount));
 }
 
 void RZSetTaskPlan::editAreaTargetAtRow(int row)
