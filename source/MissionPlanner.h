@@ -7,6 +7,7 @@
 #include <QButtonGroup>
 #include <QMainWindow>
 #include <QMap>
+#include <QSqlDatabase>
 #include "01-TaskPlan/RZTaskListWidget.h"
 #include "RightSidePanel.h"
 #include "TaskPlanningData.h"
@@ -64,6 +65,20 @@ private:
     void generateDemoData();
     // 完整任务保存回调
     void onTaskSavedDetail(const TaskPlanningData &taskData);
+    // 初始化数据库连接并创建数据表
+    bool initTaskDatabase();
+    // 创建任务相关数据表（主表 + 子表）
+    bool createTaskTables();
+    // 创建常用查询索引
+    bool createTaskIndexes();
+    // 确保数据库结构版本正确（含升级迁移）
+    bool ensureTaskSchemaVersion();
+    // 从数据库加载任务缓存
+    bool loadTaskStoreFromDatabase();
+    // 保存单条任务到数据库（支持编辑时 oldTaskUid -> newTaskUid）
+    bool saveTaskToDatabase(const TaskPlanningData &taskData, const QString &oldTaskUid = QString());
+    // 根据任务UID删除数据库中的单条任务
+    bool deleteTaskFromDatabase(const QString &taskUid);
 
 private:
     Ui_MissionPlanner *ui;
@@ -83,6 +98,8 @@ private:
 
     // 步骤导航按钮组（5个步骤按钮）
     QButtonGroup *stepButtonGroup;
+    // 任务数据库连接
+    QSqlDatabase m_taskDb;
 
     // 任务列表
     RZTaskListWidget *mTaskListWidget = nullptr;

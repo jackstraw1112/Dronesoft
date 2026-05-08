@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SetPointTargetEditDialog</class>
- <widget class="QDialog" name="SetPointTargetEditDialog">
+ <widget class="QDialog" name="setPointTargetEditDialogDlg">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>新增点目标</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="mainLy">
    <property name="leftMargin">
     <number>3</number>
    </property>
@@ -27,7 +27,7 @@
     <number>3</number>
    </property>
    <item>
-    <widget class="QWidget" name="widget_Title" native="true">
+    <widget class="QWidget" name="titleWd" native="true">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -43,7 +43,7 @@
      <property name="styleSheet">
       <string notr="true"/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="titleBarLy">
       <property name="spacing">
        <number>0</number>
       </property>
@@ -60,7 +60,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QLabel" name="titleLabel">
+       <widget class="QLabel" name="lblTitle">
         <property name="font">
          <font>
           <family>Alimama ShuHeiTi</family>
@@ -78,7 +78,7 @@
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer_2">
+      <spacer name="titleBarLeftSpc">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -91,7 +91,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="btn_Close">
+      <widget class="QPushButton" name="closeBtn">
         <property name="minimumSize">
          <size>
           <width>25</width>
@@ -116,9 +116,9 @@
     </widget>
    </item>
    <item>
-    <layout class="QFormLayout" name="formLayout">
+    <layout class="QFormLayout" name="formLy">
      <item row="0" column="0">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="targetIdLbl">
        <property name="text">
         <string>目标编号</string>
        </property>
@@ -128,7 +128,7 @@
       <widget class="QLineEdit" name="targetIdEdit"/>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="targetNameLbl">
        <property name="text">
         <string>目标名称</string>
        </property>
@@ -138,7 +138,7 @@
       <widget class="QComboBox" name="targetNameCombo"/>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="targetTypeLbl">
        <property name="text">
         <string>目标类型</string>
        </property>
@@ -148,7 +148,7 @@
       <widget class="QComboBox" name="targetTypeCombo"/>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="label_4">
+      <widget class="QLabel" name="threatLevelLbl">
        <property name="text">
         <string>威胁等级</string>
        </property>
@@ -158,14 +158,14 @@
       <widget class="QComboBox" name="threatLevelCombo"/>
      </item>
      <item row="4" column="0">
-      <widget class="QLabel" name="label_5">
+      <widget class="QLabel" name="latitudeLbl">
        <property name="text">
         <string>纬度</string>
        </property>
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QDoubleSpinBox" name="latitudeSpin">
+      <widget class="QDoubleSpinBox" name="latitudeSpb">
        <property name="decimals">
         <number>6</number>
        </property>
@@ -184,14 +184,14 @@
       </widget>
      </item>
      <item row="5" column="0">
-      <widget class="QLabel" name="label_6">
+      <widget class="QLabel" name="longitudeLbl">
        <property name="text">
         <string>经度</string>
        </property>
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QDoubleSpinBox" name="longitudeSpin">
+      <widget class="QDoubleSpinBox" name="longitudeSpb">
        <property name="decimals">
         <number>6</number>
        </property>
@@ -210,14 +210,14 @@
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="label_7">
+      <widget class="QLabel" name="cepLbl">
        <property name="text">
-        <string>定位误差CEP</string>
+        <string>圆概率误差</string>
        </property>
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QDoubleSpinBox" name="cepSpin">
+      <widget class="QDoubleSpinBox" name="cepSpb">
        <property name="decimals">
         <number>1</number>
        </property>
@@ -230,14 +230,14 @@
       </widget>
      </item>
      <item row="7" column="0">
-      <widget class="QLabel" name="label_8">
+      <widget class="QLabel" name="bandLowerLbl">
        <property name="text">
         <string>频段下限</string>
        </property>
       </widget>
      </item>
      <item row="7" column="1">
-      <widget class="QDoubleSpinBox" name="bandLowerSpin">
+      <widget class="QDoubleSpinBox" name="bandLowerSpb">
        <property name="decimals">
         <number>2</number>
        </property>
@@ -250,14 +250,14 @@
       </widget>
      </item>
      <item row="8" column="0">
-      <widget class="QLabel" name="label_12">
+      <widget class="QLabel" name="bandUpperLbl">
        <property name="text">
         <string>频段上限</string>
        </property>
       </widget>
      </item>
      <item row="8" column="1">
-      <widget class="QDoubleSpinBox" name="bandUpperSpin">
+      <widget class="QDoubleSpinBox" name="bandUpperSpb">
        <property name="decimals">
         <number>2</number>
        </property>
@@ -270,7 +270,7 @@
       </widget>
      </item>
      <item row="9" column="0">
-      <widget class="QLabel" name="label_9">
+      <widget class="QLabel" name="emissionPatternLbl">
        <property name="text">
         <string>辐射规律</string>
        </property>
@@ -280,7 +280,7 @@
       <widget class="QLineEdit" name="emissionPatternEdit"/>
      </item>
      <item row="10" column="0">
-      <widget class="QLabel" name="label_10">
+      <widget class="QLabel" name="priorityLbl">
        <property name="text">
         <string>优先级</string>
        </property>
@@ -290,14 +290,14 @@
       <widget class="QComboBox" name="priorityCombo"/>
      </item>
      <item row="11" column="0">
-      <widget class="QLabel" name="label_11">
+      <widget class="QLabel" name="requiredPkLbl">
        <property name="text">
         <string>毁伤要求</string>
        </property>
       </widget>
      </item>
      <item row="11" column="1">
-      <widget class="QDoubleSpinBox" name="requiredPkSpin">
+      <widget class="QDoubleSpinBox" name="requiredPkSpb">
        <property name="decimals">
         <number>2</number>
        </property>
@@ -318,9 +318,9 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <layout class="QHBoxLayout" name="actionsLy">
      <item>
-      <spacer name="horizontalSpacer">
+      <spacer name="actionsLeftSpc">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -333,7 +333,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="okBtn">
+      <widget class="QPushButton" name="confirmBtn">
        <property name="minimumSize">
         <size>
          <width>80</width>

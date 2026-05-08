@@ -22,6 +22,7 @@ class TaskItemWidget : public QFrame
     Q_OBJECT
 
 public:
+    // 构造/析构
     explicit TaskItemWidget(QWidget *parent = nullptr);
     ~TaskItemWidget();
 
@@ -45,24 +46,30 @@ public:
     void setSelected(bool selected);
 
 signals:
+    // 任务项被点击时发射，返回任务编号。
     void clicked(QString taskId);
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
 
 private:
+    // 初始化流程：参数 -> 对象 -> 信号槽。
     // 初始化参数
     void initParams();
     // 初始化对象
     void initObject();
     // 关联信号与槽函数
     void initConnect();
+    // 加载任务项样式表（按候选路径回退查找）。
     void loadStyleSheet();
+    // 强制重算样式（动态属性变化后调用）。
     void refreshStyle();
 
 private:
     Ui::TaskItemWidget *ui;
+    // 任务编号（作为上层列表选择与删除的索引键）。
     QString m_taskId;
+    // 当前状态文本缓存（便于状态更新和扩展）。
     QString m_status;
 };
 

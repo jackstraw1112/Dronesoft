@@ -86,7 +86,7 @@ struct PointTargetInfo
     ThreatLevelType threatLevel;     // 威胁等级（高、中、低）
     double          latitude;        // 纬度（度）
     double          longitude;       // 经度（度）
-    double          cepMeters;       // CEP 半径（米）
+    double          cepMeters;       // 圆概率误差半径（米）
     QString         band;            // 频段（如 I-BAND、H-BAND）
     QString         emissionPattern; // 辐射规律（连续、间歇 等）
     QString         priority;        // 优先级（P1、P2、P3）

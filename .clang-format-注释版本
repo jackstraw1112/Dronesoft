@@ -17,18 +17,12 @@ AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 # 运算表达式不做额外垂直对齐，保持最小变更原则。
 AlignOperands: false
-# 函数调用参数尽量打包到同一行。
-BinPackArguments: true
-# 函数声明参数尽量打包到同一行。
-BinPackParameters: true
 # 尾注释对齐，增强可读性。
 AlignTrailingComments: true
-# 短代码块也不压缩成单行，lambda/函数体视觉更统一。
-AllowShortBlocksOnASingleLine: false
+# 允许短代码块单行；函数与 if 保持多行更清晰。
+AllowShortBlocksOnASingleLine: true
 # 短函数不压缩成单行（即使只有一行逻辑）。
 AllowShortFunctionsOnASingleLine: None
-# 短 lambda 也不压缩成单行，更接近普通函数体。
-AllowShortLambdasOnASingleLine: None
 # 短 if 也不压缩成单行，统一控制流风格。
 AllowShortIfStatementsOnASingleLine: false
 # 函数定义返回类型后不强制换行。
@@ -80,10 +74,6 @@ ColumnLimit: 0
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 # 换行后的续行缩进宽度。
 ContinuationIndentWidth: 8
-# 提高“在第一个实参前断行”的代价，尽量避免函数调用参数被拆行。
-PenaltyBreakBeforeFirstCallParameter: 1000000
-# lambda 主体缩进参考函数签名风格，提升“像函数”效果。
-LambdaBodyIndentation: Signature
 # include 分组规则。
 IncludeCategories: 
   # Include sorting order:
@@ -117,8 +107,6 @@ MacroBlockBegin: ''
 MacroBlockEnd: ''
 # namespace 内部继续缩进。
 NamespaceIndentation: All
-# 函数/类等定义块之间始终插入一个空行（你要的函数实现前留空行）。
-SeparateDefinitionBlocks: Always
 # 括号与泛型尖括号空格策略：统一紧凑风格。
 # 空括号内不留空格：func()。
 SpaceInEmptyParentheses: false

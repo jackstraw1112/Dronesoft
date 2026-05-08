@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>RZTaskListWidget</class>
- <widget class="QWidget" name="RZTaskListWidget">
+ <widget class="QWidget" name="rzTaskListWidgetWd">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -10,7 +10,7 @@
     <height>812</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="mainLy">
    <property name="spacing">
     <number>0</number>
    </property>
@@ -27,14 +27,14 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="headerFrame">
+    <widget class="QFrame" name="headerFrm">
      <property name="minimumSize">
       <size>
        <width>0</width>
        <height>54</height>
       </size>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="headerContentLy">
       <property name="leftMargin">
        <number>3</number>
       </property>
@@ -48,16 +48,16 @@
        <number>3</number>
       </property>
       <item>
-       <widget class="QLabel" name="titleLabel">
+       <widget class="QLabel" name="titleLbl">
         <property name="text">
          <string>任务列表</string>
         </property>
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QHBoxLayout" name="headerActionsLy">
         <item>
-         <spacer name="horizontalSpacer">
+         <spacer name="headerActionsCenterSpc">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -130,7 +130,7 @@
            <height>748</height>
           </rect>
          </property>
-         <layout class="QVBoxLayout" name="taskListLayout">
+         <layout class="QVBoxLayout" name="taskListLy">
           <property name="spacing">
            <number>0</number>
           </property>
@@ -147,7 +147,7 @@
            <number>16</number>
           </property>
           <item>
-           <spacer name="taskListBottomSpacer">
+           <spacer name="taskListBottomSpc">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>

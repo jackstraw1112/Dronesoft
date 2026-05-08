@@ -28,7 +28,7 @@ class RZTaskListWidget : public QWidget
     Q_OBJECT
 
 public:
-    // 构造函数：创建任务列表组件，初始化UI布局
+    // 构造/析构：创建任务列表组件并释放内部 UI 资源。
     explicit RZTaskListWidget(QWidget *parent = nullptr);
     ~RZTaskListWidget();
 
@@ -48,7 +48,7 @@ public:
         return m_taskItems.size();
     }
 
-    // 添加测试任务数据：用于演示任务列表效果
+    // 添加测试任务数据：用于演示任务列表效果（开发联调使用）。
     void addTestTasks();
 
 signals:
@@ -68,9 +68,11 @@ private slots:
     void onDeleteTaskClicked();
 
 protected:
+    // 监听尺寸变化，动态同步任务项宽度约束。
     void resizeEvent(QResizeEvent *event) override;
 
 private:
+    // 初始化流程：参数 -> 对象 -> 信号槽。
     // 初始化参数
     void initParams();
     // 初始化对象
@@ -86,7 +88,7 @@ private:
 private:
     Ui::RZTaskListWidget *ui;
 
-    // 任务列表垂直布局
+    // 任务列表垂直布局（承载 TaskItemWidget）。
     QVBoxLayout *m_taskListLayout = nullptr;
 
     // 任务项映射表（key为任务ID）

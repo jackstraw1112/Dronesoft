@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>TaskItemWidget</class>
- <widget class="QFrame" name="TaskItemWidget">
+<widget class="QFrame" name="taskItemFrm">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -10,7 +10,7 @@
     <height>114</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="mainLayout">
+  <layout class="QVBoxLayout" name="mainLy">
    <property name="spacing">
     <number>10</number>
    </property>
@@ -27,12 +27,12 @@
     <number>10</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="topRow">
+    <layout class="QHBoxLayout" name="topRowLy">
      <property name="spacing">
       <number>12</number>
      </property>
      <item>
-      <widget class="QLabel" name="taskIdLabel">
+      <widget class="QLabel" name="taskIdLbl">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -44,7 +44,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="statusLabel">
+      <widget class="QLabel" name="statusLbl">
        <property name="minimumSize">
         <size>
          <width>60</width>
@@ -73,7 +73,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="taskNameLabel">
+    <widget class="QLabel" name="taskNameLbl">
      <property name="font">
       <font>
        <pointsize>12</pointsize>
@@ -85,12 +85,12 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="metaRow">
+    <layout class="QHBoxLayout" name="metaRowLy">
      <property name="spacing">
       <number>20</number>
      </property>
      <item>
-      <widget class="QLabel" name="targetCountLabel">
+      <widget class="QLabel" name="targetCountLbl">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -102,7 +102,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="threatLevelLabel">
+      <widget class="QLabel" name="threatLevelLbl">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -114,7 +114,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="timeLabel">
+      <widget class="QLabel" name="timeLbl">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -126,7 +126,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="metaSpacer">
+      <spacer name="metaRightSpc">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>RZSetTaskPlan</class>
- <widget class="QWidget" name="RZSetTaskPlan">
+ <widget class="QWidget" name="rzSetTaskPlanWd">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,9 +13,9 @@
   <property name="windowTitle">
    <string>AddOrEditTaskplan</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_12">
+  <layout class="QVBoxLayout" name="mainLy">
    <item>
-    <widget class="QGroupBox" name="formGroupBox">
+    <widget class="QGroupBox" name="taskBasicInfoGb">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -31,7 +31,7 @@
      <property name="title">
       <string>任务基本信息</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_8">
+     <layout class="QVBoxLayout" name="basicInfoBoxLy">
       <property name="leftMargin">
        <number>3</number>
       </property>
@@ -45,13 +45,13 @@
        <number>3</number>
       </property>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
+       <layout class="QVBoxLayout" name="basicInfoBodyLy">
         <item>
-         <layout class="QGridLayout" name="gridLayout">
+         <layout class="QGridLayout" name="basicInfoGridLy">
           <item row="0" column="0">
-           <layout class="QVBoxLayout" name="verticalLayout_2">
+           <layout class="QVBoxLayout" name="taskNameColumnLy">
             <item>
-             <widget class="QLabel" name="taskNameLabel">
+             <widget class="QLabel" name="taskNameLbl">
               <property name="text">
                <string>任务名称</string>
               </property>
@@ -76,9 +76,9 @@
            </layout>
           </item>
           <item row="0" column="1">
-           <layout class="QVBoxLayout" name="verticalLayout_3">
+           <layout class="QVBoxLayout" name="taskIdColumnLy">
             <item>
-             <widget class="QLabel" name="taskNameLabel_2">
+             <widget class="QLabel" name="taskIdLbl">
               <property name="text">
                <string>任务编号</string>
               </property>
@@ -88,7 +88,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="taskNameEdit_2">
+             <widget class="QLineEdit" name="taskIdEdit">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -103,9 +103,9 @@
            </layout>
           </item>
           <item row="1" column="0">
-           <layout class="QVBoxLayout" name="verticalLayout">
+           <layout class="QVBoxLayout" name="taskTypeColumnLy">
             <item>
-             <widget class="QLabel" name="taskTypeLabel">
+             <widget class="QLabel" name="taskTypeLbl">
               <property name="text">
                <string>任务类型</string>
               </property>
@@ -140,9 +140,9 @@
            </layout>
           </item>
           <item row="1" column="1">
-           <layout class="QVBoxLayout" name="verticalLayout_5">
+           <layout class="QVBoxLayout" name="priorityColumnLy">
             <item>
-             <widget class="QLabel" name="taskTypeLabel_2">
+             <widget class="QLabel" name="priorityLbl">
               <property name="text">
                <string>优先级</string>
               </property>
@@ -152,7 +152,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="taskTypeCombo_2">
+             <widget class="QComboBox" name="priorityCombo">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -184,11 +184,11 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
+         <layout class="QHBoxLayout" name="timeRangeLy">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
+           <layout class="QVBoxLayout" name="startTimeColumnLy">
             <item>
-             <widget class="QLabel" name="startTimeLabel">
+             <widget class="QLabel" name="startTimeLbl">
               <property name="text">
                <string>开始时间</string>
               </property>
@@ -213,9 +213,9 @@
            </layout>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
+           <layout class="QVBoxLayout" name="endTimeColumnLy">
             <item>
-             <widget class="QLabel" name="startTimeLabel_2">
+             <widget class="QLabel" name="endTimeLbl">
               <property name="text">
                <string>结束时间</string>
               </property>
@@ -244,9 +244,9 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <layout class="QHBoxLayout" name="remarkTitleLy">
         <item>
-         <spacer name="horizontalSpacer_4">
+         <spacer name="remarkLeftSpc">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -259,7 +259,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QLabel" name="taskTypeLabel_3">
+         <widget class="QLabel" name="taskRemarkLbl">
           <property name="text">
            <string>任务备注</string>
           </property>
@@ -269,7 +269,7 @@
          </widget>
         </item>
         <item>
-         <spacer name="horizontalSpacer_3">
+         <spacer name="remarkRightSpc">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -284,7 +284,7 @@
        </layout>
       </item>
       <item>
-       <widget class="QTextEdit" name="textEdit">
+       <widget class="QTextEdit" name="taskRemarkEdit">
         <property name="maximumSize">
          <size>
           <width>16777215</width>
@@ -299,11 +299,11 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="targetListGb">
      <property name="title">
       <string>目标清单</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_11">
+     <layout class="QVBoxLayout" name="targetsBoxLy">
       <property name="leftMargin">
        <number>3</number>
       </property>
@@ -317,15 +317,15 @@
        <number>3</number>
       </property>
       <item>
-       <widget class="QTabWidget" name="tabWidget">
+       <widget class="QTabWidget" name="targetTw">
         <property name="currentIndex">
          <number>0</number>
         </property>
-        <widget class="QWidget" name="tab">
+        <widget class="QWidget" name="pointTargetWd">
          <attribute name="title">
           <string>点目标</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_9">
+         <layout class="QVBoxLayout" name="pointTargetPageLy">
           <property name="leftMargin">
            <number>3</number>
           </property>
@@ -339,7 +339,7 @@
            <number>3</number>
           </property>
           <item>
-           <widget class="QTableWidget" name="tableWidget_2">
+           <widget class="QTableWidget" name="pointTargetTbw">
             <column>
              <property name="text">
               <string>编号</string>
@@ -357,7 +357,7 @@
             </column>
             <column>
              <property name="text">
-              <string>坐标/CEP</string>
+              <string>坐标/圆概率误差</string>
              </property>
             </column>
             <column>
@@ -378,9 +378,9 @@
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <layout class="QHBoxLayout" name="pointTargetActionsLy">
             <item>
-             <spacer name="horizontalSpacer">
+             <spacer name="pointTargetLeftSpc">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -435,11 +435,11 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="tab_2">
+        <widget class="QWidget" name="areaTargetWd">
          <attribute name="title">
           <string>区域目标</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_10">
+         <layout class="QVBoxLayout" name="areaTargetPageLy">
           <property name="leftMargin">
            <number>3</number>
           </property>
@@ -453,7 +453,7 @@
            <number>3</number>
           </property>
           <item>
-           <widget class="QTableWidget" name="tableWidget">
+           <widget class="QTableWidget" name="areaTargetTbw">
             <column>
              <property name="text">
               <string>编号</string>
@@ -497,9 +497,9 @@
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <layout class="QHBoxLayout" name="areaTargetActionsLy">
             <item>
-             <spacer name="horizontalSpacer_2">
+             <spacer name="areaTargetLeftSpc">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -557,8 +557,8 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="widget_3" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <widget class="QWidget" name="bottomBarWd" native="true">
+        <layout class="QHBoxLayout" name="bottomBarLy">
          <property name="leftMargin">
           <number>3</number>
          </property>
@@ -572,7 +572,7 @@
           <number>3</number>
          </property>
          <item>
-          <spacer name="horizontalSpacer_5">
+          <spacer name="bottomBarLeftSpc">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
