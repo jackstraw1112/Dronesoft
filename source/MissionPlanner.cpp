@@ -6,12 +6,12 @@
 #include <QDateTime>
 #include <QDir>
 #include <QDebug>
-<<<<<<< HEAD
+
 #include <QPushButton>
 #include <QLabel>
 #include <QGroupBox>
 #include <QStackedWidget>
-=======
+
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -21,7 +21,7 @@
 #include <QVariant>
 #include <QTimer>
 #include "TaskPlanningTypeConvert.h"
->>>>>>> f18b2aacc4dd0c690feeb24333d8b981fd8b0e69
+
 
 namespace
 {
@@ -38,13 +38,9 @@ MissionPlanner *MissionPlanner::GetInstance(QWidget *parent)
 MissionPlanner::MissionPlanner(QWidget *parent)
     : QMainWindow(parent), ui(new Ui_MissionPlanner)
 {
-<<<<<<< HEAD
+
     ui->setupUi(this);          // 加载UI文件并设置界面
-    initUI();                   // 初始化UI组件（按钮组、时间显示等）
-    setupConnections();         // 建立信号槽连接
     applyTechStyle();           // 应用科技风格样式
-=======
-    ui->setupUi(this);
 
     // 初始化参数
     initParams();
@@ -54,7 +50,6 @@ MissionPlanner::MissionPlanner(QWidget *parent)
 
     // 关联信号与槽函数
     initConnect();
->>>>>>> f18b2aacc4dd0c690feeb24333d8b981fd8b0e69
 }
 
 MissionPlanner::~MissionPlanner()
@@ -153,7 +148,6 @@ void MissionPlanner::initConnect()
     connect(ui->step1Page, &RZSetTaskPlan::saveTaskDetailClicked, this, &MissionPlanner::onTaskSavedDetail);
 }
 
-<<<<<<< HEAD
 // 应用科技风格样式：暗色背景、蓝色/青色强调色、发光边框，与ForceRequirementPanel统一
 void MissionPlanner::applyTechStyle()
 {
@@ -262,8 +256,7 @@ void MissionPlanner::applyTechStyle()
             padding: 4px 8px;
         }
     )").arg(textPrimary);
-    ui->label->setStyleSheet(infoLabelStyle);
-    ui->label_2->setStyleSheet(infoLabelStyle);
+
 
     // 顶部操作按钮（保存、推演、下发）
     QString actionBtnStyle = QString(R"(
@@ -289,9 +282,6 @@ void MissionPlanner::applyTechStyle()
        .arg("#0f1a3e").arg(hoverBorder).arg(accentCyan)
        .arg("#081020");
 
-    ui->pushButton->setStyleSheet(actionBtnStyle);
-    ui->pushButton_2->setStyleSheet(actionBtnStyle);
-    ui->pushButton_3->setStyleSheet(actionBtnStyle);
 
     // 内容区堆栈窗口
     ui->contentStackedWidget->setStyleSheet(QString(R"(
@@ -315,21 +305,13 @@ void MissionPlanner::applyTechStyle()
         }
     )").arg(baseBg));
 
-    // widget_3 信息栏边框（任务信息+操作按钮区域）
-    ui->widget_3->setStyleSheet(QString(R"(
-        QWidget#widget_3 {
-            background-color: %1;
-            border-bottom: 1px solid %2;
-        }
-    )").arg(panelBg).arg(borderColor));
+
 }
 
-// 步骤导航切换事件处理（0-4对应5个步骤）
-void MissionPlanner::onStepChanged(int stepIndex)
-=======
+
+
 // 步骤导航切换事件处理
 void MissionPlanner::onStepChanged(int index)
->>>>>>> f18b2aacc4dd0c690feeb24333d8b981fd8b0e69
 {
     // 切换到对应的步骤页面
     ui->contentStackedWidget->setCurrentIndex(index);

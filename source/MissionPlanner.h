@@ -25,19 +25,11 @@ public:
     // 设置运行阶段与仿真时间（仿真阶段下用于判定任务执行状态）
     void setRuntimeStage(TaskPlanStage stage, uint simTimestampSec = 0);
 
-<<<<<<< HEAD
     QButtonGroup *stepButtonGroup;   // 步骤导航按钮组（5个步骤按钮）
-
-    //任务列表
-    TaskListWidget* mTaskListWidget=nullptr;
 
     //资源
     RightSidePanel* mRightSidePanel=nullptr;
 
-    // 初始化UI界面设置
-    void initUI();
-    // 设置信号槽连接
-    void setupConnections();
     // 应用科技风格样式（与ForceRequirementPanel一致）
     void applyTechStyle();
     // 初始化基本信息表单（任务名称、类型、优先级等）
@@ -46,7 +38,7 @@ public:
     void initTargetTables();
     // 初始化兵力计算面板（无人机数量、编队间距、毁伤概率等）
     void initForceCalcPanel();
-=======
+
 private:
     explicit MissionPlanner(QWidget *parent = nullptr);
     ~MissionPlanner();
@@ -54,7 +46,7 @@ private:
     MissionPlanner &operator=(const MissionPlanner &) = delete;
     MissionPlanner(MissionPlanner &&) = delete;
     MissionPlanner &operator=(MissionPlanner &&) = delete;
->>>>>>> f18b2aacc4dd0c690feeb24333d8b981fd8b0e69
+
 
 private slots:
     // 步骤导航切换事件处理
@@ -119,16 +111,11 @@ private:
     // 当前仿真时间戳（秒）
     uint m_runtimeSimTimestampSec = 0;
 
-    // 步骤导航按钮组（5个步骤按钮）
-    QButtonGroup *stepButtonGroup;
     // 任务数据库连接
     QSqlDatabase m_taskDb;
 
     // 任务列表
     RZTaskListWidget *mTaskListWidget = nullptr;
-
-    // 资源
-    RightSidePanel *mRightSidePanel = nullptr;
 };
 
 #endif // MISSIONPLANNER_H
