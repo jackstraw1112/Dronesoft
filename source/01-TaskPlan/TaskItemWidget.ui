@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>TaskItemWidget</class>
-<widget class="QFrame" name="taskItemFrm">
+<widget class="QFrame" name="frmTaskItem">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -32,7 +32,7 @@
       <number>12</number>
      </property>
      <item>
-      <widget class="QLabel" name="taskIdLbl">
+      <widget class="QLabel" name="lblTaskId">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -44,7 +44,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="statusLbl">
+      <widget class="QLabel" name="lblStatus">
        <property name="minimumSize">
         <size>
          <width>60</width>
@@ -73,7 +73,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="taskNameLbl">
+    <widget class="QLabel" name="lblTaskName">
      <property name="font">
       <font>
        <pointsize>12</pointsize>
@@ -90,7 +90,7 @@
       <number>20</number>
      </property>
      <item>
-      <widget class="QLabel" name="targetCountLbl">
+      <widget class="QLabel" name="lblTargetCount">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -102,7 +102,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="threatLevelLbl">
+      <widget class="QLabel" name="lblThreatLevel">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -114,7 +114,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="timeLbl">
+      <widget class="QLabel" name="lblTime">
        <property name="font">
         <font>
          <pointsize>12</pointsize>

@@ -60,8 +60,6 @@ private:
     void initObject();
     // 关联信号与槽函数
     void initConnect();
-    // 加载任务项样式表（按候选路径回退查找）。
-    void loadStyleSheet();
     // 强制重算样式（动态属性变化后调用）。
     void refreshStyle();
 

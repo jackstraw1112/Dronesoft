@@ -1,0 +1,281 @@
+/* ============================================================================
+ * Mission Planner Unified Theme
+ * Source of truth for TaskPlan-related pages and dialogs.
+ * Visual baseline references TaskAllocationPanel's dark tech style.
+ * ========================================================================== */
+
+/* ---------- Palette ---------- */
+/* base: #0a0e1a, panel: #0d1326, group: #0b1124, input: #0f1a2e */
+/* border: #1a3a6a, hover: #00b4ff, accent: #00e5ff */
+/* text: #e0e8f0, secondary: #7a8ba8 */
+
+QWidget {
+    color: #e0e8f0;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 11px;
+    background-color: #0a0e1a;
+}
+
+QDialog, QFrame, QGroupBox, QTabWidget::pane {
+    background-color: #0d1326;
+    border: 1px solid #1a3a6a;
+    border-radius: 6px;
+}
+
+QLabel {
+    color: #e0e8f0;
+    background: transparent;
+    border: none;
+}
+
+QLabel#lblTaskListTitle,
+QLabel#lblTitle {
+    color: #00e5ff;
+    font-weight: bold;
+    font-size: 11px;
+    background-color: #0f1a2e;
+    border: 1px solid #1a3a6a;
+    border-left: 3px solid #00e5ff;
+    border-radius: 3px;
+    padding: 3px 8px 3px 10px;
+}
+
+QLineEdit,
+QDateTimeEdit,
+QComboBox,
+QTextEdit,
+QSpinBox,
+QDoubleSpinBox {
+    background-color: #0f1a2e;
+    border: 1px solid #1a3a6a;
+    border-radius: 4px;
+    color: #e0e8f0;
+    padding: 2px 8px;
+    min-height: 26px;
+}
+
+QLineEdit:focus,
+QDateTimeEdit:focus,
+QComboBox:focus,
+QTextEdit:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border: 1px solid #00b4ff;
+    background-color: #0a1428;
+}
+
+QLineEdit:disabled,
+QDateTimeEdit:disabled,
+QComboBox:disabled,
+QTextEdit:disabled,
+QSpinBox:disabled,
+QDoubleSpinBox:disabled {
+    background-color: #060a14;
+    color: #7a8ba8;
+}
+
+QPushButton {
+    background-color: #0f1a2e;
+    border: 1px solid #1a3a6a;
+    border-radius: 4px;
+    color: #e0e8f0;
+    font-size: 11px;
+    font-weight: bold;
+    min-height: 28px;
+    padding: 4px 12px;
+}
+
+QPushButton:hover {
+    background-color: #0f1a3e;
+    border: 1px solid #00b4ff;
+    color: #00e5ff;
+}
+
+QPushButton:pressed {
+    background-color: #081020;
+}
+
+QGroupBox {
+    background-color: #0b1124;
+    margin-top: 20px;
+    padding: 14px 8px 8px 8px;
+    font-weight: bold;
+    color: #00b4ff;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 2px 10px;
+    color: #00b4ff;
+    font-size: 11px;
+    background-color: #0f1a2e;
+    border: 1px solid #1a3a6a;
+    border-radius: 3px;
+    margin-left: 0;
+    margin-top: 6px;
+}
+
+QTabWidget::pane {
+    margin-top: 4px;
+}
+
+QTabBar::tab {
+    background-color: #0f1a2e;
+    border: 1px solid #1a3a6a;
+    border-bottom: none;
+    color: #7a8ba8;
+    min-width: 88px;
+    padding: 5px 12px;
+}
+
+QTabBar::tab:selected {
+    color: #00e5ff;
+    background-color: #0a1a3a;
+    border-color: #00b4ff;
+}
+
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+QTableWidget {
+    background-color: #0f1a2e;
+    gridline-color: #1a3a6a;
+    border: 1px solid #1a3a6a;
+    alternate-background-color: #0a1428;
+    selection-background-color: #1a3a6a;
+    selection-color: #00e5ff;
+}
+
+QHeaderView::section {
+    background-color: #0b1124;
+    color: #00b4ff;
+    border: 1px solid #1a3a6a;
+    padding: 4px 6px;
+    font-weight: bold;
+}
+
+QMenu {
+    background-color: #0d1326;
+    border: 1px solid #1a3a6a;
+    color: #e0e8f0;
+}
+
+QMenu::item:selected {
+    background-color: #0f1a3e;
+    color: #00e5ff;
+}
+
+/* ---------- 01-TaskPlan scope ---------- */
+QWidget#wdSetTaskPlan,
+QWidget#wdTaskList,
+QDialog#dlgSetPointTargetEdit,
+QDialog#dlgSetAreaTargetEdit {
+    background-color: #0a0e1a;
+    font-size: 11px;
+}
+
+QFrame#frmTaskListHeader,
+QWidget#wdTitleBar,
+QWidget#wdBottomBar {
+    background-color: #0d1326;
+    border: 1px solid #1a3a6a;
+    border-radius: 6px;
+}
+
+QScrollArea#sraTaskList {
+    background-color: transparent;
+    border: none;
+}
+
+QWidget#wdScrollContent {
+    background-color: transparent;
+    border: none;
+}
+
+/* ---------- Task item card ---------- */
+QFrame#frmTaskItem {
+    background-color: #0f1a2e;
+    border: 1px solid #1a3a6a;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+QFrame#frmTaskItem:hover {
+    border-color: #00b4ff;
+}
+
+QFrame#frmTaskItem[selected="true"] {
+    border: 1px solid #00e5ff;
+    border-left: 3px solid #00e5ff;
+}
+
+QLabel#lblTaskId {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    color: #4fd1c5;
+    letter-spacing: 1px;
+}
+
+QLabel#lblTaskName {
+    color: #e0e8f0;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+QLabel#lblTargetCount,
+QLabel#lblThreatLevel,
+QLabel#lblTime {
+    color: #7a8ba8;
+    font-size: 11px;
+}
+
+QLabel#lblThreatLevel[threatType="high"] {
+    color: #ff7a7a;
+}
+
+QLabel#lblThreatLevel[threatType="medium"] {
+    color: #ffb86b;
+}
+
+QLabel#lblThreatLevel[threatType="low"] {
+    color: #68d391;
+}
+
+QLabel#lblStatus {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+QLabel#lblStatus[statusType="planning"] {
+    color: #00b4ff;
+    background-color: rgba(0, 180, 255, 0.2);
+    border: 1px solid #00b4ff;
+}
+
+QLabel#lblStatus[statusType="ready"] {
+    color: #7a8ba8;
+    background-color: rgba(122, 139, 168, 0.2);
+    border: 1px solid #7a8ba8;
+}
+
+QLabel#lblStatus[statusType="active"] {
+    color: #4fd1c5;
+    background-color: rgba(79, 209, 197, 0.2);
+    border: 1px solid #4fd1c5;
+}
+
+QLabel#lblStatus[statusType="completed"] {
+    color: #68d391;
+    background-color: rgba(104, 211, 145, 0.2);
+    border: 1px solid #68d391;
+}
+
+QLabel#lblStatus[statusType="other"] {
+    color: #7a8ba8;
+    background-color: rgba(122, 139, 168, 0.16);
+    border: 1px solid #7a8ba8;
+}

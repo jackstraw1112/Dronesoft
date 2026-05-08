@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SetAreaTargetEditDialog</class>
- <widget class="QDialog" name="setAreaTargetEditDialogDlg">
+ <widget class="QDialog" name="SetAreaTargetEditDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>506</height>
+    <width>515</width>
+    <height>517</height>
    </rect>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>10</pointsize>
+   </font>
   </property>
   <property name="windowTitle">
    <string>区域目标</string>
   </property>
   <layout class="QVBoxLayout" name="mainLy">
+   <property name="spacing">
+    <number>8</number>
+   </property>
    <property name="leftMargin">
     <number>3</number>
    </property>
@@ -27,11 +35,11 @@
     <number>3</number>
    </property>
    <item>
-    <widget class="QWidget" name="titleWd" native="true">
+    <widget class="QWidget" name="wdTitleBar" native="true">
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>40</height>
+       <height>30</height>
       </size>
      </property>
      <property name="maximumSize">
@@ -64,7 +72,7 @@
         <property name="font">
          <font>
           <family>Alimama ShuHeiTi</family>
-          <pointsize>12</pointsize>
+          <pointsize>11</pointsize>
           <weight>75</weight>
           <bold>true</bold>
          </font>
@@ -78,7 +86,7 @@
        </widget>
       </item>
       <item>
-      <spacer name="titleBarLeftSpc">
+       <spacer name="titleBarLeftSpc">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -91,7 +99,7 @@
        </spacer>
       </item>
       <item>
-      <widget class="QPushButton" name="closeBtn">
+       <widget class="QPushButton" name="btnClose">
         <property name="minimumSize">
          <size>
           <width>25</width>
@@ -117,160 +125,227 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridFormLy">
-     <item row="5" column="0">
-      <widget class="QLabel" name="expectedEmittersLbl">
-       <property name="text">
-        <string>预期辐射源</string>
+     <property name="horizontalSpacing">
+      <number>12</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>8</number>
+     </property>
+     <item row="0" column="0">
+      <layout class="QVBoxLayout" name="targetNameFieldLy">
+       <property name="spacing">
+        <number>6</number>
        </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QLineEdit" name="expectedEmittersEdit"/>
-     </item>
-     <item row="2" column="1">
-      <widget class="QComboBox" name="areaTypeCombo"/>
+       <item>
+        <widget class="QLabel" name="targetNameLbl">
+         <property name="text">
+          <string>区域名称</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="leTargetName"/>
+       </item>
+      </layout>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="areaTypeLbl">
-       <property name="text">
-        <string>区域类型</string>
+      <layout class="QVBoxLayout" name="radiusFieldLy">
+       <property name="spacing">
+        <number>6</number>
        </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="targetIdLbl">
-       <property name="text">
-        <string>目标编号</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="targetIdEdit"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="targetNameLbl">
-       <property name="text">
-        <string>区域名称</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="targetNameEdit"/>
+       <item>
+        <widget class="QLabel" name="radiusLbl">
+         <property name="text">
+          <string>范围半径（km）</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="spbRadiusKm">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="decimals">
+          <number>2</number>
+         </property>
+         <property name="maximum">
+          <double>9999.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="searchStrategyLbl">
-       <property name="text">
-        <string>搜索策略</string>
+      <layout class="QVBoxLayout" name="centerLatFieldLy">
+       <property name="spacing">
+        <number>6</number>
        </property>
-      </widget>
+       <item>
+        <widget class="QLabel" name="centerLatitudeLbl">
+         <property name="text">
+          <string>中心纬度</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="spbCenterLatitude">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="decimals">
+          <number>6</number>
+         </property>
+         <property name="minimum">
+          <double>-90.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>90.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item row="3" column="1">
-      <widget class="QComboBox" name="searchStrategyCombo"/>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLabel" name="radiusLbl">
-       <property name="text">
-        <string>范围半径（km）</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3">
-      <widget class="QDoubleSpinBox" name="radiusKmSpb">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="decimals">
-        <number>2</number>
-       </property>
-       <property name="maximum">
-        <double>9999.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QLabel" name="centerLatitudeLbl">
-       <property name="text">
-        <string>中心纬度</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QDoubleSpinBox" name="centerLatitudeSpb">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="decimals">
+      <layout class="QVBoxLayout" name="centerLonFieldLy">
+       <property name="spacing">
         <number>6</number>
        </property>
-       <property name="minimum">
-        <double>-90.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>90.000000000000000</double>
-       </property>
-      </widget>
+       <item>
+        <widget class="QLabel" name="centerLongitudeLbl">
+         <property name="text">
+          <string>中心经度</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="spbCenterLongitude">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="decimals">
+          <number>6</number>
+         </property>
+         <property name="minimum">
+          <double>-180.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>180.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
-     <item row="2" column="2">
-      <widget class="QLabel" name="centerLongitudeLbl">
-       <property name="text">
-        <string>中心经度</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="3">
-      <widget class="QDoubleSpinBox" name="centerLongitudeSpb">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="decimals">
+     <item row="0" column="1">
+      <layout class="QVBoxLayout" name="areaTypeFieldLy">
+       <property name="spacing">
         <number>6</number>
        </property>
-       <property name="minimum">
-        <double>-180.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>180.000000000000000</double>
-       </property>
-      </widget>
+       <item>
+        <widget class="QLabel" name="areaTypeLbl">
+         <property name="text">
+          <string>区域类型</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cmbAreaType"/>
+       </item>
+      </layout>
      </item>
-     <item row="3" column="2">
-      <widget class="QLabel" name="priorityLbl">
-       <property name="text">
-        <string>优先级</string>
+     <item row="1" column="0">
+      <layout class="QVBoxLayout" name="searchStrategyFieldLy">
+       <property name="spacing">
+        <number>6</number>
        </property>
-      </widget>
+       <item>
+        <widget class="QLabel" name="searchStrategyLbl">
+         <property name="text">
+          <string>搜索策略</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cmbSearchStrategy"/>
+       </item>
+      </layout>
      </item>
-     <item row="3" column="3">
-      <widget class="QComboBox" name="priorityCombo">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+     <item row="1" column="1">
+      <layout class="QVBoxLayout" name="priorityFieldLy">
+       <property name="spacing">
+        <number>6</number>
        </property>
-      </widget>
+       <item>
+        <widget class="QLabel" name="lblPriority">
+         <property name="text">
+          <string>优先级</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cmbPriority">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="2" column="1">
+      <layout class="QVBoxLayout" name="emittersFieldLy">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="expectedEmittersLbl">
+         <property name="text">
+          <string>预期辐射源</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="leExpectedEmitters"/>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="polygonVerticesGb">
+    <widget class="QGroupBox" name="gbPolygonVertices">
      <property name="title">
       <string>区域坐标</string>
      </property>
      <layout class="QVBoxLayout" name="verticesSectionLy">
+      <property name="spacing">
+       <number>3</number>
+      </property>
+      <property name="leftMargin">
+       <number>3</number>
+      </property>
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="rightMargin">
+       <number>3</number>
+      </property>
+      <property name="bottomMargin">
+       <number>3</number>
+      </property>
       <item>
        <layout class="QHBoxLayout" name="vertexToolsLy">
         <item>
-        <spacer name="vertexToolsLeftSpc">
+         <spacer name="vertexToolsLeftSpc">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -283,28 +358,28 @@
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="mapPickBtn">
+         <widget class="QPushButton" name="btnMapPick">
           <property name="text">
            <string>地图拾取</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="addVertexBtn">
+         <widget class="QPushButton" name="btnAddVertex">
           <property name="text">
            <string>添加</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="editVertexBtn">
+         <widget class="QPushButton" name="btnEditVertex">
           <property name="text">
            <string>编辑</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="deleteVertexBtn">
+         <widget class="QPushButton" name="btnDeleteVertex">
           <property name="text">
            <string>删除</string>
           </property>
@@ -313,7 +388,7 @@
        </layout>
       </item>
       <item>
-      <widget class="QTableWidget" name="verticesTbw">
+       <widget class="QTableWidget" name="tbwVertices">
         <column>
          <property name="text">
           <string>纬度（°）</string>
@@ -345,7 +420,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="confirmBtn">
+      <widget class="QPushButton" name="btnConfirm">
        <property name="minimumSize">
         <size>
          <width>90</width>
@@ -358,7 +433,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="cancelBtn">
+      <widget class="QPushButton" name="btnCancel">
        <property name="minimumSize">
         <size>
          <width>90</width>

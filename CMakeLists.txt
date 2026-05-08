@@ -64,6 +64,15 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Sql)
 
+# 统一主题样式：构建后复制到可执行目录下的 theme/ 目录
+set(UNIFIED_THEME_QSS "${CMAKE_CURRENT_SOURCE_DIR}/source/theme/mission_planner_theme.qss")
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/theme"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${UNIFIED_THEME_QSS}"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/theme/mission_planner_theme.qss"
+)
+
 # =================================================================================
 # 项目公共配置
 # =================================================================================

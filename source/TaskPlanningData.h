@@ -196,6 +196,7 @@ struct TaskBasicInfo
     QString       taskId;               // 任务编号
     TaskType      taskType;             // 任务类型（SEAD、DEAD、SEARCH 等）
     PriorityLevel priority;             // 任务优先级
+    ThreatLevelType overallThreatLevel; // 整体威胁等级（由其他组件计算，此处仅展示）
     TaskStatusType status;              // 任务状态（待执行、规划中、执行中）
     uint          startTimestampSec;    // 任务开始时间戳（秒）
     uint          endTimestampSec;      // 任务结束时间戳（秒）
@@ -207,6 +208,7 @@ struct TaskBasicInfo
         , taskId()
         , taskType(TaskType::Unknown)
         , priority(PriorityLevel::Unknown)
+        , overallThreatLevel(ThreatLevelType::Unknown)
         , status(TaskStatusType::Unknown)
         , startTimestampSec(0)
         , endTimestampSec(0)

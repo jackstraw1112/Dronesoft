@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>RZSetTaskPlan</class>
- <widget class="QWidget" name="rzSetTaskPlanWd">
+ <widget class="QWidget" name="RZSetTaskPlan">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>957</width>
+    <width>722</width>
     <height>725</height>
    </rect>
   </property>
@@ -14,6 +14,18 @@
    <string>AddOrEditTaskplan</string>
   </property>
   <layout class="QVBoxLayout" name="mainLy">
+   <property name="leftMargin">
+    <number>3</number>
+   </property>
+   <property name="topMargin">
+    <number>3</number>
+   </property>
+   <property name="rightMargin">
+    <number>3</number>
+   </property>
+   <property name="bottomMargin">
+    <number>3</number>
+   </property>
    <item>
     <widget class="QGroupBox" name="taskBasicInfoGb">
      <property name="minimumSize">
@@ -27,6 +39,11 @@
        <width>16777215</width>
        <height>340</height>
       </size>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
      </property>
      <property name="title">
       <string>任务基本信息</string>
@@ -50,23 +67,36 @@
          <layout class="QGridLayout" name="basicInfoGridLy">
           <item row="0" column="0">
            <layout class="QVBoxLayout" name="taskNameColumnLy">
+            <property name="spacing">
+             <number>9</number>
+            </property>
             <item>
-             <widget class="QLabel" name="taskNameLbl">
+             <widget class="QLabel" name="lblTaskName">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>任务名称</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="taskNameEdit">
+             <widget class="QLineEdit" name="leTaskName">
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>30</height>
                </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
               </property>
               <property name="text">
                <string/>
@@ -76,27 +106,43 @@
            </layout>
           </item>
           <item row="0" column="1">
-           <layout class="QVBoxLayout" name="taskIdColumnLy">
+           <layout class="QVBoxLayout" name="threatLevelColumnLy">
+            <property name="spacing">
+             <number>9</number>
+            </property>
             <item>
-             <widget class="QLabel" name="taskIdLbl">
+             <widget class="QLabel" name="lblThreatLevelTitle">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="text">
-               <string>任务编号</string>
+               <string>威胁等级</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="taskIdEdit">
+             <widget class="QLineEdit" name="leThreatLevel">
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>30</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="text">
-               <string/>
+               <string>--</string>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -104,23 +150,36 @@
           </item>
           <item row="1" column="0">
            <layout class="QVBoxLayout" name="taskTypeColumnLy">
+            <property name="spacing">
+             <number>9</number>
+            </property>
             <item>
-             <widget class="QLabel" name="taskTypeLbl">
+             <widget class="QLabel" name="lblTaskType">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>任务类型</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="taskTypeCombo">
+             <widget class="QComboBox" name="cmbTaskType">
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>30</height>
                </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
               </property>
               <property name="currentIndex">
                <number>0</number>
@@ -141,40 +200,59 @@
           </item>
           <item row="1" column="1">
            <layout class="QVBoxLayout" name="priorityColumnLy">
+            <property name="spacing">
+             <number>9</number>
+            </property>
             <item>
-             <widget class="QLabel" name="priorityLbl">
+             <widget class="QLabel" name="lblPriority">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>优先级</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="priorityCombo">
+             <widget class="QComboBox" name="cmbPriority">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>30</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="currentIndex">
                <number>0</number>
               </property>
               <item>
                <property name="text">
-                <string>紧急</string>
+                <string>P1 · 优先打击</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>高</string>
+                <string>P2 · 正常处理</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>一般</string>
+                <string>P3 · 可延后</string>
                </property>
               </item>
              </widget>
@@ -188,25 +266,35 @@
           <item>
            <layout class="QVBoxLayout" name="startTimeColumnLy">
             <item>
-             <widget class="QLabel" name="startTimeLbl">
+             <widget class="QLabel" name="lblStartTime">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>开始时间</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QDateTimeEdit" name="startTimeEdit">
+             <widget class="QDateTimeEdit" name="dteStartTime">
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>30</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
               <property name="displayFormat">
-               <string>yyyy-MM-dd HH:mm:ss</string>
+               <string>yyyy-MM-dd HH:mm</string>
               </property>
              </widget>
             </item>
@@ -215,25 +303,35 @@
           <item>
            <layout class="QVBoxLayout" name="endTimeColumnLy">
             <item>
-             <widget class="QLabel" name="endTimeLbl">
+             <widget class="QLabel" name="lblEndTime">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>结束时间</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QDateTimeEdit" name="endTimeEdit">
+             <widget class="QDateTimeEdit" name="dteEndTime">
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>30</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
               <property name="displayFormat">
-               <string>yyyy-MM-dd HH:mm:ss</string>
+               <string>yyyy-MM-dd HH:mm</string>
               </property>
              </widget>
             </item>
@@ -244,62 +342,53 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="remarkTitleLy">
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="spacing">
+         <number>9</number>
+        </property>
         <item>
-         <spacer name="remarkLeftSpc">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <widget class="QLabel" name="lblTaskRemark">
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+           </font>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QLabel" name="taskRemarkLbl">
           <property name="text">
            <string>任务备注</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
         <item>
-         <spacer name="remarkRightSpc">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
+         <widget class="QTextEdit" name="txeTaskRemark">
+          <property name="maximumSize">
            <size>
-            <width>40</width>
-            <height>20</height>
+            <width>16777215</width>
+            <height>100</height>
            </size>
           </property>
-         </spacer>
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
-      <item>
-       <widget class="QTextEdit" name="taskRemarkEdit">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>100</height>
-         </size>
-        </property>
-       </widget>
-      </item>
      </layout>
      <zorder></zorder>
-     <zorder>textEdit</zorder>
     </widget>
    </item>
    <item>
     <widget class="QGroupBox" name="targetListGb">
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
      <property name="title">
       <string>目标清单</string>
      </property>
@@ -317,11 +406,16 @@
        <number>3</number>
       </property>
       <item>
-       <widget class="QTabWidget" name="targetTw">
-        <property name="currentIndex">
-         <number>0</number>
+       <widget class="QTabWidget" name="twTarget">
+        <property name="font">
+         <font>
+          <pointsize>11</pointsize>
+         </font>
         </property>
-        <widget class="QWidget" name="pointTargetWd">
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="wdPointTarget">
          <attribute name="title">
           <string>点目标</string>
          </attribute>
@@ -339,12 +433,12 @@
            <number>3</number>
           </property>
           <item>
-           <widget class="QTableWidget" name="pointTargetTbw">
-            <column>
-             <property name="text">
-              <string>编号</string>
-             </property>
-            </column>
+           <widget class="QTableWidget" name="tbwPointTarget">
+            <property name="font">
+             <font>
+              <pointsize>9</pointsize>
+             </font>
+            </property>
             <column>
              <property name="text">
               <string>目标名称</string>
@@ -357,12 +451,7 @@
             </column>
             <column>
              <property name="text">
-              <string>坐标/圆概率误差</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>频段</string>
+              <string>位置</string>
              </property>
             </column>
             <column>
@@ -381,6 +470,11 @@
            <layout class="QHBoxLayout" name="pointTargetActionsLy">
             <item>
              <spacer name="pointTargetLeftSpc">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -393,12 +487,17 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="addPointTargetBtn">
+             <widget class="QPushButton" name="btnAddPointTarget">
               <property name="minimumSize">
                <size>
                 <width>100</width>
-                <height>30</height>
+                <height>25</height>
                </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
               </property>
               <property name="text">
                <string>+添加点目标</string>
@@ -406,12 +505,17 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="editPointTargetBtn">
+             <widget class="QPushButton" name="btnEditPointTarget">
               <property name="minimumSize">
                <size>
                 <width>100</width>
-                <height>30</height>
+                <height>25</height>
                </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
               </property>
               <property name="text">
                <string>编辑点目标</string>
@@ -419,12 +523,17 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="deletePointTargetBtn">
+             <widget class="QPushButton" name="btnDeletePointTarget">
               <property name="minimumSize">
                <size>
                 <width>100</width>
-                <height>30</height>
+                <height>25</height>
                </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
               </property>
               <property name="text">
                <string>删除点目标</string>
@@ -435,7 +544,7 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="areaTargetWd">
+        <widget class="QWidget" name="wdAreaTarget">
          <attribute name="title">
           <string>区域目标</string>
          </attribute>
@@ -453,10 +562,15 @@
            <number>3</number>
           </property>
           <item>
-           <widget class="QTableWidget" name="areaTargetTbw">
+           <widget class="QTableWidget" name="tbwAreaTarget">
+            <property name="font">
+             <font>
+              <pointsize>9</pointsize>
+             </font>
+            </property>
             <column>
              <property name="text">
-              <string>编号</string>
+              <string>目标编号</string>
              </property>
             </column>
             <column>
@@ -471,27 +585,7 @@
             </column>
             <column>
              <property name="text">
-              <string>中心坐标</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>范围</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>预期辐射源</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>搜索策略</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>优先级</string>
+              <string>区域点数</string>
              </property>
             </column>
            </widget>
@@ -512,11 +606,11 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="addAreaTargetBtn">
+             <widget class="QPushButton" name="btnAddAreaTarget">
               <property name="minimumSize">
                <size>
                 <width>100</width>
-                <height>30</height>
+                <height>25</height>
                </size>
               </property>
               <property name="text">
@@ -525,11 +619,11 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="editAreaTargetBtn">
+             <widget class="QPushButton" name="btnEditAreaTarget">
               <property name="minimumSize">
                <size>
                 <width>100</width>
-                <height>30</height>
+                <height>25</height>
                </size>
               </property>
               <property name="text">
@@ -538,11 +632,11 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="deleteAreaTargetBtn">
+             <widget class="QPushButton" name="btnDeleteAreaTarget">
               <property name="minimumSize">
                <size>
                 <width>100</width>
-                <height>30</height>
+                <height>25</height>
                </size>
               </property>
               <property name="text">
@@ -557,7 +651,12 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="bottomBarWd" native="true">
+       <widget class="QWidget" name="wdBottomBar" native="true">
+        <property name="font">
+         <font>
+          <pointsize>11</pointsize>
+         </font>
+        </property>
         <layout class="QHBoxLayout" name="bottomBarLy">
          <property name="leftMargin">
           <number>3</number>
@@ -573,6 +672,11 @@
          </property>
          <item>
           <spacer name="bottomBarLeftSpc">
+           <property name="font">
+            <font>
+             <pointsize>11</pointsize>
+            </font>
+           </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
@@ -585,12 +689,17 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="saveTaskBtn">
+          <widget class="QPushButton" name="btnSaveTask">
            <property name="minimumSize">
             <size>
              <width>120</width>
-             <height>36</height>
+             <height>30</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>11</pointsize>
+            </font>
            </property>
            <property name="text">
             <string>保存任务</string>

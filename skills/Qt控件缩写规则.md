@@ -7,6 +7,8 @@
 | QToolButton  | tbn | QFrame         | frm |
 | QComboBox    | cmb | QSlider        | sld |
 | QLineEdit    | le  | QScrollBar     | scb |
+| QDateTimeEdit | dte | QTextEdit     | txe |
+| QScrollArea   | sra | QDoubleSpinBox | spb |
 | QTabWidget   | tw  | QTextBrowser   | txb |
 | QWidget      | wd  | QLayout        | ly  |
 | QDialog      | dlg | QProcessBar    | prb |

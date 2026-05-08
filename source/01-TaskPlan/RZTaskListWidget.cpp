@@ -49,7 +49,7 @@ void RZTaskListWidget::initParams()
 void RZTaskListWidget::initObject()
 {
     // scrollContent 在 .ui 中挂载了垂直布局，用于顺序放置任务卡片
-    m_taskListLayout = qobject_cast<QVBoxLayout *>(ui->scrollContent->layout());
+    m_taskListLayout = qobject_cast<QVBoxLayout *>(ui->wdScrollContent->layout());
     updateTaskItemWidthConstraints();
     updateBadge();
 }
@@ -57,8 +57,8 @@ void RZTaskListWidget::initObject()
 // 关联信号与槽函数：将顶部按钮动作转为组件对外语义
 void RZTaskListWidget::initConnect()
 {
-    connect(ui->newTaskBtn, &QPushButton::clicked, this, &RZTaskListWidget::newTaskClicked);
-    connect(ui->deleteTaskBtn, &QPushButton::clicked, this, &RZTaskListWidget::onDeleteTaskClicked);
+    connect(ui->btnNewTask, &QPushButton::clicked, this, &RZTaskListWidget::newTaskClicked);
+    connect(ui->btnDeleteTask, &QPushButton::clicked, this, &RZTaskListWidget::onDeleteTaskClicked);
 }
 
 // 添加任务项：根据传入字段创建任务卡片并插入列表
@@ -77,7 +77,7 @@ void RZTaskListWidget::addTask(QString taskId, QString taskName,
     }
 
     // 创建任务项组件（父对象设为 scrollContent，便于布局和生命周期统一管理）
-    TaskItemWidget *item = new TaskItemWidget(ui->scrollContent);
+    TaskItemWidget *item = new TaskItemWidget(ui->wdScrollContent);
 
     // 任务卡片横向不拉伸，占满可用宽度上限后由布局居中
     item->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
@@ -200,13 +200,13 @@ void RZTaskListWidget::resizeEvent(QResizeEvent *event)
 // - 卡片宽于 viewport，出现不必要的水平拥挤/错位感。
 void RZTaskListWidget::updateTaskItemWidthConstraints()
 {
-    if (!ui || !ui->taskScrollArea || !ui->scrollContent)
+    if (!ui || !ui->sraTaskList || !ui->wdScrollContent)
     {
         return;
     }
 
     // 计算滚动内容区可用宽度，避免任务卡片宽度超过容器导致“看起来不居中”
-    const int viewportWidth = ui->taskScrollArea->viewport()->width();
+    const int viewportWidth = ui->sraTaskList->viewport()->width();
     const QMargins margins = m_taskListLayout ? m_taskListLayout->contentsMargins() : QMargins();
     const int availableWidth = qMax(0, viewportWidth - margins.left() - margins.right());
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>RZTaskListWidget</class>
- <widget class="QWidget" name="rzTaskListWidgetWd">
+ <widget class="QWidget" name="wdTaskList">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -27,7 +27,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="headerFrm">
+    <widget class="QFrame" name="frmTaskListHeader">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -48,7 +48,7 @@
        <number>3</number>
       </property>
       <item>
-       <widget class="QLabel" name="titleLbl">
+       <widget class="QLabel" name="lblTaskListTitle">
         <property name="text">
          <string>任务列表</string>
         </property>
@@ -70,7 +70,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="newTaskBtn">
+         <widget class="QPushButton" name="btnNewTask">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -91,7 +91,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="deleteTaskBtn">
+         <widget class="QPushButton" name="btnDeleteTask">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -114,14 +114,14 @@
        </layout>
       </item>
       <item>
-       <widget class="QScrollArea" name="taskScrollArea">
+      <widget class="QScrollArea" name="sraTaskList">
         <property name="horizontalScrollBarPolicy">
          <enum>Qt::ScrollBarAlwaysOff</enum>
         </property>
         <property name="widgetResizable">
          <bool>true</bool>
         </property>
-        <widget class="QWidget" name="scrollContent">
+        <widget class="QWidget" name="wdScrollContent">
          <property name="geometry">
           <rect>
            <x>0</x>

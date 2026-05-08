@@ -20,6 +20,27 @@
 #include <QTableWidget>
 #include <QTableWidgetItem>
 
+namespace
+{
+QString generateTaskId()
+{
+    return QStringLiteral("MSN-%1")
+            .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmsszzz")));
+}
+
+QString generatePointTargetId()
+{
+    return QStringLiteral("PT-%1")
+            .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmsszzz")));
+}
+
+QString generateAreaTargetId()
+{
+    return QStringLiteral("AR-%1")
+            .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmsszzz")));
+}
+} // namespace
+
 RZSetTaskPlan::RZSetTaskPlan(QWidget *parent)
     : QWidget(parent), ui(new Ui::RZSetTaskPlan)
 {
@@ -53,43 +74,54 @@ void RZSetTaskPlan::initParams()
 void RZSetTaskPlan::initObject()
 {
     // 点目标表：整行选中、单选、只读显示；编辑通过弹窗完成。
-    ui->pointTargetTbw->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->pointTargetTbw->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->pointTargetTbw->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->pointTargetTbw->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->pointTargetTbw->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->tbwPointTarget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tbwPointTarget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tbwPointTarget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tbwPointTarget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tbwPointTarget->setContextMenuPolicy(Qt::CustomContextMenu);
     updatePointTargetActionBtnState();
 
     // 区域目标表：配置与点目标一致，统一交互模型。
-    ui->areaTargetTbw->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->areaTargetTbw->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->areaTargetTbw->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->areaTargetTbw->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tbwAreaTarget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tbwAreaTarget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tbwAreaTarget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tbwAreaTarget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     updateAreaTargetActionBtnState();
 
     // 默认只读，进入“新建/编辑”流程后再解锁
     setFormEditable(false);
+
+    // 字段标签统一美化：与点目标/区域目标编辑弹窗保持一致。
+    const QString fieldLabelStyle = QStringLiteral(
+            "QLabel { color: #00b4ff; font-size: 10px; font-weight: 600; padding: 0 0 2px 2px; }");
+    ui->lblTaskName->setStyleSheet(fieldLabelStyle);
+    ui->lblTaskType->setStyleSheet(fieldLabelStyle);
+    ui->lblPriority->setStyleSheet(fieldLabelStyle);
+    ui->lblThreatLevelTitle->setStyleSheet(fieldLabelStyle);
+    ui->lblStartTime->setStyleSheet(fieldLabelStyle);
+    ui->lblEndTime->setStyleSheet(fieldLabelStyle);
+    ui->lblTaskRemark->setStyleSheet(fieldLabelStyle);
 }
 
 void RZSetTaskPlan::initConnect()
 {
     // 基础表单保存。
-    connect(ui->saveTaskBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onSaveTask);
+    connect(ui->btnSaveTask, &QPushButton::clicked, this, &RZSetTaskPlan::onSaveTask);
 
     // 点目标增删改 + 表格交互（选中、双击、右键）。
-    connect(ui->addPointTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onAddPointTarget);
-    connect(ui->editPointTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onEditPointTarget);
-    connect(ui->deletePointTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onDeletePointTarget);
-    connect(ui->pointTargetTbw, &QTableWidget::itemSelectionChanged, this, &RZSetTaskPlan::updatePointTargetActionBtnState);
-    connect(ui->pointTargetTbw, &QTableWidget::cellDoubleClicked, this, &RZSetTaskPlan::onPointTargetDoubleClicked);
-    connect(ui->pointTargetTbw, &QWidget::customContextMenuRequested, this, &RZSetTaskPlan::onPointTargetContextMenu);
+    connect(ui->btnAddPointTarget, &QPushButton::clicked, this, &RZSetTaskPlan::onAddPointTarget);
+    connect(ui->btnEditPointTarget, &QPushButton::clicked, this, &RZSetTaskPlan::onEditPointTarget);
+    connect(ui->btnDeletePointTarget, &QPushButton::clicked, this, &RZSetTaskPlan::onDeletePointTarget);
+    connect(ui->tbwPointTarget, &QTableWidget::itemSelectionChanged, this, &RZSetTaskPlan::updatePointTargetActionBtnState);
+    connect(ui->tbwPointTarget, &QTableWidget::cellDoubleClicked, this, &RZSetTaskPlan::onPointTargetDoubleClicked);
+    connect(ui->tbwPointTarget, &QWidget::customContextMenuRequested, this, &RZSetTaskPlan::onPointTargetContextMenu);
 
     // 区域目标增删改 + 表格交互（选中、双击）。
-    connect(ui->addAreaTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onAddAreaTarget);
-    connect(ui->editAreaTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onEditAreaTarget);
-    connect(ui->deleteAreaTargetBtn, &QPushButton::clicked, this, &RZSetTaskPlan::onDeleteAreaTarget);
-    connect(ui->areaTargetTbw, &QTableWidget::itemSelectionChanged, this, &RZSetTaskPlan::updateAreaTargetActionBtnState);
-    connect(ui->areaTargetTbw, &QTableWidget::cellDoubleClicked, this, [this](int row, int)
+    connect(ui->btnAddAreaTarget, &QPushButton::clicked, this, &RZSetTaskPlan::onAddAreaTarget);
+    connect(ui->btnEditAreaTarget, &QPushButton::clicked, this, &RZSetTaskPlan::onEditAreaTarget);
+    connect(ui->btnDeleteAreaTarget, &QPushButton::clicked, this, &RZSetTaskPlan::onDeleteAreaTarget);
+    connect(ui->tbwAreaTarget, &QTableWidget::itemSelectionChanged, this, &RZSetTaskPlan::updateAreaTargetActionBtnState);
+    connect(ui->tbwAreaTarget, &QTableWidget::cellDoubleClicked, this, [this](int row, int)
             {
                 editAreaTargetAtRow(row);
             });
@@ -120,27 +152,26 @@ bool RZSetTaskPlan::triggerSave(bool showSuccessMessage)
     // ==========================
     // 先将界面值提取到局部变量，后续校验与组装统一基于该快照，
     // 避免在函数内多次直接访问 UI 导致“读取时机不一致”。
-    const QString taskName = ui->taskNameEdit->text().trimmed();
-    const QString taskId = ui->taskIdEdit->text().trimmed();
-    const QDateTime startTime = ui->startTimeEdit->dateTime();
-    const QDateTime endTime = ui->endTimeEdit->dateTime();
-    const int taskTypeIndex = ui->taskTypeCombo->currentIndex();
-    const int priorityIndex = ui->priorityCombo->currentIndex();
+    const QString taskName = ui->leTaskName->text().trimmed();
+    QString taskId = m_lastSavedTaskInfo.taskId.trimmed();
+    if (taskId.isEmpty())
+    {
+        taskId = generateTaskId();
+    }
+    const QDateTime startTime = ui->dteStartTime->dateTime();
+    const QDateTime endTime = ui->dteEndTime->dateTime();
+    const int taskTypeIndex = ui->cmbTaskType->currentIndex();
+    const int priorityIndex = ui->cmbPriority->currentIndex();
 
     // ==========================
     // 第三阶段：输入有效性校验（失败即早返回）
     // ==========================
     // 校验顺序遵循“用户最容易理解/修复”的原则：
-    // 名称 -> 编号 -> 时间 -> 枚举索引 -> 目标清单。
+    // 名称 -> 时间 -> 枚举索引 -> 目标清单。
     // 目标清单要求：点目标和区域目标至少其一非空，防止“空任务”被保存。
     if (taskName.isEmpty())
     {
         QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请输入任务名称。"));
-        return false;
-    }
-    if (taskId.isEmpty())
-    {
-        QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请输入任务编号。"));
         return false;
     }
     if (startTime >= endTime)
@@ -181,6 +212,8 @@ bool RZSetTaskPlan::triggerSave(bool showSuccessMessage)
     info.taskName = taskName;
     info.taskId = taskId;
     info.taskType = (taskTypeIndex == 0) ? TaskType::SEAD : TaskType::DEAD;
+    // 威胁等级由外部组件设定，此处仅透传，不参与编辑。
+    info.overallThreatLevel = m_lastSavedTaskInfo.overallThreatLevel;
 
     switch (priorityIndex)
     {
@@ -208,7 +241,7 @@ bool RZSetTaskPlan::triggerSave(bool showSuccessMessage)
             static_cast<uint>(QDateTime::currentSecsSinceEpoch()),
             info.startTimestampSec,
             info.endTimestampSec);
-    info.intent = ui->taskRemarkEdit->toPlainText().trimmed();
+    info.intent = ui->txeTaskRemark->toPlainText().trimmed();
 
     // ==========================
     // 第五阶段：缓存回写 + 多通道保存通知
@@ -245,45 +278,47 @@ void RZSetTaskPlan::loadTaskForEdit(const TaskBasicInfo &taskInfo, const QList<P
     m_pointTargets = pointTargets;
     m_areaTargets = areaTargets;
 
-    ui->taskNameEdit->setText(taskInfo.taskName);
-    ui->taskIdEdit->setText(taskInfo.taskId);
-    ui->taskTypeCombo->setCurrentIndex(taskInfo.taskType == TaskType::DEAD ? 1 : 0);
+    ui->leTaskName->setText(taskInfo.taskName);
+    ui->cmbTaskType->setCurrentIndex(taskInfo.taskType == TaskType::DEAD ? 1 : 0);
 
     switch (taskInfo.priority)
     {
         case PriorityLevel::P1:
-            ui->priorityCombo->setCurrentIndex(0);
+            ui->cmbPriority->setCurrentIndex(0);
             break;
         case PriorityLevel::P2:
-            ui->priorityCombo->setCurrentIndex(1);
+            ui->cmbPriority->setCurrentIndex(1);
             break;
         default:
-            ui->priorityCombo->setCurrentIndex(2);
+            ui->cmbPriority->setCurrentIndex(2);
             break;
     }
 
-    ui->startTimeEdit->setDateTime(QDateTime::fromSecsSinceEpoch(taskInfo.startTimestampSec));
-    ui->endTimeEdit->setDateTime(QDateTime::fromSecsSinceEpoch(taskInfo.endTimestampSec));
-    ui->taskRemarkEdit->setPlainText(taskInfo.intent);
+    ui->dteStartTime->setDateTime(QDateTime::fromSecsSinceEpoch(taskInfo.startTimestampSec));
+    ui->dteEndTime->setDateTime(QDateTime::fromSecsSinceEpoch(taskInfo.endTimestampSec));
+    ui->txeTaskRemark->setPlainText(taskInfo.intent);
+
+    // 威胁等级由外部组件计算，此处仅做展示。
+    ui->leThreatLevel->setText(threatLevelTypeToChinese(taskInfo.overallThreatLevel));
 
     // 重建点目标表格（按缓存顺序回填）。
-    ui->pointTargetTbw->setRowCount(0);
+    ui->tbwPointTarget->setRowCount(0);
     for (int i = 0; i < m_pointTargets.size(); ++i)
     {
-        ui->pointTargetTbw->insertRow(i);
+        ui->tbwPointTarget->insertRow(i);
         setPointTargetRow(i, m_pointTargets.at(i));
     }
 
     // 重建区域目标表格（按缓存顺序回填）。
-    ui->areaTargetTbw->setRowCount(0);
+    ui->tbwAreaTarget->setRowCount(0);
     for (int i = 0; i < m_areaTargets.size(); ++i)
     {
-        ui->areaTargetTbw->insertRow(i);
+        ui->tbwAreaTarget->insertRow(i);
         setAreaTargetRow(i, m_areaTargets.at(i));
     }
 
-    ui->pointTargetTbw->clearSelection();
-    ui->areaTargetTbw->clearSelection();
+    ui->tbwPointTarget->clearSelection();
+    ui->tbwAreaTarget->clearSelection();
     // 进入编辑态后才允许操作表单控件与目标按钮。
     setFormEditable(true);
     updatePointTargetActionBtnState();
@@ -298,24 +333,24 @@ void RZSetTaskPlan::resetForNewTask()
     // 并清除上一条任务在界面与内存中的残留数据。
 
     // 1) 清空任务基础输入字段。
-    ui->taskNameEdit->clear();
-    ui->taskIdEdit->clear();
+    ui->leTaskName->clear();
 
     // 2) 将下拉框恢复到默认选项（索引 0）。
-    // taskTypeCombo: 默认任务类型
-    // taskTypeCombo_2: 默认优先级
-    ui->taskTypeCombo->setCurrentIndex(0);
-    ui->priorityCombo->setCurrentIndex(0);
+    // cmbTaskType: 默认任务类型
+    // cmbPriority: 默认优先级
+    ui->cmbTaskType->setCurrentIndex(0);
+    ui->cmbPriority->setCurrentIndex(0);
 
-    // 3) 清空任务备注/意图文本。
-    ui->taskRemarkEdit->clear();
+    // 3) 清空任务备注/意图文本，重置威胁等级展示。
+    ui->txeTaskRemark->clear();
+    ui->leThreatLevel->setText(QStringLiteral("--"));
 
     // 4) 重置时间窗口：
     // 开始时间=当前时刻，结束时间=当前+1小时。
     // 保证新建时能直接通过“开始<结束”的基础时间校验。
     const QDateTime now = QDateTime::currentDateTime();
-    ui->startTimeEdit->setDateTime(now);
-    ui->endTimeEdit->setDateTime(now.addSecs(3600));
+    ui->dteStartTime->setDateTime(now);
+    ui->dteEndTime->setDateTime(now.addSecs(3600));
 
     // 5) 清空内存缓存：
     // - m_lastSavedTaskInfo: 最近一次保存/加载的任务基础信息
@@ -327,10 +362,10 @@ void RZSetTaskPlan::resetForNewTask()
 
     // 6) 清空两张目标表格及其选中态。
     // 表格是 m_pointTargets/m_areaTargets 的视图，需要与缓存同步清空。
-    ui->pointTargetTbw->setRowCount(0);
-    ui->pointTargetTbw->clearSelection();
-    ui->areaTargetTbw->setRowCount(0);
-    ui->areaTargetTbw->clearSelection();
+    ui->tbwPointTarget->setRowCount(0);
+    ui->tbwPointTarget->clearSelection();
+    ui->tbwAreaTarget->setRowCount(0);
+    ui->tbwAreaTarget->clearSelection();
 
     // 7) 进入可编辑状态（新建即编辑），并刷新按钮可用状态。
     // 例如：新增按钮可点，编辑/删除按钮取决于是否有选中行。
@@ -361,34 +396,28 @@ void RZSetTaskPlan::onAddPointTarget()
         }
     }
 
-    // 保护：若目标名称来源为空，直接提示并终止，避免弹窗后下拉框为空无法提交。
-    if (targetNames.isEmpty())
-    {
-        QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("未添加点目标名称，请先添加点目标后再执行该操作。"));
-        return;
-    }
-
     dialog.setTargetNameOptions(targetNames);
     if (dialog.exec() != QDialog::Accepted)
     {
         return;
     }
 
-    const PointTargetInfo targetInfo = dialog.pointTargetInfo();
-    // 以点目标编号作为唯一键，避免重复插入。
+    PointTargetInfo targetInfo = dialog.pointTargetInfo();
+    targetInfo.targetId = generatePointTargetId();
+    // 以自动生成的点目标编号作为内部唯一键，避免重复插入。
     for (const PointTargetInfo &existing : m_pointTargets)
     {
         if (existing.targetId == targetInfo.targetId)
         {
-            QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("点目标编号重复，请使用其他编号。"));
+            QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("点目标编号重复，请重新添加。"));
             return;
         }
     }
 
     // 数据先入缓存，再更新表格，保持“数据源 -> 视图”的单向同步。
     m_pointTargets.append(targetInfo);
-    const int row = ui->pointTargetTbw->rowCount();
-    ui->pointTargetTbw->insertRow(row);
+    const int row = ui->tbwPointTarget->rowCount();
+    ui->tbwPointTarget->insertRow(row);
     setPointTargetRow(row, targetInfo);
     updatePointTargetActionBtnState();
     forceRefreshView();
@@ -402,7 +431,7 @@ void RZSetTaskPlan::onEditPointTarget()
     }
 
     // 统一复用按行编辑逻辑，避免按钮/双击/右键三套实现分叉。
-    editPointTargetAtRow(ui->pointTargetTbw->currentRow());
+    editPointTargetAtRow(ui->tbwPointTarget->currentRow());
 }
 
 void RZSetTaskPlan::onDeletePointTarget()
@@ -412,7 +441,7 @@ void RZSetTaskPlan::onDeletePointTarget()
         return;
     }
 
-    const int row = ui->pointTargetTbw->currentRow();
+    const int row = ui->tbwPointTarget->currentRow();
     if (row < 0 || row >= m_pointTargets.size())
     {
         QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请先选择要删除的点目标。"));
@@ -429,7 +458,7 @@ void RZSetTaskPlan::onDeletePointTarget()
 
     // 删除缓存后再删视图行，避免索引漂移引发错删。
     m_pointTargets.removeAt(row);
-    ui->pointTargetTbw->removeRow(row);
+    ui->tbwPointTarget->removeRow(row);
     updatePointTargetActionBtnState();
     forceRefreshView();
 }
@@ -437,10 +466,10 @@ void RZSetTaskPlan::onDeletePointTarget()
 void RZSetTaskPlan::updatePointTargetActionBtnState()
 {
     // 编辑态 + 有选中行 才允许编辑/删除；添加仅受编辑态控制。
-    const bool hasSelection = m_formEditable && (ui->pointTargetTbw->currentRow() >= 0);
-    ui->addPointTargetBtn->setEnabled(m_formEditable);
-    ui->editPointTargetBtn->setEnabled(hasSelection);
-    ui->deletePointTargetBtn->setEnabled(hasSelection);
+    const bool hasSelection = m_formEditable && (ui->tbwPointTarget->currentRow() >= 0);
+    ui->btnAddPointTarget->setEnabled(m_formEditable);
+    ui->btnEditPointTarget->setEnabled(hasSelection);
+    ui->btnDeletePointTarget->setEnabled(hasSelection);
 }
 
 void RZSetTaskPlan::onPointTargetDoubleClicked(int row, int column)
@@ -451,19 +480,19 @@ void RZSetTaskPlan::onPointTargetDoubleClicked(int row, int column)
 
 void RZSetTaskPlan::onPointTargetContextMenu(const QPoint &pos)
 {
-    const int row = ui->pointTargetTbw->rowAt(pos.y());
+    const int row = ui->tbwPointTarget->rowAt(pos.y());
     if (row < 0 || row >= m_pointTargets.size())
     {
         return;
     }
 
-    ui->pointTargetTbw->selectRow(row);
+    ui->tbwPointTarget->selectRow(row);
 
     QMenu menu(this);
     QAction *editAction = menu.addAction(QStringLiteral("编辑点目标"));
     QAction *deleteAction = menu.addAction(QStringLiteral("删除点目标"));
     // 在 viewport 坐标系转全局坐标，保证菜单定位与鼠标位置一致。
-    QAction *selectedAction = menu.exec(ui->pointTargetTbw->viewport()->mapToGlobal(pos));
+    QAction *selectedAction = menu.exec(ui->tbwPointTarget->viewport()->mapToGlobal(pos));
     if (selectedAction == editAction)
     {
         editPointTargetAtRow(row);
@@ -500,20 +529,13 @@ void RZSetTaskPlan::editPointTargetAtRow(int row)
         return;
     }
 
-    const PointTargetInfo updatedInfo = dialog.pointTargetInfo();
+    PointTargetInfo updatedInfo = dialog.pointTargetInfo();
+    updatedInfo.targetId = m_pointTargets.at(row).targetId;
 
-    // 编辑时跳过当前行自身，校验其余项是否存在重复编号。
-    for (int i = 0; i < m_pointTargets.size(); ++i)
+    // 编辑时保留当前行内部编号，编号不再由界面输入。
+    if (updatedInfo.targetId.isEmpty())
     {
-        if (i == row)
-        {
-            continue;
-        }
-        if (m_pointTargets.at(i).targetId == updatedInfo.targetId)
-        {
-            QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("点目标编号重复，请使用其他编号。"));
-            return;
-        }
+        updatedInfo.targetId = generatePointTargetId();
     }
 
     // 行编辑属于就地替换，保持列表顺序不变。
@@ -525,19 +547,16 @@ void RZSetTaskPlan::editPointTargetAtRow(int row)
 void RZSetTaskPlan::setPointTargetRow(int row, const PointTargetInfo &targetInfo)
 {
     // 表格展示字段统一做格式化，保证列表信息可读。
-    const QString coordinateAndCep = QStringLiteral("%1, %2 / 圆概率误差:%3米")
+    const QString coordinateAndCep = QStringLiteral("%1, %2")
                                              .arg(targetInfo.latitude, 0, 'f', 6)
-                                             .arg(targetInfo.longitude, 0, 'f', 6)
-                                             .arg(targetInfo.cepMeters, 0, 'f', 1);
+                                             .arg(targetInfo.longitude, 0, 'f', 6);
 
     // QTableWidget 接管 item 生命周期，这里按列逐项写入展示字段。
-    ui->pointTargetTbw->setItem(row, 0, new QTableWidgetItem(targetInfo.targetId));
-    ui->pointTargetTbw->setItem(row, 1, new QTableWidgetItem(targetInfo.name));
-    ui->pointTargetTbw->setItem(row, 2, new QTableWidgetItem(targetTypeToChinese(targetInfo.type)));
-    ui->pointTargetTbw->setItem(row, 3, new QTableWidgetItem(coordinateAndCep));
-    ui->pointTargetTbw->setItem(row, 4, new QTableWidgetItem(targetInfo.band));
-    ui->pointTargetTbw->setItem(row, 5, new QTableWidgetItem(targetInfo.priority));
-    ui->pointTargetTbw->setItem(row, 6, new QTableWidgetItem(QString::number(targetInfo.requiredPk, 'f', 2)));
+    ui->tbwPointTarget->setItem(row, 0, new QTableWidgetItem(targetInfo.name));
+    ui->tbwPointTarget->setItem(row, 1, new QTableWidgetItem(targetTypeToChinese(targetInfo.type)));
+    ui->tbwPointTarget->setItem(row, 2, new QTableWidgetItem(coordinateAndCep));
+    ui->tbwPointTarget->setItem(row, 3, new QTableWidgetItem(targetInfo.priority));
+    ui->tbwPointTarget->setItem(row, 4, new QTableWidgetItem(QString::number(targetInfo.requiredPk, 'f', 2)));
 }
 
 void RZSetTaskPlan::onAddAreaTarget()
@@ -577,21 +596,13 @@ void RZSetTaskPlan::onAddAreaTarget()
         return;
     }
 
-    const AreaTargetInfo targetInfo = dialog.areaTargetInfo();
-    // 以区域目标编号作为唯一键，避免重复插入。
-    for (const AreaTargetInfo &existing : m_areaTargets)
-    {
-        if (existing.targetId == targetInfo.targetId)
-        {
-            QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("区域目标编号重复，请使用其他编号。"));
-            return;
-        }
-    }
+    AreaTargetInfo targetInfo = dialog.areaTargetInfo();
+    targetInfo.targetId = generateAreaTargetId();
 
-    // 数据先入缓存，再更新表格，保持“数据源 -> 视图”的单向同步。
+    // 数据先入缓存，再更新表格，保持”数据源 -> 视图”的单向同步。
     m_areaTargets.append(targetInfo);
-    const int row = ui->areaTargetTbw->rowCount();
-    ui->areaTargetTbw->insertRow(row);
+    const int row = ui->tbwAreaTarget->rowCount();
+    ui->tbwAreaTarget->insertRow(row);
     setAreaTargetRow(row, targetInfo);
     updateAreaTargetActionBtnState();
     forceRefreshView();
@@ -605,7 +616,7 @@ void RZSetTaskPlan::onEditAreaTarget()
     }
 
     // 统一复用按行编辑逻辑，避免按钮/双击实现分叉。
-    editAreaTargetAtRow(ui->areaTargetTbw->currentRow());
+    editAreaTargetAtRow(ui->tbwAreaTarget->currentRow());
 }
 
 void RZSetTaskPlan::onDeleteAreaTarget()
@@ -615,7 +626,7 @@ void RZSetTaskPlan::onDeleteAreaTarget()
         return;
     }
 
-    const int row = ui->areaTargetTbw->currentRow();
+    const int row = ui->tbwAreaTarget->currentRow();
     if (row < 0 || row >= m_areaTargets.size())
     {
         QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请先选择要删除的区域目标。"));
@@ -632,7 +643,7 @@ void RZSetTaskPlan::onDeleteAreaTarget()
 
     // 删除缓存后再删视图行，避免索引漂移引发错删。
     m_areaTargets.removeAt(row);
-    ui->areaTargetTbw->removeRow(row);
+    ui->tbwAreaTarget->removeRow(row);
     updateAreaTargetActionBtnState();
     forceRefreshView();
 }
@@ -640,26 +651,21 @@ void RZSetTaskPlan::onDeleteAreaTarget()
 void RZSetTaskPlan::updateAreaTargetActionBtnState()
 {
     // 编辑态 + 有选中行 才允许编辑/删除；添加仅受编辑态控制。
-    const bool hasSelection = m_formEditable && (ui->areaTargetTbw->currentRow() >= 0);
-    ui->addAreaTargetBtn->setEnabled(m_formEditable);
-    ui->editAreaTargetBtn->setEnabled(hasSelection);
-    ui->deleteAreaTargetBtn->setEnabled(hasSelection);
+    const bool hasSelection = m_formEditable && (ui->tbwAreaTarget->currentRow() >= 0);
+    ui->btnAddAreaTarget->setEnabled(m_formEditable);
+    ui->btnEditAreaTarget->setEnabled(hasSelection);
+    ui->btnDeleteAreaTarget->setEnabled(hasSelection);
 }
 
 void RZSetTaskPlan::setAreaTargetRow(int row, const AreaTargetInfo &targetInfo)
 {
-    const QString centerCoordinate = QStringLiteral("%1, %2").arg(targetInfo.centerLatitude, 0, 'f', 6).arg(targetInfo.centerLongitude, 0, 'f', 6);
-    const QString areaRange = QStringLiteral("%1 km").arg(targetInfo.radiusKm, 0, 'f', 2);
+    const int vertexCount = targetInfo.vertices.size();
 
     // QTableWidget 接管 item 生命周期，这里按列逐项写入展示字段。
-    ui->areaTargetTbw->setItem(row, 0, new QTableWidgetItem(targetInfo.targetId));
-    ui->areaTargetTbw->setItem(row, 1, new QTableWidgetItem(targetInfo.name));
-    ui->areaTargetTbw->setItem(row, 2, new QTableWidgetItem(areaGeometryTypeToChinese(targetInfo.areaType)));
-    ui->areaTargetTbw->setItem(row, 3, new QTableWidgetItem(centerCoordinate));
-    ui->areaTargetTbw->setItem(row, 4, new QTableWidgetItem(areaRange));
-    ui->areaTargetTbw->setItem(row, 5, new QTableWidgetItem(targetInfo.expectedEmitters));
-    ui->areaTargetTbw->setItem(row, 6, new QTableWidgetItem(searchStrategyTypeToChinese(targetInfo.searchStrategy)));
-    ui->areaTargetTbw->setItem(row, 7, new QTableWidgetItem(priorityToChinese(targetInfo.priority)));
+    ui->tbwAreaTarget->setItem(row, 0, new QTableWidgetItem(targetInfo.targetId));
+    ui->tbwAreaTarget->setItem(row, 1, new QTableWidgetItem(targetInfo.name));
+    ui->tbwAreaTarget->setItem(row, 2, new QTableWidgetItem(areaGeometryTypeToChinese(targetInfo.areaType)));
+    ui->tbwAreaTarget->setItem(row, 3, new QTableWidgetItem(QString::number(vertexCount)));
 }
 
 void RZSetTaskPlan::editAreaTargetAtRow(int row)
@@ -701,19 +707,12 @@ void RZSetTaskPlan::editAreaTargetAtRow(int row)
         return;
     }
 
-    const AreaTargetInfo updatedInfo = dialog.areaTargetInfo();
-    // 编辑时跳过当前行自身，校验其余项是否存在重复编号。
-    for (int i = 0; i < m_areaTargets.size(); ++i)
+    AreaTargetInfo updatedInfo = dialog.areaTargetInfo();
+    // 编辑时保留当前行内部编号，编号不再由界面输入。
+    updatedInfo.targetId = m_areaTargets.at(row).targetId;
+    if (updatedInfo.targetId.isEmpty())
     {
-        if (i == row)
-        {
-            continue;
-        }
-        if (m_areaTargets.at(i).targetId == updatedInfo.targetId)
-        {
-            QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("区域目标编号重复，请使用其他编号。"));
-            return;
-        }
+        updatedInfo.targetId = generateAreaTargetId();
     }
 
     // 行编辑属于就地替换，保持列表顺序不变。
@@ -727,13 +726,13 @@ void RZSetTaskPlan::editAreaTargetAtRow(int row)
 void RZSetTaskPlan::forceRefreshView()
 {
     // 强制刷新两张表格，处理首次插入后布局延迟更新的问题。
-    ui->pointTargetTbw->resizeRowsToContents();
-    ui->pointTargetTbw->viewport()->update();
-    ui->pointTargetTbw->updateGeometry();
+    ui->tbwPointTarget->resizeRowsToContents();
+    ui->tbwPointTarget->viewport()->update();
+    ui->tbwPointTarget->updateGeometry();
 
-    ui->areaTargetTbw->resizeRowsToContents();
-    ui->areaTargetTbw->viewport()->update();
-    ui->areaTargetTbw->updateGeometry();
+    ui->tbwAreaTarget->resizeRowsToContents();
+    ui->tbwAreaTarget->viewport()->update();
+    ui->tbwAreaTarget->updateGeometry();
 
     // QWidget 级别再触发一次刷新，规避首帧布局延迟造成的显示不完整。
     update();
@@ -746,15 +745,14 @@ void RZSetTaskPlan::setFormEditable(bool editable)
     m_formEditable = editable;
 
     // 基础信息区随编辑态统一启停，避免局部可编辑导致状态混乱。
-    ui->taskNameEdit->setEnabled(editable);
-    ui->taskIdEdit->setEnabled(editable);
-    ui->taskTypeCombo->setEnabled(editable);
-    ui->priorityCombo->setEnabled(editable);
-    ui->startTimeEdit->setEnabled(editable);
-    ui->endTimeEdit->setEnabled(editable);
-    ui->taskRemarkEdit->setEnabled(editable);
-    ui->targetTw->setEnabled(editable);
-    ui->saveTaskBtn->setEnabled(editable);
+    ui->leTaskName->setEnabled(editable);
+    ui->cmbTaskType->setEnabled(editable);
+    ui->cmbPriority->setEnabled(editable);
+    ui->dteStartTime->setEnabled(editable);
+    ui->dteEndTime->setEnabled(editable);
+    ui->txeTaskRemark->setEnabled(editable);
+    ui->twTarget->setEnabled(editable);
+    ui->btnSaveTask->setEnabled(editable);
 
     updatePointTargetActionBtnState();
     updateAreaTargetActionBtnState();

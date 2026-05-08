@@ -2,10 +2,12 @@
 // ARUA Mission Planning System - Main Window Implementation
 
 #include "MissionPlanner.h"
+#include "MissionPlannerTheme.h"
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QDebug>
+#include <QApplication>
 
 #include <QPushButton>
 #include <QLabel>
@@ -26,6 +28,25 @@
 namespace
 {
 constexpr int kTaskDbSchemaVersion = 1;
+
+QString generateAutoTaskId()
+{
+    return QStringLiteral("MSN-%1")
+            .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmsszzz")));
+}
+
+QString effectiveTaskId(const TaskBasicInfo &taskInfo)
+{
+    if (!taskInfo.taskId.trimmed().isEmpty())
+    {
+        return taskInfo.taskId.trimmed();
+    }
+    if (!taskInfo.taskUid.trimmed().isEmpty())
+    {
+        return QStringLiteral("MSN-%1").arg(taskInfo.taskUid.left(8).toUpper());
+    }
+    return generateAutoTaskId();
+}
 }
 
 MissionPlanner *MissionPlanner::GetInstance(QWidget *parent)
@@ -120,13 +141,9 @@ void MissionPlanner::initObject()
 
         refreshTaskList();
 
-        if (!m_taskStore.isEmpty())
+        if (!m_taskStore.isEmpty() && !m_taskNumberToUid.isEmpty())
         {
-            const QString firstTaskId = m_taskStore.first().basicInfo.taskId;
-            if (!firstTaskId.isEmpty())
-            {
-                onTaskItemSelected(firstTaskId);
-            }
+            onTaskItemSelected(m_taskNumberToUid.firstKey());
         } });
 }
 
@@ -151,161 +168,10 @@ void MissionPlanner::initConnect()
 // 应用科技风格样式：暗色背景、蓝色/青色强调色、发光边框，与ForceRequirementPanel统一
 void MissionPlanner::applyTechStyle()
 {
-    const QString baseBg = "#0a0e1a";
-    const QString panelBg = "#0d1326";
-    const QString borderColor = "#1a3a6a";
-    const QString accentBlue = "#00b4ff";
-    const QString accentCyan = "#00e5ff";
-    const QString textPrimary = "#e0e8f0";
-    const QString textSecondary = "#7a8ba8";
-    const QString inputBg = "#0f1a2e";
-    const QString inputBorder = "#1a3a6a";
-    const QString hoverBorder = "#00b4ff";
-    const QString successGreen = "#00e676";
-
-    // 主窗口背景
-    setStyleSheet(QString(R"(
-        QMainWindow { background-color: %1; }
-        QWidget#centralwidget { background-color: %1; }
-    )").arg(baseBg));
-
-    // 标题栏背景
-    ui->widget_Title->setStyleSheet(QString(R"(
-        QWidget#widget_Title {
-            background-color: %1;
-            border-bottom: 1px solid %2;
-        }
-    )").arg(panelBg).arg(borderColor));
-
-    // 标题文字
-    ui->titleLabel->setStyleSheet(QString(R"(
-        QLabel {
-            color: %1;
-            font-size: 16px;
-            font-weight: bold;
-            background: transparent;
-            border: none;
-            padding: 0px;
-        }
-    )").arg(accentBlue));
-
-    // 关闭按钮
-    ui->btn_Close->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: transparent;
-            border: 1px solid %1;
-            border-radius: 4px;
-            color: %2;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        QPushButton:hover {
-            background-color: #ff3355;
-            border-color: #ff3355;
-            color: #ffffff;
-        }
-    )").arg(borderColor).arg(textSecondary));
-
-    // 顶部步骤导航栏背景
-    ui->centerPanelHeader->setStyleSheet(QString(R"(
-        QFrame#centerPanelHeader {
-            background-color: %1;
-            border-bottom: 1px solid %2;
-        }
-    )").arg(panelBg).arg(borderColor));
-
-    // 步骤导航按钮样式
-    QString stepBtnStyle = QString(R"(
-        QPushButton {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 6px;
-            color: %3;
-            font-size: 13px;
-            font-weight: bold;
-            padding: 8px;
-        }
-        QPushButton:hover {
-            background-color: %4;
-            border: 1px solid %5;
-            color: %6;
-        }
-        QPushButton:checked {
-            background-color: %7;
-            border: 1px solid %5;
-            color: %6;
-        }
-    )").arg(inputBg).arg(borderColor).arg(textSecondary)
-       .arg("#0f1a3e").arg(accentBlue).arg(accentCyan)
-       .arg("#0a1a3a");
-
-    ui->step1Btn->setStyleSheet(stepBtnStyle);
-    ui->step2Btn->setStyleSheet(stepBtnStyle);
-    ui->step3Btn->setStyleSheet(stepBtnStyle);
-    ui->step4Btn->setStyleSheet(stepBtnStyle);
-    ui->step5Btn->setStyleSheet(stepBtnStyle);
-
-    // 任务信息标签（任务编号、任务名称）
-    QString infoLabelStyle = QString(R"(
-        QLabel {
-            color: %1;
-            font-size: 14px;
-            font-weight: bold;
-            background: transparent;
-            border: none;
-            padding: 4px 8px;
-        }
-    )").arg(textPrimary);
-
-
-    // 顶部操作按钮（保存、推演、下发）
-    QString actionBtnStyle = QString(R"(
-        QPushButton {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            color: %3;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 4px 12px;
-            min-height: 28px;
-        }
-        QPushButton:hover {
-            background-color: %4;
-            border: 1px solid %5;
-            color: %6;
-        }
-        QPushButton:pressed {
-            background-color: %7;
-        }
-    )").arg(inputBg).arg(borderColor).arg(textPrimary)
-       .arg("#0f1a3e").arg(hoverBorder).arg(accentCyan)
-       .arg("#081020");
-
-
-    // 内容区堆栈窗口
-    ui->contentStackedWidget->setStyleSheet(QString(R"(
-        QStackedWidget {
-            background-color: %1;
-            border: none;
-        }
-    )").arg(baseBg));
-
-    // widget_back 背景
-    ui->widget_back->setStyleSheet(QString(R"(
-        QWidget#widget_back {
-            background-color: %1;
-        }
-    )").arg(baseBg));
-
-    // widget_Center 背景
-    ui->widget_Center->setStyleSheet(QString(R"(
-        QWidget#widget_Center {
-            background-color: %1;
-        }
-    )").arg(baseBg));
-
-
+    // Authoritative stylesheet lives in theme/mission_planner_theme.qss (loaded once for QApplication).
+    // This preserves dialog styling consistency (01-TaskPlan dialogs, QMessageBox menus, etc.).
+    if (auto *app = qobject_cast<QApplication *>(QApplication::instance()))
+        MissionPlannerTheme::applyToApplication(app);
 }
 
 
@@ -401,6 +267,10 @@ void MissionPlanner::onTaskSaved(const TaskBasicInfo &taskInfo)
         entry = m_taskStore.value(m_currentEditingTaskUid);
     }
     entry.basicInfo = taskInfo;
+    if (entry.basicInfo.taskId.trimmed().isEmpty())
+    {
+        entry.basicInfo.taskId = generateAutoTaskId();
+    }
 
     const QString oldTaskUid = m_currentEditingTaskUid;
     if (!m_currentEditingTaskUid.isEmpty() && m_currentEditingTaskUid != taskInfo.taskUid)
@@ -417,16 +287,20 @@ void MissionPlanner::onTaskSaved(const TaskBasicInfo &taskInfo)
         return;
     }
 
-    m_taskStore.insert(taskInfo.taskUid, entry);
-    m_currentEditingTaskUid = taskInfo.taskUid;
+    m_taskStore.insert(entry.basicInfo.taskUid, entry);
+    m_currentEditingTaskUid = entry.basicInfo.taskUid;
     refreshTaskList();
-    onTaskItemSelected(taskInfo.taskId);
+    onTaskItemSelected(entry.basicInfo.taskId);
 }
 
 void MissionPlanner::onTaskSavedDetail(const TaskPlanningData &taskData)
 {
     // 标准入口：使用编辑页回传的完整任务数据覆盖缓存
     TaskPlanningData entry = taskData;
+    if (entry.basicInfo.taskId.trimmed().isEmpty())
+    {
+        entry.basicInfo.taskId = generateAutoTaskId();
+    }
     const TaskBasicInfo &taskInfo = entry.basicInfo;
 
     const QString oldTaskUid = m_currentEditingTaskUid;
@@ -465,10 +339,8 @@ void MissionPlanner::refreshTaskList()
     {
         const TaskPlanningData &taskData = it.value();
         const TaskBasicInfo &task = taskData.basicInfo;
-        if (!task.taskId.isEmpty())
-        {
-            m_taskNumberToUid.insert(task.taskId, task.taskUid);
-        }
+        const QString taskId = effectiveTaskId(task);
+        m_taskNumberToUid.insert(taskId, task.taskUid);
         // 根据当前阶段与仿真时间动态判定任务状态
         const uint statusTime = (m_runtimeStage == TaskPlanStage::Simulate)
                 ? m_runtimeSimTimestampSec
@@ -484,7 +356,7 @@ void MissionPlanner::refreshTaskList()
                                           .arg(QDateTime::fromSecsSinceEpoch(task.startTimestampSec).toString("yyyy-MM-dd HH:mm"))
                                           .arg(QDateTime::fromSecsSinceEpoch(task.endTimestampSec).toString("yyyy-MM-dd HH:mm"));
         // 目标数量目前使用点目标数量，后续可扩展为点+区域总和
-        mTaskListWidget->addTask(task.taskId, task.taskName, statusText, taskData.pointTargets.size(), 6, timeRange);
+        mTaskListWidget->addTask(taskId, task.taskName, statusText, taskData.pointTargets.size(), 6, timeRange);
     }
 
     // 强制刷新界面

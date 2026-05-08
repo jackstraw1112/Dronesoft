@@ -3,11 +3,75 @@
 #include "TaskItemWidget.h"
 #include "ui_TaskItemWidget.h"
 
-#include <QCoreApplication>
-#include <QFile>
-#include <QLabel>
 #include <QMouseEvent>
 #include <QStyle>
+#include <QtGlobal>
+
+namespace
+{
+    QString normalizeStatusType(const QString &status, QString *displayText)
+    {
+        const QString normalized = status.trimmed().toLower();
+
+        if (normalized == QStringLiteral("规划中") || normalized == QStringLiteral("planning"))
+        {
+            if (displayText)
+                *displayText = QStringLiteral("规划中");
+            return QStringLiteral("planning");
+        }
+        if (normalized == QStringLiteral("待执行") || normalized == QStringLiteral("ready"))
+        {
+            if (displayText)
+                *displayText = QStringLiteral("待执行");
+            return QStringLiteral("ready");
+        }
+        if (normalized == QStringLiteral("执行中") || normalized == QStringLiteral("active"))
+        {
+            if (displayText)
+                *displayText = QStringLiteral("执行中");
+            return QStringLiteral("active");
+        }
+        if (normalized == QStringLiteral("已完成") || normalized == QStringLiteral("completed"))
+        {
+            if (displayText)
+                *displayText = QStringLiteral("已完成");
+            return QStringLiteral("completed");
+        }
+
+        if (displayText)
+            *displayText = status.trimmed().isEmpty() ? QStringLiteral("未知") : status.trimmed();
+        return QStringLiteral("other");
+    }
+
+    QString normalizeThreatType(const QString &level, QString *displayText)
+    {
+        const QString trimmed = level.trimmed();
+        const QString normalized = trimmed.toLower();
+
+        if (trimmed == QStringLiteral("高") || normalized == QStringLiteral("high"))
+        {
+            if (displayText)
+                *displayText = QStringLiteral("高");
+            return QStringLiteral("high");
+        }
+        if (trimmed == QStringLiteral("中") || normalized == QStringLiteral("medium"))
+        {
+            if (displayText)
+                *displayText = QStringLiteral("中");
+            return QStringLiteral("medium");
+        }
+        if (trimmed == QStringLiteral("低") || normalized == QStringLiteral("low"))
+        {
+            if (displayText)
+                *displayText = QStringLiteral("低");
+            return QStringLiteral("low");
+        }
+
+        if (displayText)
+            *displayText = trimmed.isEmpty() ? QStringLiteral("未知") : trimmed;
+        return QStringLiteral("unknown");
+    }
+} // namespace
 
 TaskItemWidget::TaskItemWidget(QWidget *parent)
     : QFrame(parent), ui(new Ui::TaskItemWidget), m_taskId("")
@@ -38,48 +102,21 @@ void TaskItemWidget::initParams()
 
 void TaskItemWidget::initObject()
 {
-    // 组件基础属性：对象名用于 QSS 选择器，鼠标样式强化“可点击”语义。
-    setObjectName("taskItem");
+    // QSS 选择在 theme/mission_planner_theme.qss 中命中根 QFrame（与 .ui 的 objectName 对齐）。
+    // 指针光标强化“可点击”语义。
+    setObjectName("frmTaskItem");
     setCursor(Qt::PointingHandCursor);
     // selected/statusType 作为动态属性，供 QSS 根据状态切换视觉样式。
     setProperty("selected", false);
-    ui->statusLbl->setProperty("statusType", "other");
-    // 优先加载外部样式，再主动刷新一次确保属性已生效。
-    loadStyleSheet();
+    setProperty("statusType", "other");
+    setProperty("threatType", "unknown");
+    ui->lblStatus->setProperty("statusType", "other");
+    ui->lblThreatLevel->setProperty("threatType", "unknown");
     refreshStyle();
 }
 
 void TaskItemWidget::initConnect()
 {
-}
-
-void TaskItemWidget::loadStyleSheet()
-{
-    QString qss;
-    const QString appDir = QCoreApplication::applicationDirPath();
-    // 样式文件路径按“运行目录 -> 构建目录回退 -> 源码目录回退”逐级尝试。
-    // 这样无论从安装包运行还是开发目录运行，都能尽量命中样式文件。
-    const QStringList candidates = {
-            appDir + "/theme/TaskItemWidget.qss",
-            appDir + "/../theme/TaskItemWidget.qss",
-            appDir + "/../source/01-TaskPlan/TaskItemWidget.qss",
-            "source/01-TaskPlan/TaskItemWidget.qss"};
-
-    for (const QString &path : candidates)
-    {
-        QFile file(path);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            // 命中首个可读取文件后立即使用，避免后续路径覆盖前者。
-            qss = QString::fromUtf8(file.readAll());
-            break;
-        }
-    }
-
-    if (!qss.isEmpty())
-    {
-        setStyleSheet(qss);
-    }
 }
 
 void TaskItemWidget::refreshStyle()
@@ -88,54 +125,39 @@ void TaskItemWidget::refreshStyle()
     style()->unpolish(this);
     style()->polish(this);
     // statusLabel 单独刷新，确保 statusType 对标签颜色/边框等样式生效。
-    style()->unpolish(ui->statusLbl);
-    style()->polish(ui->statusLbl);
+    style()->unpolish(ui->lblStatus);
+    style()->polish(ui->lblStatus);
+    style()->unpolish(ui->lblThreatLevel);
+    style()->polish(ui->lblThreatLevel);
     update();
 }
 
 void TaskItemWidget::setTaskId(QString taskId)
 {
-    m_taskId = taskId;
-    ui->taskIdLbl->setText(taskId);
+    m_taskId = taskId.trimmed();
+    if (m_taskId.isEmpty())
+    {
+        m_taskId = QStringLiteral("MSN-UNKNOWN");
+    }
+    ui->lblTaskId->setText(m_taskId);
 }
 
 void TaskItemWidget::setTaskName(QString taskName)
 {
-    ui->taskNameLbl->setText(taskName);
+    const QString trimmed = taskName.trimmed();
+    ui->lblTaskName->setText(trimmed.isEmpty() ? QStringLiteral("未命名任务") : trimmed);
 }
 
 void TaskItemWidget::setTaskStatus(QString status)
 {
     // 保留原始状态值，便于后续扩展（如日志、导出或状态比较）。
-    m_status = status;
+    m_status = status.trimmed();
 
-    // 兼容中英文本状态输入，并统一映射到内部 statusType 样式键。
-    if (status == "规划中" || status == "planning")
-    {
-        ui->statusLbl->setText(status == "planning" ? "规划中" : status);
-        ui->statusLbl->setProperty("statusType", "planning");
-    }
-    else if (status == "待执行" || status == "ready")
-    {
-        ui->statusLbl->setText(status == "ready" ? "待执行" : status);
-        ui->statusLbl->setProperty("statusType", "ready");
-    }
-    else if (status == "执行中" || status == "active")
-    {
-        ui->statusLbl->setText(status == "active" ? "执行中" : status);
-        ui->statusLbl->setProperty("statusType", "active");
-    }
-    else if (status == "已完成" || status == "completed")
-    {
-        ui->statusLbl->setText(status == "completed" ? "已完成" : status);
-        ui->statusLbl->setProperty("statusType", "completed");
-    }
-    else
-    {
-        // 未知状态按原文显示，并回落到 other 样式。
-        ui->statusLbl->setText(status);
-        ui->statusLbl->setProperty("statusType", "other");
-    }
+    QString statusText;
+    const QString statusType = normalizeStatusType(m_status, &statusText);
+    ui->lblStatus->setText(statusText);
+    ui->lblStatus->setProperty("statusType", statusType);
+    setProperty("statusType", statusType);
 
     // 状态文字/样式更新后立即刷新，避免“下一次交互才生效”。
     refreshStyle();
@@ -143,25 +165,52 @@ void TaskItemWidget::setTaskStatus(QString status)
 
 void TaskItemWidget::setTargetCount(int count)
 {
-    ui->targetCountLbl->setText(QString("◉ %1 目标").arg(count));
+    const int safeCount = qMax(0, count);
+    ui->lblTargetCount->setText(QString("◉ %1 目标").arg(safeCount));
+
+    if (safeCount >= 8)
+        setProperty("targetDensity", "high");
+    else if (safeCount >= 4)
+        setProperty("targetDensity", "medium");
+    else
+        setProperty("targetDensity", "low");
+
+    refreshStyle();
 }
 
 void TaskItemWidget::setThreatLevel(const QString &level)
 {
-    ui->threatLevelLbl->setText(QString("⚠ 威胁：%1").arg(level));
+    QString displayText;
+    const QString threatType = normalizeThreatType(level, &displayText);
+    ui->lblThreatLevel->setText(QString("⚠ 威胁：%1").arg(displayText));
+    ui->lblThreatLevel->setProperty("threatType", threatType);
+    setProperty("threatType", threatType);
+    refreshStyle();
 }
 
 void TaskItemWidget::setTime(QString time)
 {
     const QString trimmed = time.trimmed();
-    // 已包含时间区间分隔符时按原文展示，否则补齐为“开始 ~ 结束”同值占位。
-    if (trimmed.contains("~") || trimmed.contains("-"))
+    if (trimmed.isEmpty())
     {
-        ui->timeLbl->setText(QString("⏱ %1").arg(trimmed));
+        ui->lblTime->setText(QStringLiteral("⏱ --:-- ~ --:--"));
+        return;
+    }
+
+    // 已包含时间区间分隔符时按原文展示，否则补齐为“开始 ~ 结束”同值占位。
+    if (trimmed.contains("~"))
+    {
+        ui->lblTime->setText(QString("⏱ %1").arg(trimmed));
+    }
+    else if (trimmed.contains(" - "))
+    {
+        QString normalized = trimmed;
+        normalized.replace(" - ", " ~ ");
+        ui->lblTime->setText(QString("⏱ %1").arg(normalized));
     }
     else
     {
-        ui->timeLbl->setText(QString("⏱ %1 ~ %1").arg(trimmed));
+        ui->lblTime->setText(QString("⏱ %1 ~ %1").arg(trimmed));
     }
 }
 
