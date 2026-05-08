@@ -10,12 +10,18 @@
 #include <QGroupBox>
 #include <QComboBox>
 #include <QTableWidget>
+#include <QHeaderView>
+#include <QPushButton>
+#include <QMap>
+#include <cmath>
 
 
 RoutePlanning::RoutePlanning(QWidget *parent) : QFrame(parent), ui(new Ui::RoutePlanning)
 {
     ui->setupUi(this);
     applyTechStyle();
+
+    connect(ui->pushButton, &QPushButton::clicked, this, &RoutePlanning::onPlanAllClicked);
 }
 
 RoutePlanning::~RoutePlanning()
@@ -23,6 +29,246 @@ RoutePlanning::~RoutePlanning()
     delete ui;
 }
 
+void RoutePlanning::setAllocationData(const QList<UavAssignment> &assignments, int totalUavCount)
+{
+    m_assignments = assignments;
+    m_totalUavCount = totalUavCount;
+
+    // 清空表格并显示分配摘要
+    ui->tableWidget->setRowCount(0);
+    ui->tableWidget->clearContents();
+
+    // 表格中显示已分配无人机总数
+    int assignedCount = m_assignments.size();
+    ui->pushButton->setText(QString("一键自动规划  (%1 架 UAV)").arg(assignedCount));
+}
+
+// ============================================================
+// "一键自动规划" 按钮点击
+// ============================================================
+void RoutePlanning::onPlanAllClicked()
+{
+    if (m_assignments.isEmpty()) {
+        return;
+    }
+
+    // 清空表格
+    ui->tableWidget->setRowCount(0);
+    ui->tableWidget->clearContents();
+
+    // 按目标分组 UAV
+    QMap<QString, QList<UavAssignment>> groups;  // key = targetId
+    for (const auto &a : m_assignments)
+        groups[a.targetId].append(a);
+
+    // 基准坐标（参考 main_demo.cpp 使用北京周边区域）
+    const double baseLon = 116.35;
+    const double baseLat = 39.95;
+
+    int assignedRowCount = 0;
+
+    // 遍历每个目标分组进行航路规划
+    for (auto it = groups.begin(); it != groups.end(); ++it) {
+        const QList<UavAssignment> &group = it.value();
+        if (group.isEmpty()) continue;
+
+        // --- 构建 start_positions ---
+        std::vector<GeoPoint> startPositions;
+        for (int i = 0; i < group.size(); ++i) {
+            // 在基准点附近散布起飞点（每架UAV偏移微小量）
+            double lonOff = (i % 5) * 0.008;
+            double latOff = (i / 5) * 0.006;
+            startPositions.push_back({
+                baseLon + lonOff,
+                baseLat + latOff + 0.08,
+                50.0 + (i % 7) * 2.0
+            });
+        }
+
+        // --- 构建 target_area ---
+        std::vector<GeoPoint> targetArea;
+        if (group.first().targetType == "AR") {
+            // 区域目标：4 个点组成一个矩形区域
+            double tLon = baseLon + 0.12;
+            double tLat = baseLat - 0.06;
+            targetArea.push_back({tLon, tLat, 30.0});
+            targetArea.push_back({tLon + 0.05, tLat, 30.0});
+            targetArea.push_back({tLon + 0.05, tLat - 0.04, 30.0});
+            targetArea.push_back({tLon, tLat - 0.04, 30.0});
+        } else {
+            // 点目标：单个坐标点
+            double tLon = baseLon + 0.15;
+            double tLat = baseLat - 0.10;
+            targetArea.push_back({tLon, tLat, 30.0});
+        }
+
+        // 构建 PlanningInput 并调用规划算法
+        PlanningInput input = buildPlanningInput(group, startPositions, targetArea);
+        PlanningResult result = planPaths(input);
+
+        // 将本组结果填入表格
+        populateTable(result, group.first().targetName);
+        assignedRowCount += group.size();
+    }
+
+    ui->pushButton->setText(QString("航路规划完成  (%1 架)").arg(assignedRowCount));
+}
+
+// ============================================================
+// 根据 UI 控件参数构建规划输入
+// ============================================================
+PlanningInput RoutePlanning::buildPlanningInput(const QList<UavAssignment> &group,
+                                                 const std::vector<GeoPoint> &startPositions,
+                                                 const std::vector<GeoPoint> &targetArea)
+{
+    PlanningInput input;
+
+    input.start_positions = startPositions;
+    input.target_area = targetArea;
+    input.uav_count = static_cast<int>(group.size());
+
+    // ---- 从 UI 读取参数 ----
+
+    // 爬升高度 → 巡航高度
+    input.cruise_alt = parseValue(ui->label_ClimbHeightValue->text());
+    if (input.cruise_alt < 100.0) input.cruise_alt = 800.0;
+
+    // 巡航速度 km/h → m/s
+    input.cruise_speed_mps = parseSpeed(ui->label_CruiseSpeedValue->text());
+    if (input.cruise_speed_mps < 1.0) input.cruise_speed_mps = 60.0;
+
+    // 搜索半径：从搜索高度标签读取
+    {
+        double sh = parseValue(ui->label_AreaSearchHeightValue->text());
+        input.search_radius = (sh > 10.0) ? sh * 4.0 : 2000.0;
+    }
+
+    // 散点间距：默认 400m
+    input.waypoint_spacing_m = 400.0;
+
+    // 搜索形式 → SearchPattern
+    QString searchForm = ui->comboBox_SearchForm->currentText();
+    if (searchForm.contains(QString::fromUtf8("8")))
+        input.search_pattern = SearchPattern::FIGURE8;
+    else
+        input.search_pattern = SearchPattern::SPIRAL;
+
+    // 巡航方式 → 影响巡航高度上限
+    QString cruiseMode = ui->comboBox_CruiseMode->currentText();
+    if (cruiseMode.contains("中空")) {
+        input.cruise_alt = 3000.0;
+    } else if (cruiseMode.contains("地形跟随")) {
+        input.cruise_alt = qMin(input.cruise_alt, 200.0);
+    }
+
+    // 禁飞区：默认使用两个示例禁飞区（参考 main_demo.cpp）
+    NoFlyZone nfz1;
+    nfz1.min_alt = 0;
+    nfz1.max_alt = -1;
+    nfz1.polygon = {
+        {116.31, 40.00, 0.0}, {116.36, 40.01, 0.0}, {116.40, 39.98, 0.0},
+        {116.39, 39.93, 0.0}, {116.34, 39.91, 0.0}, {116.29, 39.94, 0.0}
+    };
+
+    NoFlyZone nfz2;
+    nfz2.min_alt = 0;
+    nfz2.max_alt = -1;
+    nfz2.polygon = {
+        {116.40, 39.99, 0.0}, {116.46, 39.97, 0.0},
+        {116.45, 39.92, 0.0}, {116.38, 39.93, 0.0}
+    };
+
+    input.no_fly_zones = {nfz1, nfz2};
+
+    return input;
+}
+
+// ============================================================
+// 将规划结果填入表格
+// ============================================================
+void RoutePlanning::populateTable(const PlanningResult &result, const QString &targetName)
+{
+    if (!result.success) return;
+
+    int n = static_cast<int>(result.approach_paths.size());
+    int currentRow = ui->tableWidget->rowCount();
+    ui->tableWidget->setRowCount(currentRow + n);
+
+    for (int i = 0; i < n; ++i) {
+        int row = currentRow + i;
+
+        const UAVPath &approach = result.approach_paths[i];
+        const UAVPath &attack = result.attack_paths[i];
+
+        // 编号
+        QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(row + 1));
+        idItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(row, 0, idItem);
+
+        // 无人机名称
+        QString uavName;
+        for (const auto &a : m_assignments) {
+            if (a.uavIndex == approach.uav_id) {
+                uavName = a.uavId;
+                break;
+            }
+        }
+        if (uavName.isEmpty())
+            uavName = QString("UAV-%1").arg(approach.uav_id + 1, 2, 10, QChar('0'));
+        QTableWidgetItem *uavItem = new QTableWidgetItem(uavName);
+        uavItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(row, 1, uavItem);
+
+        // 目标
+        QTableWidgetItem *tgtItem = new QTableWidgetItem(targetName);
+        tgtItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(row, 2, tgtItem);
+
+        // 总航程：累加 approach + attack 中每段距离
+        double totalDist = 0.0;
+        auto calcPathLen = [&](const std::vector<GeoPoint> &pts) {
+            for (size_t k = 1; k < pts.size(); ++k)
+                totalDist += geo::haversineDistance(pts[k - 1], pts[k]);
+        };
+        calcPathLen(approach.waypoints);
+        calcPathLen(attack.waypoints);
+
+        QTableWidgetItem *distItem = new QTableWidgetItem(
+            QString("%1 km").arg(totalDist / 1000.0, 0, 'f', 2));
+        distItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(row, 3, distItem);
+
+        // 状态
+        QTableWidgetItem *statusItem = new QTableWidgetItem("已生成");
+        statusItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(row, 4, statusItem);
+    }
+}
+
+// ============================================================
+// 工具函数：解析 UI 中的数值
+// ============================================================
+double RoutePlanning::parseValue(const QString &text)
+{
+    // 提取字符串中的数字部分（如 "800m" → 800, "±3s" → 3, "45°" → 45）
+    QString digits;
+    for (const QChar &ch : text) {
+        if (ch.isDigit() || ch == '.')
+            digits.append(ch);
+    }
+    return digits.toDouble();
+}
+
+double RoutePlanning::parseSpeed(const QString &text)
+{
+    // 解析速度 "320km/h" → 320 → 88.89 m/s
+    double kmh = parseValue(text);
+    return kmh / 3.6;
+}
+
+// ============================================================
+// 以下为样式代码（保持不变）
+// ============================================================
 void RoutePlanning::applyTechStyle()
 {
     const QString baseBg = "#0a0e1a";
@@ -57,7 +303,6 @@ void RoutePlanning::applyTechStyle()
         }
     )").arg(panelBg).arg(borderColor));
 
-    // 规划参数中四个阶段子面板加边框
     QString phaseWidgetStyle = QString(R"(
         QWidget {
             background-color: %1;
@@ -282,4 +527,15 @@ void RoutePlanning::applyTechStyle()
             }
         )").arg(color).arg(fontSize).arg(isBold ? "bold" : "normal"));
     }
+
+    // 初始化表格列
+    QStringList headers = {"编号", "无人机", "目标", "总航程", "状态"};
+    ui->tableWidget->setColumnCount(5);
+    ui->tableWidget->setHorizontalHeaderLabels(headers);
+    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableWidget->verticalHeader()->setVisible(false);
+    ui->tableWidget->setSelectionBehavior(QTableWidget::SelectRows);
+    ui->tableWidget->setAlternatingRowColors(true);
+    ui->tableWidget->setEditTriggers(QTableWidget::NoEditTriggers);
 }

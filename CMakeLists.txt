@@ -42,6 +42,7 @@ find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Sql)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/01-TaskPlan)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/PathAlgorithm)
 
 # 自动收集源文件和头文件，减少手动维护
 # 注意：GLOB 不适用于需要精确控制文件顺序的场景
@@ -49,12 +50,14 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
         "*.cpp"
         "source/*.cpp"
         "source/01-TaskPlan/*.cpp"
+        "source/PathAlgorithm/path_planner.cpp"
 )
 
 file(GLOB HEADERS CONFIGURE_DEPENDS
         "*.h"
         "source/*.h"
         "source/01-TaskPlan/*.h"
+        "source/PathAlgorithm/path_planner.h"
 )
 
 add_executable(${PROJECT_NAME}

@@ -39,7 +39,7 @@ AreaTargetInfo SetAreaTargetEditDialog::areaTargetInfo() const
     info.vertices.clear();
     for (int row = 0; row < ui->tbwVertices->rowCount(); ++row)
     {
-        GeoPoint point;
+        GeoPosition point;
         if (tryParseVertexRow(row, point))
         {
             info.vertices.append(point);
@@ -77,7 +77,7 @@ void SetAreaTargetEditDialog::setDialogTitle(const QString &title)
     setWindowTitle(title);
 }
 
-void SetAreaTargetEditDialog::setPickedVertices(const QList<GeoPoint> &vertices)
+void SetAreaTargetEditDialog::setPickedVertices(const QList<GeoPosition> &vertices)
 {
     // 地图一次性回填多点：完全覆盖当前表格。
     ui->tbwVertices->setRowCount(0);
@@ -90,7 +90,7 @@ void SetAreaTargetEditDialog::setPickedVertices(const QList<GeoPoint> &vertices)
     updateVertexActionBtnState();
 }
 
-void SetAreaTargetEditDialog::appendPickedVertex(const GeoPoint &point)
+void SetAreaTargetEditDialog::appendPickedVertex(const GeoPosition &point)
 {
     // 地图增量回填单点：追加到末尾，不影响已有行顺序。
     const int row = ui->tbwVertices->rowCount();
@@ -115,7 +115,7 @@ void SetAreaTargetEditDialog::onAcceptClicked()
         int validCount = 0;
         for (int row = 0; row < ui->tbwVertices->rowCount(); ++row)
         {
-            GeoPoint point;
+            GeoPosition point;
             if (!tryParseVertexRow(row, point))
             {
                 QMessageBox::warning(this, QStringLiteral("提示"),
@@ -271,7 +271,7 @@ void SetAreaTargetEditDialog::initConnect()
             this, &SetAreaTargetEditDialog::updateVertexActionBtnState);
 }
 
-bool SetAreaTargetEditDialog::tryParseVertexRow(int row, GeoPoint &point) const
+bool SetAreaTargetEditDialog::tryParseVertexRow(int row, GeoPosition &point) const
 {
     // 防御式解析：行号、单元格存在性、数值格式、经纬度范围均需合法。
     if (row < 0 || row >= ui->tbwVertices->rowCount())

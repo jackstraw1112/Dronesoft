@@ -31,9 +31,9 @@ public:
     // 设置弹窗标题（新增/编辑文案切换）。
     void setDialogTitle(const QString &title);
     // 批量回填地图拾取顶点（覆盖模式）。
-    void setPickedVertices(const QList<GeoPoint> &vertices);
+    void setPickedVertices(const QList<GeoPosition> &vertices);
     // 追加单个拾取顶点（增量模式）。
-    void appendPickedVertex(const GeoPoint &point);
+    void appendPickedVertex(const GeoPosition &point);
 
 signals:
     // 请求外部地图模块进行拾取
@@ -61,7 +61,7 @@ private:
     // 绑定信号与槽函数。
     void initConnect();
     // 解析并校验指定表格行的经纬度数据。
-    bool tryParseVertexRow(int row, GeoPoint &point) const;
+    bool tryParseVertexRow(int row, GeoPosition &point) const;
 
     // UI 对象
     Ui::SetAreaTargetEditDialog *ui;

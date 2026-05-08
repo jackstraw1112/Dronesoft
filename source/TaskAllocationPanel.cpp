@@ -365,45 +365,157 @@ void TaskAllocationPanel::generateAllocationResult()
     setMetric(5, QString::number(solveTimeMs[alg]),
               QString("%1 次迭代").arg(iterations[alg]), "#00e5ff");
 
-    // ── 4. 候选方案 ──
-    // 清空旧方案，生成 3 条算法特定的候选方案
+    // ── 4. 保存目标数据并计算各候选方案的每目标分配架数 ──
+    m_lastTargets = targets;
+
+    // 方案 2：减 1 架（从首目标扣除）
+    QList<int> plan2Counts;
+    for (int i = 0; i < allocs.size(); ++i)
+        plan2Counts.append((i == 0) ? qMax(1, allocs[i].assigned - 1) : allocs[i].assigned);
+
+    // 方案 3：加 2 架（增加到首目标）
+    QList<int> plan3Counts;
+    for (int i = 0; i < allocs.size(); ++i)
+        plan3Counts.append((i == 0) ? allocs[i].assigned + 2 : allocs[i].assigned);
+
+    // ── 5. 构建候选方案数据列表 ──
     clearAltPlans();
 
-    // 方案 1（当前选中）: 当前算法结果
-    addAltPlan(QString("方案 1 · %1").arg(alg == 0 ? "精确指派" : alg == 1 ? "均衡分配" : "分布投标"),
-               QString::number(fVal[alg], 'f', 3),
-               QString::number(totalAssigned),
-               (alg == 0) ? "低" : (alg == 1) ? "中" : "较低", true);
-
-    // 方案 2（备选）: 假设减 1 架
-    int alt2Sorties = qMax(totalAssigned - 1, 1);
+    QString risk1 = (alg == 0) ? QStringLiteral("低") : (alg == 1) ? QStringLiteral("中") : QStringLiteral("较低");
+    QString risk2 = (alg == 0) ? QStringLiteral("中") : (alg == 1) ? QStringLiteral("高") : QStringLiteral("中");
+    QString risk3 = (alg == 0) ? QStringLiteral("极低") : (alg == 1) ? QStringLiteral("低") : QStringLiteral("极低");
+    int alt2Tot = qMax(totalAssigned - 1, 1);
+    int alt3Tot = totalAssigned + 2;
     double alt2F = fVal[alg] - 0.03;
-    addAltPlan("方案 2 · 节省兵力",
-               QString::number(alt2F, 'f', 3),
-               QString::number(alt2Sorties),
-               (alg == 0) ? "中" : (alg == 1) ? "高" : "中", false);
-
-    // 方案 3（备选）: 假设加 2 架
-    int alt3Sorties = totalAssigned + 2;
     double alt3F = fVal[alg] + 0.02;
-    addAltPlan("方案 3 · 高冗余",
-               QString::number(alt3F, 'f', 3),
-               QString::number(alt3Sorties),
-               (alg == 0) ? "极低" : (alg == 1) ? "低" : "极低", false);
 
-    // ── 5. 编队分配方案 ──
-    // 清空旧分配组，为每个目标生成对应的 UAV 编队
+    AltPlanData pd1;
+    pd1.name = QString("方案 1 · %1").arg(alg == 0 ? "精确指派" : alg == 1 ? "均衡分配" : "分布投标");
+    pd1.fVal = fVal[alg];
+    pd1.totalAssigned = totalAssigned;
+    pd1.risk = risk1;
+    pd1.isCurrent = true;
+    for (const auto &ta : allocs) pd1.perTargetCounts.append(ta.assigned);
+    m_altPlanDataList.append(pd1);
+
+    AltPlanData pd2;
+    pd2.name = "方案 2 · 节省兵力";
+    pd2.fVal = alt2F;
+    pd2.totalAssigned = alt2Tot;
+    pd2.risk = risk2;
+    pd2.isCurrent = false;
+    pd2.perTargetCounts = plan2Counts;
+    m_altPlanDataList.append(pd2);
+
+    AltPlanData pd3;
+    pd3.name = "方案 3 · 高冗余";
+    pd3.fVal = alt3F;
+    pd3.totalAssigned = alt3Tot;
+    pd3.risk = risk3;
+    pd3.isCurrent = false;
+    pd3.perTargetCounts = plan3Counts;
+    m_altPlanDataList.append(pd3);
+
+    // ── 6. 生成候选方案行 ──
+    for (const auto &pd : m_altPlanDataList)
+        addAltPlan(pd.name, QString::number(pd.fVal, 'f', 3),
+                   QString::number(pd.totalAssigned), pd.risk, pd.isCurrent);
+
+    // ── 7. 应用当前候选方案（生成编队分配组） ──
+    applyAltPlan(0);
+
+    // ── 8. 权重动画同步到选中算法的目标值 ──
+    if (alg < algorithmCount()) {
+        for (int i = 0; i < kWeightCount; ++i) {
+            m_weightFrom[i] = m_weightBars[i] ? m_weightBars[i]->value() : 0;
+            m_weightTo[i] = kWeightProfiles[alg][i];
+        }
+        animateWeights();
+    }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 候选方案切换
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::onAltPlanClicked(int index)
+{
+    if (index < 0 || index >= m_altPlanDataList.size()) return;
+    if (index == m_currentAltPlan) return;  // 已是当前方案
+
+    // 更新按钮状态：将所有"已选"改为"选用"
+    for (int i = 0; i < m_altPlanBtns.size() && i < m_altPlanRows.size(); ++i) {
+        QPushButton *btn = m_altPlanBtns[i];
+        if (!btn) continue;
+        if (i == index) {
+            btn->setText("已选");
+            btn->setStyleSheet(
+                "QPushButton {"
+                "  color: #ffb300;"
+                "  background: transparent;"
+                "  border: 1px solid #ffb300;"
+                "  border-radius: 3px;"
+                "  font-size: 9px;"
+                "  padding: 1px 6px;"
+                "}"
+                "QPushButton:hover {"
+                "  color: #ffffff;"
+                "  background-color: #ffb300;"
+                "}"
+            );
+        } else {
+            btn->setText("选用");
+            QString btnColor = kAccentCyan;
+            btn->setStyleSheet(QString(
+                "QPushButton {"
+                "  color: %1;"
+                "  background: transparent;"
+                "  border: 1px solid %1;"
+                "  border-radius: 3px;"
+                "  font-size: 9px;"
+                "  padding: 1px 6px;"
+                "}"
+                "QPushButton:hover {"
+                "  color: #ffffff;"
+                "  background-color: %1;"
+                "}"
+            ).arg(btnColor));
+        }
+    }
+
+    applyAltPlan(index);
+}
+
+
+void TaskAllocationPanel::applyAltPlan(int index)
+{
+    if (index < 0 || index >= m_altPlanDataList.size()) return;
+    const AltPlanData &plan = m_altPlanDataList[index];
+    m_currentAltPlan = index;
+
+    // 更新指标卡片：方案切换后只更新与方案相关的指标（目标函数值、使用兵力）
+    auto setMetric = [&](int idx, const QString &val, const QString &tag, const QString &color) {
+        if (idx < metricCount())
+            updateMetric(idx, val, tag, color);
+    };
+    QString colorGood = "#00e676";
+    setMetric(0, QString::number(plan.fVal, 'f', 3), QString("较初始 +%1%").arg((plan.fVal - 0.6) * 100, 0, 'f', 0), "#00e5ff");
+    setMetric(3, QString::number(plan.totalAssigned), QString("需求 %1").arg(plan.totalAssigned), colorGood);
+
+    // 清空旧分配组重新生成
     clearAllocGroups();
 
     int uavCounter = 1;
 
-    for (int ti = 0; ti < allocs.size(); ++ti) {
-        const auto &ta = allocs[ti];
-        int uavCount = ta.assigned;
+    for (int ti = 0; ti < m_lastTargets.size(); ++ti) {
+        int uavCount = (ti < plan.perTargetCounts.size()) ? plan.perTargetCounts[ti] : 1;
+
+        const auto &tgt = m_lastTargets[ti];
+        QString type = tgt.type;
 
         // 根据目标类型生成波段信息
         QStringList bands;
-        if (ta.type == "PT") {
+        if (type == "PT") {
             bands << "I-band · 62km" << "I-band · 63km" << "H-band · 71km"
                   << "H-band · 73km" << "X-band · 55km" << "X-band · 58km";
         } else {
@@ -413,11 +525,11 @@ void TaskAllocationPanel::generateAllocationResult()
 
         // 构造 UAV 编队列表
         QList<UavSpec> uavs;
+        int primary = qMin(uavCount, qMax(2, (uavCount * 2 + 2) / 3));
         for (int ui = 0; ui < uavCount; ++ui) {
             UavSpec spec;
             spec.id = QString("UAV-%1").arg(uavCounter++, 3, 10, QChar('0'));
-            // 主攻、协同、备份按顺序循环
-            if (ui < ta.primary)
+            if (ui < primary)
                 spec.role = (ui == 0) ? "长机" : QString("僚机 %1").arg(ui);
             else
                 spec.role = "备份";
@@ -425,32 +537,24 @@ void TaskAllocationPanel::generateAllocationResult()
             uavs.append(spec);
         }
 
-        // 协同方式描述（固定不变）
         QString coordDesc = QString("%1 机同时到达 · 时间协同 · 误差 ±2s").arg(uavCount);
-
-        // 生成 TOT 时刻（递增）
         QString tot = QString("TOT 14:%1:%2")
                           .arg(42 + ti, 2, 10, QChar('0'))
                           .arg(18 + ti * 5, 2, 10, QChar('0'));
 
-        addAllocGroup(ta.id, ta.name, ta.priority, tot, uavs, coordDesc);
+        addAllocGroup(tgt.id, tgt.name, tgt.priority, tot, uavs, coordDesc);
     }
 
-    // 统一所有编队分配组卡片高度（取最高卡片的最小高度为统一值）
+    // 统一高度
     int uniformH = 0;
     for (QFrame *f : m_allocFrames)
         uniformH = qMax(uniformH, f->minimumSizeHint().height());
-    for (QFrame *f : m_allocFrames)
+    for (QFrame *f : m_allocFrames) {
         f->setMinimumHeight(uniformH);
-
-    // ── 6. 权重动画同步到选中算法的目标值 ──
-    if (alg < algorithmCount()) {
-        for (int i = 0; i < kWeightCount; ++i) {
-            m_weightFrom[i] = m_weightBars[i] ? m_weightBars[i]->value() : 0;
-            m_weightTo[i] = kWeightProfiles[alg][i];
-        }
-        animateWeights();
+        f->setMaximumHeight(uniformH);
     }
+
+    m_allocScrollLayout->addStretch();
 }
 
 
@@ -752,6 +856,22 @@ void TaskAllocationPanel::setupMetricsGroup()
     addAltPlan("方案 1 · 当前",    "0.943", "11", "低",   true);
     addAltPlan("方案 2 · 节省兵力","0.891", "9",  "中",   false);
     addAltPlan("方案 3 · 高冗余",  "0.967", "14", "极低", false);
+
+    // 初始化默认候选方案数据（供未求解时切换使用）
+    m_altPlanDataList.clear();
+    AltPlanData dp1, dp2, dp3;
+    dp1.name = "方案 1 · 当前";  dp1.fVal = 0.943; dp1.totalAssigned = 11; dp1.risk = "低";   dp1.isCurrent = true;  dp1.perTargetCounts = {3, 3, 2, 2, 1};
+    dp2.name = "方案 2 · 节省兵力"; dp2.fVal = 0.891; dp2.totalAssigned = 9;  dp2.risk = "中";   dp2.isCurrent = false; dp2.perTargetCounts = {2, 2, 2, 2, 1};
+    dp3.name = "方案 3 · 高冗余"; dp3.fVal = 0.967; dp3.totalAssigned = 14; dp3.risk = "极低"; dp3.isCurrent = false; dp3.perTargetCounts = {4, 3, 3, 2, 2};
+    m_altPlanDataList.append(dp1);
+    m_altPlanDataList.append(dp2);
+    m_altPlanDataList.append(dp3);
+
+    // 初始化默认目标数据（匹配 setupAllocationResult 中的 2 个默认编队）
+    m_lastTargets.clear();
+    m_lastTargets.append({"PT-01", "东郊制导雷达", "PT", 3, "P1"});
+    m_lastTargets.append({"PT-02", "东郊火控雷达", "PT", 3, "P1"});
+    m_currentAltPlan = 0;
 }
 
 void TaskAllocationPanel::setupAllocationResult()
@@ -762,7 +882,7 @@ void TaskAllocationPanel::setupAllocationResult()
         m_allocLayout = new QVBoxLayout(container);
         container->setLayout(m_allocLayout);
     }
-    m_allocLayout->setContentsMargins(0, 0, 0, 0);
+    m_allocLayout->setContentsMargins(6, 6, 6, 6);
     m_allocLayout->setSpacing(6);
 
     // 分区标题
@@ -788,7 +908,7 @@ void TaskAllocationPanel::setupAllocationResult()
     scrollContent->setStyleSheet(QString("background-color: %1; border: none;").arg(kPanelBg));
     m_allocScrollArea->viewport()->setStyleSheet(QString("background-color: %1; border: none;").arg(kPanelBg));
     m_allocScrollLayout = new QVBoxLayout(scrollContent);
-    m_allocScrollLayout->setContentsMargins(0, 0, 0, 0);
+    m_allocScrollLayout->setContentsMargins(4, 0, 4, 0);
     m_allocScrollLayout->setSpacing(6);
     scrollContent->setLayout(m_allocScrollLayout);
     m_allocScrollArea->setWidget(scrollContent);
@@ -806,6 +926,8 @@ void TaskAllocationPanel::setupAllocationResult()
     addAllocGroup("PT-02", "东郊火控雷达", "P1", "TOT 14:42:18",
                   {{"UAV-A04","主攻 1","H-band · 71km"}, {"UAV-A05","主攻 2","H-band · 71km"}, {"UAV-A06","备份","H-band · 73km"}},
                   "3 机同时到达 · 与 PT-01 同步压制");
+
+    m_allocScrollLayout->addStretch();
 }
 
 
@@ -1020,10 +1142,25 @@ QFrame *TaskAllocationPanel::createAltPlanRow(const QString &name, const QString
     planLayout->addWidget(riskP);
     planLayout->addStretch();
 
-    QLabel *statusP = new QLabel(isCurrent ? "已选" : "选用", planRow);
-    QString statusColor = isCurrent ? "#ffb300" : kAccentCyan;
-    statusP->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: 1px solid %1; border-radius: 3px; padding: 1px 6px;").arg(statusColor));
-    planLayout->addWidget(statusP);
+    QPushButton *selectBtn = new QPushButton(isCurrent ? "已选" : "选用", planRow);
+    QString btnColor = isCurrent ? "#ffb300" : kAccentCyan;
+    selectBtn->setFixedSize(48, 22);
+    selectBtn->setCursor(Qt::PointingHandCursor);
+    selectBtn->setStyleSheet(QString(
+        "QPushButton {"
+        "  color: %1;"
+        "  background: transparent;"
+        "  border: 1px solid %1;"
+        "  border-radius: 3px;"
+        "  font-size: 9px;"
+        "  padding: 1px 6px;"
+        "}"
+        "QPushButton:hover {"
+        "  color: #ffffff;"
+        "  background-color: %1;"
+        "}"
+    ).arg(btnColor));
+    planLayout->addWidget(selectBtn, 0, Qt::AlignVCenter);
 
     return planRow;
 }
@@ -1052,22 +1189,26 @@ QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const 
 
     QLabel *tgtLabel = new QLabel(target, groupFrame);
     tgtLabel->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: bold; font-family: 'Consolas', monospace; background: transparent; border: none;").arg(kAccentCyan));
+    tgtLabel->setFixedHeight(16);
     headerRow->addWidget(tgtLabel);
 
     QLabel *nameLabel = new QLabel(name, groupFrame);
     nameLabel->setStyleSheet(QString("color: %1; font-size: 11px; background: transparent; border: none;").arg(kTextPrimary));
+    nameLabel->setFixedHeight(16);
     headerRow->addWidget(nameLabel);
 
     // 优先级：P1 红色、P2 琥珀色
     QString priColor = (priority == "P1") ? "#ff3b3b" : "#ffb300";
     QLabel *priLabel = new QLabel(priority, groupFrame);
     priLabel->setAlignment(Qt::AlignCenter);
+    priLabel->setFixedHeight(16);
     priLabel->setStyleSheet(QString("color: #ffffff; background-color: %1; border-radius: 3px; padding: 0 6px; font-size: 9px; font-weight: bold;").arg(priColor));
     headerRow->addWidget(priLabel);
     headerRow->addStretch();
 
     QLabel *totLabel = new QLabel(tot, groupFrame);
     totLabel->setStyleSheet(QString("color: %1; font-size: 9px; font-family: 'Consolas', monospace; background: transparent; border: none;").arg(kTextSec));
+    totLabel->setFixedHeight(16);
     headerRow->addWidget(totLabel);
     groupCol->addLayout(headerRow);
 
@@ -1081,7 +1222,7 @@ QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const 
         bool isPrimary = (u < 2);
         QString chipBg = isPrimary ? kInputBg : "#1a0a0a";
         QString chipBorder = isPrimary ? kBorderColor : "#5a1a1a";
-        chip->setFixedSize(78, 58);
+        chip->setFixedSize(78, 48);
         chip->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 3px; }").arg(chipBg).arg(chipBorder));
 
         QVBoxLayout *chipCol = new QVBoxLayout(chip);
@@ -1091,18 +1232,22 @@ QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const 
         QString roleColor = isPrimary ? kAccentCyan : "#ff6b35";
         QLabel *roleLbl = new QLabel(spec.role, chip);
         roleLbl->setAlignment(Qt::AlignCenter);
+        roleLbl->setFixedHeight(11);
         roleLbl->setStyleSheet(QString("color: %1; font-size: 9px; font-weight: bold; background: transparent; border: none;").arg(roleColor));
         chipCol->addWidget(roleLbl);
 
         QLabel *idLbl = new QLabel(spec.id, chip);
         idLbl->setAlignment(Qt::AlignCenter);
+        idLbl->setFixedHeight(12);
         idLbl->setStyleSheet(QString("color: %1; font-size: 10px; font-family: 'Consolas', monospace; background: transparent; border: none;").arg(kTextPrimary));
         chipCol->addWidget(idLbl);
 
         QLabel *metaLbl = new QLabel(spec.meta, chip);
         metaLbl->setAlignment(Qt::AlignCenter);
+        metaLbl->setFixedHeight(10);
         metaLbl->setStyleSheet(QString("color: %1; font-size: 8px; background: transparent; border: none;").arg(kTextSec));
         chipCol->addWidget(metaLbl);
+        chipCol->addStretch();
 
         uavRow->addWidget(chip);
     }
@@ -1112,16 +1257,19 @@ QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const 
     // 协同方式条：描述编队中无人机之间的协同关系
     QFrame *coordFrame = new QFrame(groupFrame);
     coordFrame->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 3px; }").arg(kBaseBg).arg(kBorderColor));
+    coordFrame->setFixedHeight(22);
     QHBoxLayout *coordRow = new QHBoxLayout(coordFrame);
-    coordRow->setContentsMargins(6, 3, 6, 3);
+    coordRow->setContentsMargins(6, 2, 6, 2);
     coordRow->setSpacing(6);
 
     QLabel *coordTag = new QLabel("协同方式", coordFrame);
     coordTag->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: none; padding: 0 4px;").arg(kAccentCyan));
+    coordTag->setFixedHeight(16);
     coordRow->addWidget(coordTag);
 
     QLabel *coordVal = new QLabel(coordDesc, coordFrame);
     coordVal->setStyleSheet(QString("color: %1; font-size: 9px; background: transparent; border: none;").arg(kTextSec));
+    coordVal->setFixedHeight(16);
     coordRow->addWidget(coordVal, 1);
     coordRow->addStretch();
 
@@ -1334,6 +1482,15 @@ int TaskAllocationPanel::addAltPlan(const QString &name, const QString &fval,
     QFrame *row = createAltPlanRow(name, fval, sorties, risk, isCurrent);
     m_altPlanRows.append(row);
 
+    // 查找该行中的"选用"按钮，存储并连接
+    QPushButton *btn = row->findChild<QPushButton*>();
+    if (btn) {
+        m_altPlanBtns.append(btn);
+        connect(btn, &QPushButton::clicked, this, [this, id]() {
+            onAltPlanClicked(id);
+        });
+    }
+
     if (m_altPlanLayout)
         m_altPlanLayout->addWidget(row);
     return id;
@@ -1350,6 +1507,8 @@ void TaskAllocationPanel::clearAltPlans()
 {
     for (QFrame *row : m_altPlanRows) row->deleteLater();
     m_altPlanRows.clear();
+    m_altPlanBtns.clear();
+    m_altPlanDataList.clear();
 }
 
 int TaskAllocationPanel::altPlanCount() const
@@ -1385,7 +1544,15 @@ void TaskAllocationPanel::removeAllocGroup(int index)
 
 void TaskAllocationPanel::clearAllocGroups()
 {
-    for (QFrame *frame : m_allocFrames) frame->deleteLater();
+    if (m_allocScrollLayout) {
+        QLayoutItem *item;
+        while ((item = m_allocScrollLayout->takeAt(0)) != nullptr) {
+            if (item->widget()) {
+                item->widget()->deleteLater();
+            }
+            delete item;
+        }
+    }
     m_allocFrames.clear();
 }
 

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>889</width>
+    <width>892</width>
     <height>689</height>
    </rect>
   </property>
@@ -345,8 +345,14 @@
                <widget class="QDoubleSpinBox" name="spinBox_SingleShotProb">
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>180</width>
                   <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>180</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="alignment">
@@ -364,7 +370,7 @@
                <widget class="QLabel" name="label_WeaponManual">
                 <property name="maximumSize">
                  <size>
-                  <width>60</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -422,8 +428,14 @@
                <widget class="QSpinBox" name="spinBox_BackupCount">
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>180</width>
                   <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>180</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="alignment">
@@ -441,7 +453,7 @@
                <widget class="QLabel" name="label_DefaultBackup">
                 <property name="maximumSize">
                  <size>
-                  <width>60</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -1012,8 +1024,14 @@
                <widget class="QSpinBox" name="spinBox_Area">
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>180</width>
                   <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>180</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                </widget>
@@ -1022,12 +1040,15 @@
                <widget class="QLabel" name="label_AreaUnit">
                 <property name="maximumSize">
                  <size>
-                  <width>30</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
                 <property name="text">
                  <string>KM²</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -1104,8 +1125,14 @@
                <widget class="QDoubleSpinBox" name="spinBox_EstTargetCount">
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>180</width>
                   <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>180</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="alignment">
@@ -1123,7 +1150,7 @@
                <widget class="QLabel" name="label_WeaponManual2">
                 <property name="maximumSize">
                  <size>
-                  <width>50</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -1194,8 +1221,14 @@
                <widget class="QSpinBox" name="spinBox_ShotsPerTarget">
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>180</width>
                   <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>180</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="alignment">
@@ -1213,7 +1246,7 @@
                <widget class="QLabel" name="label_ShotsPerUnit">
                 <property name="maximumSize">
                  <size>
-                  <width>30</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -1290,8 +1323,14 @@
                <widget class="QSpinBox" name="spinBox_AreaBackupCount">
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>180</width>
                   <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>180</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="alignment">

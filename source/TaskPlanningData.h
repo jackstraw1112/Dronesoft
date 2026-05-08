@@ -118,7 +118,7 @@ enum class AreaGeometryType
 };
 
 // 简单经纬度点，用于多边形/走廊等顶点描述
-struct GeoPoint
+struct GeoPosition
 {
     double latitude  = 0.0;
     double longitude = 0.0;
@@ -143,7 +143,7 @@ struct AreaTargetInfo
     double           centerLatitude;   // 中心点纬度（度）
     double           centerLongitude;  // 中心点经度（度）
     double           radiusKm;         // 范围半径（千米），圆形/走廊用
-    QList<GeoPoint>  vertices;         // 多边形或走廊的顶点列表（地图拾取）
+    QList<GeoPosition>  vertices;         // 多边形或走廊的顶点列表（地图拾取）
     QString          expectedEmitters; // 预期辐射源描述
     SearchStrategyType searchStrategy; // 搜索策略（螺旋扫描、平行线扫描等）
     PriorityLevel    priority;         // 优先级（P1、P2、P3）

@@ -208,6 +208,31 @@ void MissionPlanner::onStepChanged(int index)
                                  forcePanel->ptResults(),
                                  forcePanel->arResults());
     }
+
+    // 步骤 4（航路规划）：从任务分配面板读取兵力编排数据，注入到航路规划面板
+    if (index == 3) {
+        TaskAllocationPanel *allocPanel = ui->step3Page;
+        RoutePlanning *routePanel = ui->step4Page;
+
+        QList<UavAssignment> assignments;
+        const QList<ForceTargetData> &targets = allocPanel->forceTargets();
+
+        int uavIndex = 0;
+        for (const ForceTargetData &tgt : targets) {
+            for (int j = 0; j < tgt.aircraftCount; ++j) {
+                UavAssignment ua;
+                ua.uavId = QString("UAV-%1").arg(uavIndex + 1, 2, 10, QChar('0'));
+                ua.uavIndex = uavIndex;
+                ua.targetId = tgt.id;
+                ua.targetName = tgt.name;
+                ua.targetType = tgt.type;
+                assignments.append(ua);
+                ++uavIndex;
+            }
+        }
+
+        routePanel->setAllocationData(assignments, uavIndex);
+    }
 }
 
 void MissionPlanner::setRuntimeStage(TaskPlanStage stage, uint simTimestampSec)
@@ -470,9 +495,9 @@ void MissionPlanner::generateDemoData()
                     << makePointTarget("PT-202", "北部干扰设备", TargetType::Jammer, 31.389842, 121.340510, "1500~1900MHz", "P3")
                     << makePointTarget("PT-203", "北部数传节点", TargetType::DataLinkNode, 31.377492, 121.328341, "700~850MHz", "P3");
     t3.areaTargets << makeAreaTarget("AT-201", "北部多边形警戒区", AreaGeometryType::Polygon, 31.390000, 121.340000, 10.0);
-    t3.areaTargets.first().vertices << GeoPoint{31.402, 121.326}
-                                    << GeoPoint{31.415, 121.348}
-                                    << GeoPoint{31.386, 121.362};
+    t3.areaTargets.first().vertices << GeoPosition{31.402, 121.326}
+                                    << GeoPosition{31.415, 121.348}
+                                    << GeoPosition{31.386, 121.362};
 
     m_taskStore.insert(t1.basicInfo.taskUid, t1);
     m_taskStore.insert(t2.basicInfo.taskUid, t2);
@@ -793,7 +818,7 @@ bool MissionPlanner::loadTaskStoreFromDatabase()
                         continue;
                     }
                     const QJsonObject pointObj = pointValue.toObject();
-                    GeoPoint point;
+                    GeoPosition point;
                     point.latitude = pointObj.value(QStringLiteral("latitude")).toDouble();
                     point.longitude = pointObj.value(QStringLiteral("longitude")).toDouble();
                     a.vertices.append(point);
@@ -898,7 +923,7 @@ bool MissionPlanner::saveTaskToDatabase(const TaskPlanningData &taskData, const 
     for (const AreaTargetInfo &area : taskData.areaTargets)
     {
         QJsonArray verticesArray;
-        for (const GeoPoint &point : area.vertices)
+        for (const GeoPosition &point : area.vertices)
         {
             QJsonObject pointObj;
             pointObj.insert(QStringLiteral("latitude"), point.latitude);

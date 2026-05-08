@@ -8,6 +8,7 @@
 #include <QFrame>
 #include <QList>
 #include <QLabel>
+#include <QPushButton>
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QRadioButton>
@@ -40,6 +41,17 @@ struct ForceTargetData {
 };
 
 
+// 候选方案数据：存储每次求解生成的 3 个备选方案参数
+struct AltPlanData {
+    QString name;              // 方案名称
+    double fVal = 0.0;         // 目标函数值
+    int totalAssigned = 0;     // 总架数
+    QString risk;              // 风险等级
+    bool isCurrent = false;    // 当前是否选中
+    QList<int> perTargetCounts; // 每个目标分配的 UAV 架数（用于重新生成编队）
+};
+
+
 class TaskAllocationPanel : public QFrame {
 Q_OBJECT
 
@@ -57,6 +69,9 @@ public:
     void setForceData(const QList<ForceTargetData> &targets,
                       const QMap<QString, PtCalcData> &ptResults = QMap<QString, PtCalcData>(),
                       const QMap<QString, ArCalcData> &arResults = QMap<QString, ArCalcData>());
+
+    // 获取当前兵力目标数据（供 MissionPlanner 在步骤切换时传递给 RoutePlanning）
+    const QList<ForceTargetData> &forceTargets() const { return m_forceTargets; }
 
     // ═══════════════════════════════════════════
     // 求解算法 API
@@ -207,6 +222,9 @@ private slots:
     // 求解算法切换时更新目标函数权重
     void onAlgChanged(int id);
 
+    // 候选方案选用：切换分配方案并重新生成编队分组
+    void onAltPlanClicked(int index);
+
 private:
     // 应用深色科技风全局样式
     void applyTechStyle();
@@ -222,6 +240,9 @@ private:
 
     // 根据当前选中算法和兵力数据生成分配方案
     void generateAllocationResult();
+
+    // 应用指定索引的候选方案（重新生成编队分配组并更新指标）
+    void applyAltPlan(int index);
 
     // 根据算法索引启动权重平滑动画
     void animateWeights();
@@ -281,6 +302,9 @@ private:
     // ─── 候选方案成员 ───
     QVBoxLayout *m_altPlanLayout;   // 候选方案容器布局
     QList<QFrame*> m_altPlanRows;   // 所有候选方案行
+    QList<QPushButton*> m_altPlanBtns;  // 所有候选方案的"选用"按钮
+    QList<AltPlanData> m_altPlanDataList; // 候选方案数据列表
+    int m_currentAltPlan = 0;       // 当前选中方案索引
 
     // ─── 编队分配成员 ───
     QVBoxLayout *m_allocLayout;         // widget_2 外布局（标题 + 滚动区 + 弹簧）
@@ -292,6 +316,7 @@ private:
     QList<ForceTargetData> m_forceTargets;           // 目标列表
     QMap<QString, PtCalcData> m_forcePtResults;     // 点目标计算结果
     QMap<QString, ArCalcData> m_forceArResults;     // 区域目标计算结果
+    QList<ForceTargetData> m_lastTargets;            // 最近一次求解使用的目标数据（用于切换候选方案）
 };
 
 

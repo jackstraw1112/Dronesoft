@@ -585,7 +585,7 @@ void RZSetTaskPlan::onAddAreaTarget()
                     return;
                 }
 
-                GeoPoint point;
+                GeoPosition point;
                 point.latitude = lat;
                 point.longitude = lon;
                 dialog.appendPickedVertex(point);
@@ -695,7 +695,7 @@ void RZSetTaskPlan::editAreaTargetAtRow(int row)
                     return;
                 }
 
-                GeoPoint point;
+                GeoPosition point;
                 point.latitude = lat;
                 point.longitude = lon;
                 dialog.appendPickedVertex(point);
