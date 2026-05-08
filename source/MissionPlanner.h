@@ -39,6 +39,8 @@ public:
     void initUI();
     // 设置信号槽连接
     void setupConnections();
+    // 应用科技风格样式（与ForceRequirementPanel一致）
+    void applyTechStyle();
     // 初始化基本信息表单（任务名称、类型、优先级等）
     void initBasicInfoForm();
     // 初始化目标信息表格（点目标表、面目标详情）

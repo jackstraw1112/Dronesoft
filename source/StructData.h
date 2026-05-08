@@ -4,6 +4,8 @@
 #include <QString>
 #include <QList>
 #include <QTime>
+#include <QMap>
+#include <QMetaType>
 
 /**
  * @brief 任务信息结构体
@@ -191,6 +193,36 @@ struct RcmJammingParam {
 };
 
 
+// 雷达目标数据结构：用于兵力需求面板的目标选择
+struct RadarTarget {
+    QString id;      // 编号，如 PT-01
+    QString name;    // 名称，如 东郊制导雷达
+    QString type;    // 类型：PT(炮台雷达) 或 AR(防空区)
+    RadarTarget(const QString& i = QString(), const QString& n = QString(), const QString& t = "PT")
+        : id(i), name(n), type(t) {}
+};
+
+Q_DECLARE_METATYPE(RadarTarget);
+
+// 点目标计算结果数据结构：存储每个PT目标的计算参数和结果
+struct PtCalcData {
+    double damageLevel = 0.9;  // 毁伤要求P̄
+    double Pk = 0.95;           // 单弹毁伤概率
+    int n = 1;                  // 计算所需弹数
+    int backup = 1;             // 备份架数
+    int total = 2;              // 总架数 = n + backup
+};
+
+// 区域目标计算结果数据结构：存储每个AR目标的计算参数和结果
+struct ArCalcData {
+    int area = 100;             // 区域面积 KM²
+    double estTargets = 3.0;    // 估计目标数
+    int shotsPerTarget = 2;     // 每目标弹数
+    int backup = 2;             // 备份架数
+    int N_search = 4;           // 搜索所需架数
+    int N_strike = 6;           // 打击所需架数
+    int total = 8;              // 总架数 = MAX(N_search,N_strike) + backup
+};
 
 
 #endif // STRUCTDATA_H

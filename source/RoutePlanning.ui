@@ -29,14 +29,14 @@
             <number>20</number>
            </property>
            <item row="0" column="0">
-            <widget class="QLabel" name="label_9">
+            <widget class="QLabel" name="label_ClimbRate">
              <property name="text">
               <string>爬升率</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="comboBox">
+            <widget class="QComboBox" name="comboBox_ClimbRate">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -56,14 +56,14 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_10">
+            <widget class="QLabel" name="label_ClimbHeight">
              <property name="text">
               <string>爬升高度</string>
              </property>
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLabel" name="label_11">
+            <widget class="QLabel" name="label_ClimbHeightValue">
              <property name="text">
               <string>800m</string>
              </property>
@@ -73,14 +73,14 @@
             </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="label_12">
+            <widget class="QLabel" name="label_TakeoffAzimuth">
              <property name="text">
               <string>起飞方位角</string>
              </property>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QLabel" name="label_13">
+            <widget class="QLabel" name="label_TakeoffAzimuthValue">
              <property name="text">
               <string>090°E</string>
              </property>
@@ -94,7 +94,7 @@
          <item row="0" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
-            <widget class="QLabel" name="label">
+            <widget class="QLabel" name="label_Phase1Index">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -110,7 +110,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_2">
+            <widget class="QLabel" name="label_Phase1Name">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -159,7 +159,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QLabel" name="label_4">
+            <widget class="QLabel" name="label_Phase2Index">
              <property name="text">
               <string>②</string>
              </property>
@@ -169,7 +169,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_3">
+            <widget class="QLabel" name="label_Phase2Name">
              <property name="text">
               <string>巡航突防</string>
              </property>
@@ -196,14 +196,14 @@
             <number>20</number>
            </property>
            <item row="0" column="0">
-            <widget class="QLabel" name="label_14">
+            <widget class="QLabel" name="label_CruiseMode">
              <property name="text">
               <string>巡航方式</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="comboBox_2">
+            <widget class="QComboBox" name="comboBox_CruiseMode">
              <property name="minimumSize">
               <size>
                <width>120</width>
@@ -228,14 +228,14 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_15">
+            <widget class="QLabel" name="label_CruiseSpeed">
              <property name="text">
               <string>巡航速度</string>
              </property>
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLabel" name="label_16">
+            <widget class="QLabel" name="label_CruiseSpeedValue">
              <property name="text">
               <string>320km/h</string>
              </property>
@@ -245,14 +245,14 @@
             </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="label_17">
+            <widget class="QLabel" name="label_BypassStrategy">
              <property name="text">
               <string>绕比策略</string>
              </property>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QComboBox" name="comboBox_3">
+            <widget class="QComboBox" name="comboBox_BypassStrategy">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -306,7 +306,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <widget class="QLabel" name="label_6">
+            <widget class="QLabel" name="label_Phase3Index">
              <property name="text">
               <string>③</string>
              </property>
@@ -316,7 +316,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_5">
+            <widget class="QLabel" name="label_Phase3Name">
              <property name="text">
               <string>搜索阶段</string>
              </property>
@@ -346,21 +346,21 @@
             <number>20</number>
            </property>
            <item row="3" column="0">
-            <widget class="QLabel" name="label_21">
+            <widget class="QLabel" name="label_MaxSearchDuration">
              <property name="text">
               <string>最大搜索时长</string>
              </property>
             </widget>
            </item>
            <item row="0" column="0">
-            <widget class="QLabel" name="label_18">
+            <widget class="QLabel" name="label_SearchForm">
              <property name="text">
               <string>点目标·搜索形式</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="comboBox_4">
+            <widget class="QComboBox" name="comboBox_SearchForm">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -385,14 +385,14 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_19">
+            <widget class="QLabel" name="label_AreaSearchForm">
              <property name="text">
               <string>区域目标·搜索形式</string>
              </property>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QLabel" name="label_20">
+            <widget class="QLabel" name="label_AreaSearchHeightValue">
              <property name="text">
               <string>500m</string>
              </property>
@@ -402,7 +402,7 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QComboBox" name="comboBox_6">
+            <widget class="QComboBox" name="comboBox_AreaSearchForm">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -432,14 +432,14 @@
             </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="label_22">
+            <widget class="QLabel" name="label_SearchHeight">
              <property name="text">
               <string>搜索高度</string>
              </property>
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QLabel" name="label_23">
+            <widget class="QLabel" name="label_SearchDurationValue">
              <property name="text">
               <string>180s</string>
              </property>
@@ -472,7 +472,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
-            <widget class="QLabel" name="label_8">
+            <widget class="QLabel" name="label_Phase4Index">
              <property name="text">
               <string>④</string>
              </property>
@@ -482,7 +482,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_7">
+            <widget class="QLabel" name="label_Phase4Name">
              <property name="text">
               <string>打击阶段</string>
              </property>
@@ -509,14 +509,14 @@
             <number>20</number>
            </property>
            <item row="0" column="0">
-            <widget class="QLabel" name="label_25">
+            <widget class="QLabel" name="label_AttackMode">
              <property name="text">
               <string>攻击方式</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="comboBox_5">
+            <widget class="QComboBox" name="comboBox_AttackMode">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -536,14 +536,14 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_26">
+            <widget class="QLabel" name="label_DiveAngle">
              <property name="text">
               <string>俯冲角</string>
              </property>
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLabel" name="label_29">
+            <widget class="QLabel" name="label_DiveAngleValue">
              <property name="text">
               <string>45°</string>
              </property>
@@ -553,14 +553,14 @@
             </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="label_28">
+            <widget class="QLabel" name="label_SimultaneousArrivalAccuracy">
              <property name="text">
               <string>同时到达精度</string>
              </property>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QLabel" name="label_27">
+            <widget class="QLabel" name="label_SimultaneousArrivalAccuracyValue">
              <property name="text">
               <string>±3s</string>
              </property>
@@ -570,14 +570,14 @@
             </widget>
            </item>
            <item row="3" column="0">
-            <widget class="QLabel" name="label_24">
+            <widget class="QLabel" name="label_AttackAzimuth">
              <property name="text">
               <string>攻击方位</string>
              </property>
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QComboBox" name="comboBox_7">
+            <widget class="QComboBox" name="comboBox_AttackAzimuth">
              <property name="minimumSize">
               <size>
                <width>0</width>

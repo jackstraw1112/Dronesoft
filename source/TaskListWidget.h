@@ -75,7 +75,7 @@ private:
 
 // 任务列表组件类：管理多个任务项的容器组件
 // 提供任务列表的滚动显示、新建任务和导入情报功能
-class TaskListWidget : public QWidget
+class TaskListWidget : public QFrame
 {
     Q_OBJECT
 

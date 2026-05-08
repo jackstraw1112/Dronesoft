@@ -39,7 +39,7 @@ void TaskItemWidget::setupUi()
         "QLabel#taskIdLabel {"
         "   font-family: 'Consolas', 'Courier New', monospace;"
         "   font-size: 10px;"
-        "   color: #4fd1c5;"
+        "   color: #00e5ff;"
         "   letter-spacing: 1.5px;"
         "}"
     );
@@ -58,7 +58,7 @@ void TaskItemWidget::setupUi()
     m_taskNameLabel->setObjectName("taskNameLabel");
     m_taskNameLabel->setStyleSheet(
         "QLabel#taskNameLabel {"
-        "   color: #a8bdc4;"
+        "   color: #e0e8f0;"
         "   font-size: 10px;"
         "   font-weight: bold;"
         "}"
@@ -73,7 +73,7 @@ void TaskItemWidget::setupUi()
     m_targetCountLabel->setObjectName("metaLabel");
     m_targetCountLabel->setStyleSheet(
         "QLabel#metaLabel {"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "   font-size: 10px;"
         "}"
     );
@@ -83,7 +83,7 @@ void TaskItemWidget::setupUi()
     m_aircraftCountLabel->setObjectName("metaLabel");
     m_aircraftCountLabel->setStyleSheet(
         "QLabel#metaLabel {"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "   font-size: 10px;"
         "}"
     );
@@ -93,7 +93,7 @@ void TaskItemWidget::setupUi()
     m_timeLabel->setObjectName("metaLabel");
     m_timeLabel->setStyleSheet(
         "QLabel#metaLabel {"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "   font-size: 10px;"
         "}"
     );
@@ -111,13 +111,13 @@ void TaskItemWidget::setupUi()
     // 设置任务卡片的基础样式：深色背景、细边框、圆角
     setStyleSheet(
         "QFrame#taskItem {"
-        "   background-color: #0f1518;"
-        "   border: 1px solid #2a3a40;"
+        "   background-color: #0d1326;"
+        "   border: 1px solid #1a3a6a;"
         "   border-radius: 4px;"
         "   margin-bottom: 8px;"
         "}"
         "QFrame#taskItem:hover {"
-        "   border-color: #4a5a60;"
+        "   border-color: #00b4ff;"
         "}"
     );
 }
@@ -149,9 +149,9 @@ void TaskItemWidget::setTaskStatus(QString status)
         m_statusLabel->setStyleSheet(
             "QLabel#statusLabel {"
             "   font-size: 10px;"
-            "   color: #ffb627;"
-            "   background-color: rgba(255, 182, 39, 0.2);"
-            "   border: 1px solid #ffb627;"
+            "   color: #ffaa44;"
+            "   background-color: rgba(255, 170, 68, 0.2);"
+            "   border: 1px solid #ffaa44;"
             "   padding: 2px 8px;"
             "   border-radius: 3px;"
             "}"
@@ -162,9 +162,9 @@ void TaskItemWidget::setTaskStatus(QString status)
         m_statusLabel->setStyleSheet(
             "QLabel#statusLabel {"
             "   font-size: 10px;"
-            "   color: #a8bdc4;"
-            "   background-color: rgba(168, 189, 196, 0.2);"
-            "   border: 1px solid #a8bdc4;"
+            "   color: #7a8ba8;"
+            "   background-color: rgba(122, 139, 168, 0.2);"
+            "   border: 1px solid #7a8ba8;"
             "   padding: 2px 8px;"
             "   border-radius: 3px;"
             "}"
@@ -175,9 +175,9 @@ void TaskItemWidget::setTaskStatus(QString status)
         m_statusLabel->setStyleSheet(
             "QLabel#statusLabel {"
             "   font-size: 10px;"
-            "   color: #4fd1c5;"
-            "   background-color: rgba(79, 209, 197, 0.2);"
-            "   border: 1px solid #4fd1c5;"
+            "   color: #00e5ff;"
+            "   background-color: rgba(0, 229, 255, 0.2);"
+            "   border: 1px solid #00e5ff;"
             "   padding: 2px 8px;"
             "   border-radius: 3px;"
             "}"
@@ -188,9 +188,9 @@ void TaskItemWidget::setTaskStatus(QString status)
         m_statusLabel->setStyleSheet(
             "QLabel#statusLabel {"
             "   font-size: 10px;"
-            "   color: #68d391;"
-            "   background-color: rgba(104, 211, 145, 0.2);"
-            "   border: 1px solid #68d391;"
+            "   color: #00e676;"
+            "   background-color: rgba(0, 230, 118, 0.2);"
+            "   border: 1px solid #00e676;"
             "   padding: 2px 8px;"
             "   border-radius: 3px;"
             "}"
@@ -233,31 +233,31 @@ void TaskItemWidget::setTime(QString time)
 void TaskItemWidget::setSelected(bool selected)
 {
     if (selected) {
-        // 选中状态：金色边框和左侧高亮条
+        // 选中状态：蓝色边框和左侧高亮条
         setStyleSheet(
             "QFrame#taskItem {"
-            "   background-color: #0f1518;"
-            "   border: 1px solid #ffb627;"
-            "   border-left: 3px solid #ffb627;"
+            "   background-color: #0d1326;"
+            "   border: 1px solid #00b4ff;"
+            "   border-left: 3px solid #00b4ff;"
             "   border-radius: 4px;"
             "   margin-bottom: 8px;"
             "}"
             "QFrame#taskItem:hover {"
-            "   border-color: #ffb627;"
-            "   border-left: 3px solid #ffb627;"
+            "   border-color: #00e5ff;"
+            "   border-left: 3px solid #00e5ff;"
             "}"
         );
     } else {
         // 非选中状态：默认深色边框
         setStyleSheet(
             "QFrame#taskItem {"
-            "   background-color: #0f1518;"
-            "   border: 1px solid #2a3a40;"
+            "   background-color: #0d1326;"
+            "   border: 1px solid #1a3a6a;"
             "   border-radius: 4px;"
             "   margin-bottom: 8px;"
             "}"
             "QFrame#taskItem:hover {"
-            "   border-color: #4a5a60;"
+            "   border-color: #00b4ff;"
             "}"
         );
     }
@@ -274,16 +274,9 @@ void TaskItemWidget::mousePressEvent(QMouseEvent *event)
 
 // 任务列表组件构造函数
 TaskListWidget::TaskListWidget(QWidget *parent)
-    : QWidget(parent)
+    : QFrame(parent)
 {
     setupUi();
-
-    // 设置组件整体样式
-    setStyleSheet(
-        "QWidget {"
-        "   background-color: #0f1518;"
-        "}"
-    );
 
     // 添加测试任务数据
     addTestTasks();
@@ -294,7 +287,7 @@ void TaskListWidget::setupUi()
 {
     // 创建主垂直布局
     m_mainLayout = new QVBoxLayout(this);
-    m_mainLayout->setContentsMargins(1, 1, 1, 1);  // 无边距
+    m_mainLayout->setContentsMargins(3, 3, 3, 3);  // 无边距
     m_mainLayout->setSpacing(0);  // 无间距
 
     // 创建头部框架：深色背景，包含标题和徽章
@@ -303,8 +296,8 @@ void TaskListWidget::setupUi()
     m_headerFrame->setMinimumSize(QSize(0, 54));
     m_headerFrame->setStyleSheet(
         "QFrame#headerFrame {"
-        "   background-color: #131a1d;"
-        "   border-bottom: 1px solid #2a3a40;"
+        "   background-color: #0d1326;"
+        "   border-bottom: 1px solid #1a3a6a;"
         "}"
     );
 
@@ -317,11 +310,11 @@ void TaskListWidget::setupUi()
     titleLabel->setText("任务列表");
     titleLabel->setStyleSheet(
         "QLabel {"
-        "   color: #ffb627;"
+        "   color: #00b4ff;"
         "   font-weight: bold;"
         "   font-size: 16px;"
         "   letter-spacing: 2px;"
-        "   border-left: 3px solid #ffb627;"
+        "   border-left: 3px solid #00b4ff;"
         "   padding-left: 8px;"
         "}"
     );
@@ -347,17 +340,17 @@ void TaskListWidget::setupUi()
         "   background-color: transparent;"
         "}"
         "QScrollArea#taskScrollArea QScrollBar:vertical {"
-        "   background-color: #0f1518;"
+        "   background-color: #0a0e1a;"
         "   width: 6px;"
         "   margin: 0px;"
         "}"
         "QScrollArea#taskScrollArea QScrollBar::handle:vertical {"
-        "   background-color: #2a3a40;"
+        "   background-color: #1a3a6a;"
         "   border-radius: 3px;"
         "   min-height: 20px;"
         "}"
         "QScrollArea#taskScrollArea QScrollBar::handle:vertical:hover {"
-        "   background-color: #4a5a60;"
+        "   background-color: #00b4ff;"
         "}"
         "QScrollArea#taskScrollArea QScrollBar::add-line:vertical,"
         "QScrollArea#taskScrollArea QScrollBar::sub-line:vertical {"
@@ -389,8 +382,8 @@ void TaskListWidget::setupUi()
     buttonFrame->setObjectName("buttonFrame");
     buttonFrame->setStyleSheet(
         "QFrame#buttonFrame {"
-        "   background-color: #0f1518;"
-        "   border-top: 1px solid #2a3a40;"
+        "   background-color: #0a0e1a;"
+        "   border-top: 1px solid #1a3a6a;"
         "}"
     );
 
@@ -405,8 +398,8 @@ void TaskListWidget::setupUi()
     newTaskBtn->setCursor(Qt::PointingHandCursor);
     newTaskBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #ffb627;"
-        "   color: #0a0e0f;"
+        "   background-color: #00b4ff;"
+        "   color: #0a0e1a;"
         "   border: none;"
         "   padding: 12px 16px;"
         "   font-size: 14px;"
@@ -415,7 +408,7 @@ void TaskListWidget::setupUi()
         "   border-radius: 4px;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #ffc547;"
+        "   background-color: #00e5ff;"
         "}"
     );
     connect(newTaskBtn, &QPushButton::clicked, this, &TaskListWidget::newTaskClicked);
@@ -427,17 +420,17 @@ void TaskListWidget::setupUi()
     importBtn->setStyleSheet(
         "QPushButton {"
         "   background-color: transparent;"
-        "   color: #a8bdc4;"
-        "   border: 1px solid #2a3a40;"
+        "   color: #7a8ba8;"
+        "   border: 1px solid #1a3a6a;"
         "   padding: 12px 16px;"
         "   font-size: 14px;"
         "   letter-spacing: 1px;"
         "   border-radius: 4px;"
         "}"
         "QPushButton:hover {"
-        "   background-color: rgba(79, 209, 197, 0.1);"
-        "   border-color: #4fd1c5;"
-        "   color: #4fd1c5;"
+        "   background-color: rgba(0, 180, 255, 0.1);"
+        "   border-color: #00b4ff;"
+        "   color: #00e5ff;"
         "}"
     );
     connect(importBtn, &QPushButton::clicked, this, &TaskListWidget::importIntelClicked);
@@ -449,6 +442,17 @@ void TaskListWidget::setupUi()
     m_mainLayout->addWidget(m_headerFrame);    // 添加头部框架
     m_mainLayout->addWidget(m_scrollArea, 1);  // 添加滚动区域（可拉伸）
     m_mainLayout->addWidget(buttonFrame);      // 添加底部按钮框架
+
+    // QFrame 边框样式（QFrame 原生支持 border 绘制）
+    setFrameShape(QFrame::NoFrame);
+    setAutoFillBackground(true);
+    setStyleSheet(
+        "TaskListWidget {"
+        "   background-color: #0d1326;"
+        "   border: 2px solid #1a3a6a;"
+        "   border-radius: 6px;"
+        "}"
+    );
 }
 
 // 添加任务项：根据提供的信息创建并显示任务卡片
@@ -536,7 +540,7 @@ void TaskListWidget::updateBadge()
     m_badgeLabel->setStyleSheet(
         "QLabel#badgeLabel {"
         "   font-size: 14px;"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "   letter-spacing: 1px;"
         "}"
     );

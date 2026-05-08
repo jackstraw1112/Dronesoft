@@ -1,6 +1,9 @@
 # 设置cmake最低版本
 cmake_minimum_required(VERSION 3.16)
 
+# 项目名称
+project(MissionPlannerApp)
+
 # =================================================================================
 # Qt C++ 相关配置
 # =================================================================================
@@ -27,6 +30,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 设置编译文件默认为：UTF-8 编码
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+
+# 设置输出路径
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin_windows)
 
 # =================================================================================
 # 项目配置

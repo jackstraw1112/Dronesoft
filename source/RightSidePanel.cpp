@@ -17,9 +17,35 @@
 // 参数：parent - 父窗口指针
 // ============================================================================
 RightSidePanel::RightSidePanel(QWidget *parent)
-    : QWidget(parent)
+    : QFrame(parent)
 {
     setupUi();
+    applyTechStyle();
+}
+
+void RightSidePanel::applyTechStyle()
+{
+    const QString baseBg = "#0a0e1a";
+    const QString panelBg = "#0d1326";
+    const QString borderColor = "#1a3a6a";
+    const QString accentBlue = "#00b4ff";
+    const QString accentCyan = "#00e5ff";
+    const QString textPrimary = "#e0e8f0";
+    const QString textSecondary = "#7a8ba8";
+    const QString groupBoxBg = "#0b1124";
+    const QString inputBg = "#0f1a2e";
+
+    setStyleSheet(QString(R"(
+        RightSidePanel {
+            background-color: %1;
+            border: 2px solid %2;
+            border-radius: 6px;
+        }
+        QWidget {
+            color: %3;
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        }
+    )").arg(baseBg).arg(borderColor).arg(textPrimary));
 }
 
 // ============================================================================
@@ -32,11 +58,6 @@ void RightSidePanel::setupUi()
 {
     // 设置面板对象名称和背景样式
     setObjectName("rightSidePanel");
-    setStyleSheet(
-        "QWidget#rightSidePanel {"
-        "   background-color: #0f1518;"
-        "}"
-    );
 
     // 创建主布局
     m_mainLayout = new QVBoxLayout(this);
@@ -51,24 +72,24 @@ void RightSidePanel::setupUi()
     m_scrollArea->setObjectName("rightScrollArea");
     m_scrollArea->setStyleSheet(
         "QScrollArea#rightScrollArea {"
-        "   background-color: #0f1518;"
+        "   background-color: #0d1326;"
         "   border: none;"
         "}"
         "QScrollArea#rightScrollArea > QWidget {"
-        "   background-color: #0f1518;"
+        "   background-color: #0d1326;"
         "}"
         "QScrollArea#rightScrollArea QScrollBar:vertical {"
-        "   background-color: #0f1518;"
+        "   background-color: #0d1326;"
         "   width: 6px;"
         "   margin: 0px;"
         "}"
         "QScrollArea#rightScrollArea QScrollBar::handle:vertical {"
-        "   background-color: #2a3a40;"
+        "   background-color: #1a3a6a;"
         "   border-radius: 3px;"
         "   min-height: 20px;"
         "}"
         "QScrollArea#rightScrollArea QScrollBar::handle:vertical:hover {"
-        "   background-color: #4a5a60;"
+        "   background-color: #00b4ff;"
         "}"
         "QScrollArea#rightScrollArea QScrollBar::add-line:vertical,"
         "QScrollArea#rightScrollArea QScrollBar::sub-line:vertical {"
@@ -83,7 +104,7 @@ void RightSidePanel::setupUi()
     m_scrollContent->setObjectName("scrollContent");
     m_scrollContent->setStyleSheet(
         "QWidget#scrollContent {"
-        "   background-color: #0f1518;"
+        "   background-color: #0d1326;"
         "}"
     );
 
@@ -122,8 +143,8 @@ void RightSidePanel::setupHeader()
     headerFrame->setMinimumSize(QSize(0, 44));
     headerFrame->setStyleSheet(
         "QFrame#headerFrame {"
-        "   background-color: #131a1d;"
-        "   border-bottom: 1px solid #2a3a40;"
+        "   background-color: #0b1124;"
+        "   border-bottom: 1px solid #1a3a6a;"
         "}"
     );
 
@@ -136,11 +157,11 @@ void RightSidePanel::setupHeader()
     titleLabel->setText("资源 / 态势");
     titleLabel->setStyleSheet(
         "QLabel {"
-        "   color: #ffb627;"
+        "   color: #00b4ff;"
         "   font-weight: bold;"
         "   font-size: 18px;"
         "   letter-spacing: 2px;"
-        "   border-left: 4px solid #ffb627;"
+        "   border-left: 4px solid #00b4ff;"
         "   padding-left: 10px;"
         "}"
     );
@@ -151,7 +172,7 @@ void RightSidePanel::setupHeader()
     m_badgeLabel->setStyleSheet(
         "QLabel {"
         "   font-size: 14px;"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "   letter-spacing: 1px;"
         "}"
     );
@@ -177,8 +198,8 @@ void RightSidePanel::setupKpiSection()
     sectionFrame->setObjectName("sectionFrame");
     sectionFrame->setStyleSheet(
         "QFrame#sectionFrame {"
-        "   background-color: #0f1518;"
-        "   border-bottom: 1px solid #2a3a40;"
+        "   background-color: #0d1326;"
+        "   border-bottom: 1px solid #1a3a6a;"
         "}"
     );
 
@@ -192,9 +213,9 @@ void RightSidePanel::setupKpiSection()
     sectionTitle->setText("关键指标 / KPI");
     sectionTitle->setStyleSheet(
         "QLabel {"
-        "   font-family: 'Noto Sans SC', sans-serif;"
+        "   font-family: 'Microsoft YaHei', sans-serif;"
         "   font-size: 16px;"
-        "   color: #ffb627;"
+        "   color: #00b4ff;"
         "   letter-spacing: 1.5px;"
         "}"
     );
@@ -235,8 +256,8 @@ void RightSidePanel::addKpiCard(QString label, QString value)
     kpiCard->setObjectName("kpiCard");
     kpiCard->setStyleSheet(
         "QFrame#kpiCard {"
-        "   background-color: #131a1d;"
-        "   border: 1px solid #2a3a40;"
+        "   background-color: #0b1124;"
+        "   border: 1px solid #1a3a6a;"
         "   padding: 12px 14px;"
         "}"
     );
@@ -254,7 +275,7 @@ void RightSidePanel::addKpiCard(QString label, QString value)
     kpiLabel->setStyleSheet(
         "QLabel {"
         "   font-size: 10px;"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "   letter-spacing: 1px;"
         "}"
     );
@@ -267,8 +288,8 @@ void RightSidePanel::addKpiCard(QString label, QString value)
         "QLabel {"
         "   font-size: 15px;"
         "   font-weight: bold;"
-        "   color: #d8e8ee;"
-        "   font-family: 'Orbitron', monospace;"
+        "   color: #00e5ff;"
+        "   font-family: 'Microsoft YaHei', monospace;"
         "}"
     );
 
@@ -293,8 +314,8 @@ void RightSidePanel::setupAssetsSection()
     sectionFrame->setObjectName("sectionFrame");
     sectionFrame->setStyleSheet(
         "QFrame#sectionFrame {"
-        "   background-color: #0f1518;"
-        "   border-bottom: 1px solid #2a3a40;"
+        "   background-color: #0d1326;"
+        "   border-bottom: 1px solid #1a3a6a;"
         "}"
     );
 
@@ -308,9 +329,9 @@ void RightSidePanel::setupAssetsSection()
     sectionTitle->setText("可用兵力 / ASSETS");
     sectionTitle->setStyleSheet(
         "QLabel {"
-        "   font-family: 'Noto Sans SC', sans-serif;"
+        "   font-family: 'Microsoft YaHei', sans-serif;"
         "   font-size: 16px;"
-        "   color: #ffb627;"
+        "   color: #00b4ff;"
         "   letter-spacing: 1.5px;"
         "}"
     );
@@ -345,8 +366,8 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
     uavCard->setObjectName("uavCard");
     uavCard->setStyleSheet(
         "QFrame#uavCard {"
-        "   background-color: #131a1d;"
-        "   border: 1px solid #2a3a40;"
+        "   background-color: #0b1124;"
+        "   border: 1px solid #1a3a6a;"
         "   padding: 10px 12px;"
         "   margin-bottom: 8px;"
         "}"
@@ -363,7 +384,7 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
     uavIcon->setStyleSheet(
         "QLabel {"
         "   font-size: 24px;"
-        "   color: #4fd1c5;"
+        "   color: #00e5ff;"
         "   min-width: 36px;"
         "}"
     );
@@ -379,7 +400,7 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
         "QLabel {"
         "   font-size: 14px;"
         "   font-weight: bold;"
-        "   color: #a8bdc4;"
+        "   color: #e0e8f0;"
         "}"
     );
 
@@ -389,7 +410,7 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
     uavSpec->setStyleSheet(
         "QLabel {"
         "   font-size: 12px;"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "}"
     );
 
@@ -404,25 +425,25 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
 
     // 根据状态设置不同的样式
     if (status.contains("已分配")) {
-        // 已分配状态 - 黄色
+        // 已分配状态 - 蓝色
         statusLabel->setStyleSheet(
             "QLabel {"
             "   font-size: 13px;"
-            "   color: #ffb627;"
-            "   background-color: rgba(255, 182, 39, 0.15);"
-            "   border: 1px solid #8a6010;"
+            "   color: #00b4ff;"
+            "   background-color: rgba(0, 180, 255, 0.15);"
+            "   border: 1px solid #1a3a6a;"
             "   padding: 3px 8px;"
             "   border-radius: 3px;"
             "}"
         );
     } else if (status == "就绪") {
-        // 就绪状态 - 绿色
+        // 就绪状态 - 青色
         statusLabel->setStyleSheet(
             "QLabel {"
             "   font-size: 13px;"
-            "   color: #5dde85;"
-            "   background-color: rgba(93, 222, 133, 0.15);"
-            "   border: 1px solid #2d5a3a;"
+            "   color: #00e5ff;"
+            "   background-color: rgba(0, 229, 255, 0.15);"
+            "   border: 1px solid #1a3a6a;"
             "   padding: 3px 8px;"
             "   border-radius: 3px;"
             "}"
@@ -432,9 +453,9 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
         statusLabel->setStyleSheet(
             "QLabel {"
             "   font-size: 13px;"
-            "   color: #5a6e75;"
+            "   color: #7a8ba8;"
             "   background-color: transparent;"
-            "   border: 1px solid #2a3a40;"
+            "   border: 1px solid #1a3a6a;"
             "   padding: 3px 8px;"
             "   border-radius: 3px;"
             "}"
@@ -463,8 +484,8 @@ void RightSidePanel::setupThreatsSection()
     sectionFrame->setObjectName("sectionFrame");
     sectionFrame->setStyleSheet(
         "QFrame#sectionFrame {"
-        "   background-color: #0f1518;"
-        "   border-bottom: 1px solid #2a3a40;"
+        "   background-color: #0d1326;"
+        "   border-bottom: 1px solid #1a3a6a;"
         "}"
     );
 
@@ -478,9 +499,9 @@ void RightSidePanel::setupThreatsSection()
     sectionTitle->setText("威胁清单 / THREATS");
     sectionTitle->setStyleSheet(
         "QLabel {"
-        "   font-family: 'Noto Sans SC', sans-serif;"
+        "   font-family: 'Microsoft YaHei', sans-serif;"
         "   font-size: 16px;"
-        "   color: #ffb627;"
+        "   color: #00b4ff;"
         "   letter-spacing: 1.5px;"
         "}"
     );
@@ -531,7 +552,7 @@ void RightSidePanel::addThreatItem(QString name, QString range)
     threatName->setStyleSheet(
         "QLabel {"
         "   font-size: 15px;"
-        "   color: #a8bdc4;"
+        "   color: #e0e8f0;"
         "}"
     );
 
@@ -542,7 +563,7 @@ void RightSidePanel::addThreatItem(QString name, QString range)
     threatRange->setStyleSheet(
         "QLabel {"
         "   font-size: 15px;"
-        "   font-family: 'Orbitron', monospace;"
+        "   font-family: 'Microsoft YaHei', monospace;"
         "   color: #ff4d4d;"
         "}"
     );
@@ -568,8 +589,8 @@ void RightSidePanel::setupWeatherSection()
     sectionFrame->setObjectName("sectionFrame");
     sectionFrame->setStyleSheet(
         "QFrame#sectionFrame {"
-        "   background-color: #0f1518;"
-        "   border-bottom: 1px solid #2a3a40;"
+        "   background-color: #0d1326;"
+        "   border-bottom: 1px solid #1a3a6a;"
         "}"
     );
 
@@ -583,9 +604,9 @@ void RightSidePanel::setupWeatherSection()
     sectionTitle->setText("气象简报 / WX");
     sectionTitle->setStyleSheet(
         "QLabel {"
-        "   font-family: 'Noto Sans SC', sans-serif;"
+        "   font-family: 'Microsoft YaHei', sans-serif;"
         "   font-size: 16px;"
-        "   color: #ffb627;"
+        "   color: #00b4ff;"
         "   letter-spacing: 1.5px;"
         "}"
     );
@@ -626,8 +647,8 @@ void RightSidePanel::addWeatherCard(QString label, QString value)
     weatherCard->setObjectName("weatherCard");
     weatherCard->setStyleSheet(
         "QFrame#weatherCard {"
-        "   background-color: #0a0e0f;"
-        "   border-left: 2px solid #4fd1c5;"
+        "   background-color: #0b1124;"
+        "   border: 1px solid #1a3a6a;"
         "   padding: 10px 12px;"
         "}"
     );
@@ -645,7 +666,7 @@ void RightSidePanel::addWeatherCard(QString label, QString value)
     weatherLabel->setStyleSheet(
         "QLabel {"
         "   font-size: 13px;"
-        "   color: #5a6e75;"
+        "   color: #7a8ba8;"
         "   letter-spacing: 1px;"
         "}"
     );
@@ -657,8 +678,8 @@ void RightSidePanel::addWeatherCard(QString label, QString value)
     weatherValue->setStyleSheet(
         "QLabel {"
         "   font-size: 15px;"
-        "   font-family: 'Orbitron', monospace;"
-        "   color: #ffb627;"
+        "   font-family: 'Microsoft YaHei', monospace;"
+        "   color: #00e5ff;"
         "   margin-top: 4px;"
         "}"
     );
