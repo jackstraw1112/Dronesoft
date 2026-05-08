@@ -13,6 +13,7 @@
 #include <QRadioButton>
 #include <QProgressBar>
 #include <QTimer>
+#include <QScrollArea>
 #include <QMap>
 #include "StructData.h"
 
@@ -282,8 +283,10 @@ private:
     QList<QFrame*> m_altPlanRows;   // 所有候选方案行
 
     // ─── 编队分配成员 ───
-    QVBoxLayout *m_allocLayout;     // 编队分配容器布局
-    QList<QFrame*> m_allocFrames;   // 所有编队分配组
+    QVBoxLayout *m_allocLayout;         // widget_2 外布局（标题 + 滚动区 + 弹簧）
+    QScrollArea *m_allocScrollArea;     // 编队分组滚动区
+    QVBoxLayout *m_allocScrollLayout;   // 滚动区内布局（存放所有分配组卡片）
+    QList<QFrame*> m_allocFrames;       // 所有编队分配组
 
     // ─── 兵力数据成员（来自 ForceRequirementPanel） ───
     QList<ForceTargetData> m_forceTargets;           // 目标列表

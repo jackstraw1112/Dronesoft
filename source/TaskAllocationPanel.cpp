@@ -68,6 +68,8 @@ TaskAllocationPanel::TaskAllocationPanel(QWidget *parent)
     , m_metricGrid(nullptr)
     , m_altPlanLayout(nullptr)
     , m_allocLayout(nullptr)
+    , m_allocScrollArea(nullptr)
+    , m_allocScrollLayout(nullptr)
 {
     // 加载 .ui 文件定义的静态控件
     ui->setupUi(this);
@@ -423,15 +425,8 @@ void TaskAllocationPanel::generateAllocationResult()
             uavs.append(spec);
         }
 
-        // 协同方式描述
-        QString coordDesc;
-        if (alg == 0) {
-            coordDesc = QString("%1 机同时到达 · 误差 ±2s · 航向夹角 60°").arg(uavCount);
-        } else if (alg == 1) {
-            coordDesc = QString("%1 机分段到达 · 误差 ±5s · 多波次压制").arg(uavCount);
-        } else {
-            coordDesc = QString("%1 机分布式到达 · 自主投标 · 动态协同").arg(uavCount);
-        }
+        // 协同方式描述（固定不变）
+        QString coordDesc = QString("%1 机同时到达 · 时间协同 · 误差 ±2s").arg(uavCount);
 
         // 生成 TOT 时刻（递增）
         QString tot = QString("TOT 14:%1:%2")
@@ -440,6 +435,13 @@ void TaskAllocationPanel::generateAllocationResult()
 
         addAllocGroup(ta.id, ta.name, ta.priority, tot, uavs, coordDesc);
     }
+
+    // 统一所有编队分配组卡片高度（取最高卡片的最小高度为统一值）
+    int uniformH = 0;
+    for (QFrame *f : m_allocFrames)
+        uniformH = qMax(uniformH, f->minimumSizeHint().height());
+    for (QFrame *f : m_allocFrames)
+        f->setMinimumHeight(uniformH);
 
     // ── 6. 权重动画同步到选中算法的目标值 ──
     if (alg < algorithmCount()) {
@@ -760,13 +762,41 @@ void TaskAllocationPanel::setupAllocationResult()
         m_allocLayout = new QVBoxLayout(container);
         container->setLayout(m_allocLayout);
     }
-    m_allocLayout->setContentsMargins(6, 4, 6, 4);
+    m_allocLayout->setContentsMargins(0, 0, 0, 0);
     m_allocLayout->setSpacing(6);
 
     // 分区标题
     QLabel *title = new QLabel("▌ 分配方案 · 编队组织", container);
     title->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold; background: transparent; border: none; padding: 2px 0;").arg(kAccentCyan));
     m_allocLayout->addWidget(title);
+
+    // 滚动区：包裹编队分配组卡片
+    m_allocScrollArea = new QScrollArea(container);
+    m_allocScrollArea->setWidgetResizable(true);
+    m_allocScrollArea->setFrameShape(QFrame::NoFrame);
+    m_allocScrollArea->setStyleSheet(QString(
+        "QScrollArea { background: transparent; border: none; }"
+        "QScrollBar:vertical {"
+        "  background: %1; width: 6px; margin: 0;"
+        "  border-radius: 3px; }"
+        "QScrollBar::handle:vertical {"
+        "  background: %2; min-height: 30px; border-radius: 3px; }"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
+    ).arg(kInputBg).arg(kAccentBlue));
+
+    QWidget *scrollContent = new QWidget(m_allocScrollArea);
+    scrollContent->setStyleSheet(QString("background-color: %1; border: none;").arg(kPanelBg));
+    m_allocScrollArea->viewport()->setStyleSheet(QString("background-color: %1; border: none;").arg(kPanelBg));
+    m_allocScrollLayout = new QVBoxLayout(scrollContent);
+    m_allocScrollLayout->setContentsMargins(0, 0, 0, 0);
+    m_allocScrollLayout->setSpacing(6);
+    scrollContent->setLayout(m_allocScrollLayout);
+    m_allocScrollArea->setWidget(scrollContent);
+
+    m_allocLayout->addWidget(m_allocScrollArea, 1);   // stretch=1 让滚动区占据剩余空间
+
+    // 底部弹簧：将滚动区向上推，避免卡片沉底
+    m_allocLayout->addStretch(0);
 
     // 添加 2 个默认编队分配组（PT-01 制导雷达、PT-02 火控雷达）
     addAllocGroup("PT-01", "东郊制导雷达", "P1", "TOT 14:42:18",
@@ -776,8 +806,6 @@ void TaskAllocationPanel::setupAllocationResult()
     addAllocGroup("PT-02", "东郊火控雷达", "P1", "TOT 14:42:18",
                   {{"UAV-A04","主攻 1","H-band · 71km"}, {"UAV-A05","主攻 2","H-band · 71km"}, {"UAV-A06","备份","H-band · 73km"}},
                   "3 机同时到达 · 与 PT-01 同步压制");
-
-    m_allocLayout->addStretch();
 }
 
 
@@ -1007,7 +1035,12 @@ QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const 
 {
     QWidget *container = ui->widget_2;
     QFrame *groupFrame = new QFrame(container);
-    groupFrame->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 4px; }").arg(kInputBg).arg(kBorderColor));
+    groupFrame->setStyleSheet(QString("QFrame#allocGroupFrame {"
+        "background-color: %1;"
+        "border: 1px solid %2;"
+        "border-radius: 4px; }"
+    ).arg(kInputBg).arg(kBorderColor));
+    groupFrame->setObjectName("allocGroupFrame");
 
     QVBoxLayout *groupCol = new QVBoxLayout(groupFrame);
     groupCol->setContentsMargins(8, 6, 8, 6);
@@ -1048,6 +1081,7 @@ QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const 
         bool isPrimary = (u < 2);
         QString chipBg = isPrimary ? kInputBg : "#1a0a0a";
         QString chipBorder = isPrimary ? kBorderColor : "#5a1a1a";
+        chip->setFixedSize(78, 58);
         chip->setStyleSheet(QString("QFrame { background-color: %1; border: 1px solid %2; border-radius: 3px; }").arg(chipBg).arg(chipBorder));
 
         QVBoxLayout *chipCol = new QVBoxLayout(chip);
@@ -1072,6 +1106,7 @@ QFrame *TaskAllocationPanel::createAllocGroupFrame(const QString &target, const 
 
         uavRow->addWidget(chip);
     }
+    uavRow->addStretch();
     groupCol->addLayout(uavRow);
 
     // 协同方式条：描述编队中无人机之间的协同关系
@@ -1335,11 +1370,8 @@ int TaskAllocationPanel::addAllocGroup(const QString &target, const QString &nam
     QFrame *frame = createAllocGroupFrame(target, name, priority, tot, uavs, coordDesc);
     m_allocFrames.append(frame);
 
-    if (m_allocLayout) {
-        // 插入到 stretch 之前
-        int insertPos = m_allocLayout->count() - 1;
-        if (insertPos < 0) insertPos = 0;
-        m_allocLayout->insertWidget(insertPos, frame);
+    if (m_allocScrollLayout) {
+        m_allocScrollLayout->addWidget(frame);
     }
     return id;
 }
