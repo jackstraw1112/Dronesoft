@@ -71,36 +71,36 @@
 
 ## 7. Qt对象名（`*.ui` 的 objectName）规则
 
-> 推荐格式：`<业务语义><控件缩写>`，使用 `lowerCamelCase`。  
-> 缩写参考 `skills/Qt控件缩写.md`。
+> 推荐格式：**`<控件缩写><业务语义>`**，使用 `lowerCamelCase`。  
+> 缩写参考 `skills/Qt控件缩写规则.md`。
 >
 > **命名方向强制要求（固化）**：
-> - 统一使用：**语义在前，类型在后**。
-> - 禁止使用：类型前缀风格（如 `btnSaveTask`、`lblTitle`、`wdMain`）。
+> - 统一使用：**控件缩写在前，业务语义在后**（如 `btnSaveTask`、`leTaskName`）。
+> - 禁止使用：语义在前、缩写在后（如 ~~`saveTaskBtn`~~、~~`taskNameLe`~~）。
 > - 历史代码如需调整，按“改动即清理”原则逐步迁移。
 
 示例：
-- `saveTaskBtn`（`QPushButton`）
-- `taskNameEdit`（`QLineEdit`）
-- `taskTypeCombo`（`QComboBox`）
-- `taskTableTbw`（`QTableWidget`，若需强调类型）
-- `mainLy`（`QLayout`）
-- `titleWd`（`QWidget`）
-- `taskListBottomSpc`（`QSpacerItem`）
-- `setAreaTargetEditDialogDlg`（`QDialog` 根对象）
+- `btnSaveTask`（`QPushButton`）
+- `leTaskName`（`QLineEdit`）
+- `cmbTaskType`（`QComboBox`）
+- `tbwTaskTable`（`QTableWidget`）
+- `lyMainForm`（`QLayout`）
+- `wdTaskListPage`（`QWidget`）
+- `spcTaskListBottom`（`QSpacerItem`）
+- `dlgSetPointTargetEditDialog`（`QDialog` 根对象）
 
 约束：
 1. 同一页面同类控件按语义区分，不使用 `pushButton_2`、`lineEdit_3`。
-2. 编辑/删除按钮对称命名：
-   - `addAreaTargetBtn`
-   - `editAreaTargetBtn`
-   - `deleteAreaTargetBtn`
+2. 编辑/删除按钮对称命名（缩写统一在前）：
+   - `btnAddAreaTarget`
+   - `btnEditAreaTarget`
+   - `btnDeleteAreaTarget`
 3. root objectName 也遵循相同方向：
-   - `QWidget`：`taskListPageWd`
-   - `QDialog`：`setPointTargetEditDialogDlg`
+   - `QWidget`：`wdTaskListPage`
+   - `QDialog`：`dlgSetPointTargetEditDialog`
 4. 布局与间隔器命名：
-   - `QLayout`：`xxxLy`（如 `actionsLy`、`gridFormLy`）
-   - `QSpacerItem`：`xxxSpc`（如 `actionsLeftSpc`）
+   - `QLayout`：`ly` + 语义（如 `lyActions`、`lyGridForm`）
+   - `QSpacerItem`：`spc` + 语义（如 `spcActionsLeft`）
 
 ## 8. 信号与槽命名
 
@@ -126,13 +126,13 @@
 
 ## 10. 反例与修正
 
-- `btn1` -> `saveTaskBtn`
-- `btnSaveTask` -> `saveTaskBtn`
-- `lblTitle` -> `titleLbl`
-- `wdTitle` -> `titleWd`
-- `lyMain` -> `mainLy`
-- `spcActionsLeft` -> `actionsLeftSpc`
-- `tableWidget_2`（代码中直接使用） -> 建议改为 `pointTargetTable`（渐进重构）
+- `btn1` -> `btnSaveTask`（补全业务语义）
+- `saveTaskBtn` -> `btnSaveTask`（渐进迁移 objectName）
+- `titleLbl` -> `lblTitle`
+- `titleWd` -> `wdTitle`
+- `mainLy` -> `lyMain`
+- `actionsLeftSpc` -> `spcActionsLeft`
+- `tableWidget_2`（代码中直接使用） -> 建议改为 `tbwPointTarget`（渐进重构）
 - `DoDelete()` -> `onDeleteTaskClicked()`
 - `flag` -> `hasSelection`
 
@@ -160,7 +160,7 @@ void setSelectedTask(const QString &taskId);
 
 ```cpp
 // 更新区域目标操作按钮状态。
-// 规则：仅当 areaTargetTable 存在有效选中行时，允许编辑和删除。
+// 规则：仅当 tbwAreaTarget 存在有效选中行时，允许编辑和删除。
 void updateAreaTargetActionBtnState();
 ```
 
@@ -168,21 +168,22 @@ void updateAreaTargetActionBtnState();
 
 ```cpp
 // 点击删除按钮后统一走 onDeleteTaskClicked，避免散落删除逻辑。
-connect(ui->deleteTaskBtn, &QPushButton::clicked,
-        this, &RZTaskListWidget::onDeleteTaskClicked);
+connect(ui->btnDeleteTask, &QPushButton::clicked, this, &RZTaskListWidget::onDeleteTaskClicked);
 ```
 
 ```cpp
 // 行双击直接进入编辑流程，保持与“编辑区域目标”按钮行为一致。
-connect(ui->areaTargetTable, &QTableWidget::cellDoubleClicked,
-        this, [this](int row, int) { editAreaTargetAtRow(row); });
+connect(ui->tbwAreaTarget, &QTableWidget::cellDoubleClicked, this, [this](int row, int) 
+      { 
+         editAreaTargetAtRow(row); 
+      });
 ```
 
 ### 12.3 数据映射注释案例
 
 ```cpp
 // row 与 m_areaTargets 索引一一对应，插入/删除必须同步修改两侧数据。
-ui->areaTargetTable->insertRow(row);
+ui->tbwAreaTarget->insertRow(row);
 m_areaTargets.append(targetInfo);
 ```
 
@@ -195,8 +196,8 @@ const QString deletedTaskId = m_selectedTaskId;
 
 ```cpp
 // hasSelection 表示“是否存在有效选中项”，命名可直接用于条件判断。
-const bool hasSelection = (ui->pointTargetTable->currentRow() >= 0);
-ui->deletePointTargetBtn->setEnabled(hasSelection);
+const bool hasSelection = (ui->tbwPointTarget->currentRow() >= 0);
+ui->btnDeletePointTarget->setEnabled(hasSelection);
 ```
 
 ```cpp

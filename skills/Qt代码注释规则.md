@@ -102,14 +102,14 @@ ui->pointTargetTbw->insertRow(row);
 
 ```cpp
 // 把按钮设为不可用
-ui->deleteTaskBtn->setEnabled(false);
+ui->btnDeleteTask->setEnabled(false);
 ```
 
 ### 正例
 
 ```cpp
 // 删除按钮仅在存在有效选中行时启用，防止误触发空删除流程。
-ui->deleteTaskBtn->setEnabled(currentRow >= 0);
+ui->btnDeleteTask->setEnabled(currentRow >= 0);
 ```
 
 ## 9. 与现有规范协同
@@ -119,7 +119,7 @@ ui->deleteTaskBtn->setEnabled(currentRow >= 0);
    - `skills/Qt代码命名规则.md`
    - `skills/Qt控件缩写规则.md`
 3. 注释不替代良好命名；先改名，再考虑补注释。
-4. `objectName` 示例统一使用“语义在前、类型在后”（如 `saveTaskBtn`、`taskNameEdit`、`pointTargetTbw`）。
+4. `objectName` 示例统一使用“控件缩写在前、业务语义在后”（如 `btnSaveTask`、`leTaskName`、`tbwPointTarget`）。
 
 ## 10. 渐进落地建议
 
