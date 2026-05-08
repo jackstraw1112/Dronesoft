@@ -38,34 +38,23 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin_windows)
 # 项目配置
 # =================================================================================
 
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Sql)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/01-TaskPlan)
 
-set(SOURCES
-    source/main.cpp
-    source/MissionPlanner.cpp
-    source/TaskListWidget.cpp
-    source/RightSidePanel.cpp
-    source/WindowStyle.cpp
-    source/AddOrEditTaskplan.cpp
-    source/ForceRequirementPanel.cpp
-    source/ParameterLoading.cpp
-    source/RoutePlanning.cpp
-    source/TaskAllocationPanel.cpp
+# 自动收集源文件和头文件，减少手动维护
+# 注意：GLOB 不适用于需要精确控制文件顺序的场景
+file(GLOB SOURCES CONFIGURE_DEPENDS
+        "*.cpp"
+        "source/*.cpp"
+        "source/01-TaskPlan/*.cpp"
 )
 
-set(HEADERS
-    source/MissionPlanner.h
-    source/TaskListWidget.h
-    source/RightSidePanel.h
-    source/StructData.h
-    source/WindowStyle.h
-    source/AddOrEditTaskplan.h
-    source/ForceRequirementPanel.h
-    source/ParameterLoading.h
-    source/RoutePlanning.h
-    source/TaskAllocationPanel.h
+file(GLOB HEADERS CONFIGURE_DEPENDS
+        "*.h"
+        "source/*.h"
+        "source/01-TaskPlan/*.h"
 )
 
 add_executable(${PROJECT_NAME}
@@ -73,4 +62,71 @@ add_executable(${PROJECT_NAME}
     ${HEADERS}
 )
 
-target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Sql)
+
+# =================================================================================
+# 项目公共配置
+# =================================================================================
+
+# 设置输出目录
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_x86_64"        # app输出目录
+                ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_x86_64/lib"    # so输出目录
+        )
+    elseif (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_x86_64"        # app输出目录
+                ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_x86_64/lib"    # so输出目录
+        )
+    elseif (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "ARM64")
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_aarch64"        # app输出目录
+                ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_aarch64/lib"    # so输出目录
+        )
+    else ()
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_loongarch64"        # app输出目录
+                ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_linux_loongarch64/lib"    # so输出目录
+        )
+    endif ()
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    # Windows 下直接设置目标属性，确保对已创建目标生效
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_windows"          # exe/dll 输出目录
+            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_windows/lib"      # .lib 输出目录
+            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin_windows/plugins"  # 其他库输出目录
+    )
+
+    # 多配置生成器（如 VS）下，避免产物落到 Debug/Release 子目录
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin_windows"
+            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin_windows"
+            RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/bin_windows"
+            RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/bin_windows"
+            ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin_windows/lib"
+            ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin_windows/lib"
+            ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/bin_windows/lib"
+            ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/bin_windows/lib"
+            LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin_windows/plugins"
+            LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin_windows/plugins"
+            LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/bin_windows/plugins"
+            LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/bin_windows/plugins"
+    )
+endif ()
+
+# 设置数据目录变量：OUTPUT_DIR
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+        set(OUTPUT_DIR "bin_linux_x64")
+    elseif (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
+        set(OUTPUT_DIR "bin_linux_x64")
+    elseif (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "ARM64")
+        set(OUTPUT_DIR "bin_linux_aarch64")
+    else ()
+        set(OUTPUT_DIR "bin_linux_loongarch64")
+    endif ()
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(OUTPUT_DIR "bin_windows")
+endif ()
