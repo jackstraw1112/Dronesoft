@@ -35,95 +35,6 @@
     <number>6</number>
    </property>
    <item>
-    <widget class="QWidget" name="wdTitleBar" native="true">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>30</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>40</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <layout class="QHBoxLayout" name="titleBarLy">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>3</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>3</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QLabel" name="lblTitle">
-        <property name="font">
-         <font>
-          <family>Alimama ShuHeiTi</family>
-          <pointsize>11</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>设置点目标</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="titleBarLeftSpc">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnClose">
-        <property name="minimumSize">
-         <size>
-          <width>25</width>
-          <height>25</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>25</width>
-          <height>25</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>×</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <layout class="QGridLayout" name="formLy">
      <property name="horizontalSpacing">
       <number>12</number>
@@ -137,11 +48,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="targetNameLbl">
-         <property name="text">
-          <string>目标名称</string>
+        <layout class="QHBoxLayout" name="targetNameHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineTargetName">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="targetNameLbl">
+           <property name="text">
+            <string>目标名称</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QComboBox" name="cmbTargetName">
@@ -161,11 +101,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="targetTypeLbl">
-         <property name="text">
-          <string>目标类型</string>
+        <layout class="QHBoxLayout" name="targetTypeHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineTargetType">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="targetTypeLbl">
+           <property name="text">
+            <string>目标类型</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QComboBox" name="cmbTargetType"/>
@@ -178,11 +147,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="threatLevelLbl">
-         <property name="text">
-          <string>威胁等级</string>
+        <layout class="QHBoxLayout" name="threatLevelHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineThreatLevel">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="threatLevelLbl">
+           <property name="text">
+            <string>威胁等级</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QComboBox" name="cmbThreatLevel">
@@ -202,11 +200,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="lblPriority">
-         <property name="text">
-          <string>优先级</string>
+        <layout class="QHBoxLayout" name="priorityHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlinePriority">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblPriority">
+           <property name="text">
+            <string>优先级</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QComboBox" name="cmbPriority">
@@ -226,11 +253,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="latitudeLbl">
-         <property name="text">
-          <string>纬度</string>
+        <layout class="QHBoxLayout" name="latitudeHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineLatitude">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="latitudeLbl">
+           <property name="text">
+            <string>纬度</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="spbLatitude">
@@ -256,11 +312,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="longitudeLbl">
-         <property name="text">
-          <string>经度</string>
+        <layout class="QHBoxLayout" name="longitudeHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineLongitude">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="longitudeLbl">
+           <property name="text">
+            <string>经度</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="spbLongitude">
@@ -286,11 +371,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="bandLowerLbl">
-         <property name="text">
-          <string>频段下限</string>
+        <layout class="QHBoxLayout" name="bandLowerHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineBandLower">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="bandLowerLbl">
+           <property name="text">
+            <string>频段下限</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="spbBandLower">
@@ -313,11 +427,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="bandUpperLbl">
-         <property name="text">
-          <string>频段上限</string>
+        <layout class="QHBoxLayout" name="bandUpperHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineBandUpper">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="bandUpperLbl">
+           <property name="text">
+            <string>频段上限</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="spbBandUpper">
@@ -346,11 +489,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="emissionPatternLbl">
-         <property name="text">
-          <string>辐射规律</string>
+        <layout class="QHBoxLayout" name="emissionPatternHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineEmissionPattern">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="emissionPatternLbl">
+           <property name="text">
+            <string>辐射规律</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QLineEdit" name="leEmissionPattern"/>
@@ -363,11 +535,40 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QLabel" name="requiredPkLbl">
-         <property name="text">
-          <string>毁伤要求</string>
+        <layout class="QHBoxLayout" name="requiredPkHeaderLy">
+         <property name="spacing">
+          <number>4</number>
          </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="vlineRequiredPk">
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #00b4ff; border-radius: 1px;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="requiredPkLbl">
+           <property name="text">
+            <string>毁伤要求</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="spbRequiredPk">

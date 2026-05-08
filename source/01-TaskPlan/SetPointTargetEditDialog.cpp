@@ -13,6 +13,7 @@ SetPointTargetEditDialog::SetPointTargetEditDialog(QWidget *parent)
 {
     // 由uic生成的界面对象完成控件创建与布局装配
     ui->setupUi(this);
+    setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
     // 初始化默认数据（下拉框选项、窗口标题等）
     initObject();
     // 统一绑定交互信号，保持构造函数简洁
@@ -201,7 +202,6 @@ void SetPointTargetEditDialog::initConnect()
     // “确定”先走校验，再决定是否accept
     connect(ui->btnConfirm, &QPushButton::clicked, this, &SetPointTargetEditDialog::onAcceptClicked);
 
-    // “取消/关闭”均直接reject，避免产生半完成数据
+    // “取消”直接reject，避免产生半完成数据
     connect(ui->btnCancel, &QPushButton::clicked, this, &SetPointTargetEditDialog::reject);
-    connect(ui->btnClose, &QPushButton::clicked, this, &SetPointTargetEditDialog::reject);
 }

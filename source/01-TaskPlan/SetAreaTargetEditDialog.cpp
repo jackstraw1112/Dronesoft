@@ -12,6 +12,7 @@ SetAreaTargetEditDialog::SetAreaTargetEditDialog(QWidget *parent)
 {
     // 初始化顺序固定为：构建界面 -> 初始化控件属性 -> 连接信号槽。
     ui->setupUi(this);
+    setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
     initObject();
     initConnect();
 }
@@ -253,10 +254,9 @@ void SetAreaTargetEditDialog::initObject()
 
 void SetAreaTargetEditDialog::initConnect()
 {
-    // 底部确认/取消与右上角关闭按钮。
+    // 底部确认/取消按钮。
     connect(ui->btnConfirm, &QPushButton::clicked, this, &SetAreaTargetEditDialog::onAcceptClicked);
     connect(ui->btnCancel, &QPushButton::clicked, this, &SetAreaTargetEditDialog::reject);
-    connect(ui->btnClose, &QPushButton::clicked, this, &SetAreaTargetEditDialog::reject);
 
     // 区域类型切换时，联动“区域坐标组”可用状态。
     connect(ui->cmbAreaType, QOverload<int>::of(&QComboBox::currentIndexChanged),
