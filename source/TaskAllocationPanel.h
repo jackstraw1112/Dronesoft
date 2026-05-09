@@ -16,7 +16,7 @@
 #include <QTimer>
 #include <QScrollArea>
 #include <QMap>
-#include "StructData.h"
+#include "TaskPlanningData.h"
 
 class QVBoxLayout;
 class QGridLayout;
@@ -27,29 +27,7 @@ namespace Ui { class TaskAllocationPanel; }
 QT_END_NAMESPACE
 
 
-// 兵力需求汇总：从 ForceRequirementPanel 传递到 TaskAllocationPanel 的每个目标数据
-struct ForceTargetData {
-    QString id;              // 目标编号（如 "PT-01"）
-    QString name;            // 目标名称（如 "东郊制导雷达"）
-    QString type;            // 目标类型（"PT" / "AR"）
-    int aircraftCount = 0;   // 该目标所需总架数（来自兵力需求计算结果）
-    QString priority = "P1"; // 优先级（"P1" / "P2"）
-
-    ForceTargetData() = default;
-    ForceTargetData(const QString &i, const QString &n, const QString &t, int cnt, const QString &pri = "P1")
-        : id(i), name(n), type(t), aircraftCount(cnt), priority(pri) {}
-};
-
-
-// 候选方案数据：存储每次求解生成的 3 个备选方案参数
-struct AltPlanData {
-    QString name;              // 方案名称
-    double fVal = 0.0;         // 目标函数值
-    int totalAssigned = 0;     // 总架数
-    QString risk;              // 风险等级
-    bool isCurrent = false;    // 当前是否选中
-    QList<int> perTargetCounts; // 每个目标分配的 UAV 架数（用于重新生成编队）
-};
+// ForceTargetData / AltPlanData / UavSpec 定义已统一移至 TaskPlanningData.h
 
 
 class TaskAllocationPanel : public QFrame {

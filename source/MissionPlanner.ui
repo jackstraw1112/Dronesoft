@@ -473,7 +473,7 @@
             <item>
              <widget class="QStackedWidget" name="contentStackedWidget">
               <property name="currentIndex">
-               <number>0</number>
+               <number>4</number>
               </property>
               <widget class="RZSetTaskPlan" name="step1Page">
                <layout class="QVBoxLayout" name="step1Layout">
@@ -551,7 +551,7 @@
                 </property>
                </layout>
               </widget>
-              <widget class="QWidget" name="step5Page">
+              <widget class="ParameterLoading" name="step5Page">
                <layout class="QVBoxLayout" name="step5Layout">
                 <property name="spacing">
                  <number>16</number>
@@ -709,6 +709,12 @@
    <class>RZTaskListWidget</class>
    <extends>QWidget</extends>
    <header>RZTaskListWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ParameterLoading</class>
+   <extends>QWidget</extends>
+   <header location="global">ParameterLoading.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

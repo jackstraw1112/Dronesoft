@@ -6,13 +6,1087 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>831</width>
-    <height>580</height>
+    <width>931</width>
+    <height>795</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ParameterLoading</string>
+   <string>参数装订</string>
   </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="widget_back" native="true">
+     <layout class="QVBoxLayout" name="backLayout">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>12</number>
+      </property>
+      <property name="bottomMargin">
+       <number>12</number>
+      </property>
+      <item>
+       <widget class="QWidget" name="dualGridWidget" native="true">
+        <layout class="QHBoxLayout" name="dualGridLayout">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QWidget" name="cardRadar" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <layout class="QVBoxLayout" name="radarCardLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QWidget" name="radarHeader" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>40</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>40</height>
+               </size>
+              </property>
+              <layout class="QHBoxLayout" name="radarHeaderLayout">
+               <property name="leftMargin">
+                <number>16</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>16</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="lblRadarTitle">
+                 <property name="text">
+                  <string>📡 雷达辐射源参数</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="radarHeaderSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Expanding</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblRadarBadge">
+                 <property name="text">
+                  <string>EMITTER</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="radarBody" native="true">
+              <layout class="QVBoxLayout" name="radarBodyLayout">
+               <property name="spacing">
+                <number>10</number>
+               </property>
+               <property name="leftMargin">
+                <number>16</number>
+               </property>
+               <property name="topMargin">
+                <number>12</number>
+               </property>
+               <property name="rightMargin">
+                <number>16</number>
+               </property>
+               <property name="bottomMargin">
+                <number>12</number>
+               </property>
+               <item>
+                <widget class="QWidget" name="rowFreq" native="true">
+                 <layout class="QVBoxLayout" name="rowFreqLayout">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblFreq">
+                    <property name="text">
+                     <string>中心频率 / 工作频点 (GHz)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="rfFreq">
+                    <property name="text">
+                     <string>9.375</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowBand" native="true">
+                 <layout class="QVBoxLayout" name="rowBandLayout">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblBand">
+                    <property name="text">
+                     <string>频段 / Band</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="rfBand">
+                    <item>
+                     <property name="text">
+                      <string>H/I (8-10 GHz) 火控/制导雷达</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>G/H (6-8 GHz) 监视雷达</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>D/E (2-4 GHz) 警戒雷达</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>宽频 6-18 GHz</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowPulsePrf" native="true">
+                 <layout class="QHBoxLayout" name="rowPulsePrfLayout">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QWidget" name="colPulse" native="true">
+                    <layout class="QVBoxLayout" name="colPulseLayout">
+                     <property name="spacing">
+                      <number>4</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblPulseWidth">
+                       <property name="text">
+                        <string>脉冲宽度 (μs)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="pulseWidth">
+                       <property name="text">
+                        <string>1.2</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QWidget" name="colPrf" native="true">
+                    <layout class="QVBoxLayout" name="colPrfLayout">
+                     <property name="spacing">
+                      <number>4</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblPrf">
+                       <property name="text">
+                        <string>重频 PRF (Hz)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="prf">
+                       <property name="text">
+                        <string>3200</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowThreat" native="true">
+                 <layout class="QVBoxLayout" name="rowThreatLayout">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblThreatLevel">
+                    <property name="text">
+                     <string>辐射源威胁等级</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="threatLevel">
+                    <item>
+                     <property name="text">
+                      <string>P1 · 高威胁 (制导/火控)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>P2 · 中威胁 (搜索/跟踪)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>P3 · 低威胁 (警戒)</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowAltEmitter" native="true">
+                 <layout class="QVBoxLayout" name="rowAltEmitterLayout">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <spacer name="radarBodySpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Expanding</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="cardSeeker" native="true">
+           <layout class="QVBoxLayout" name="seekerCardLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QWidget" name="seekerHeader" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>40</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>40</height>
+               </size>
+              </property>
+              <layout class="QHBoxLayout" name="seekerHeaderLayout">
+               <property name="leftMargin">
+                <number>16</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>16</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="lblSeekerTitle">
+                 <property name="text">
+                  <string>🎯 导引头搜索 &amp; 引炸炸高</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="seekerHeaderSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Expanding</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblSeekerBadge">
+                 <property name="text">
+                  <string>SEEKER + ALT</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="seekerBody" native="true">
+              <layout class="QVBoxLayout" name="seekerBodyLayout">
+               <property name="spacing">
+                <number>10</number>
+               </property>
+               <property name="leftMargin">
+                <number>16</number>
+               </property>
+               <property name="topMargin">
+                <number>12</number>
+               </property>
+               <property name="rightMargin">
+                <number>16</number>
+               </property>
+               <property name="bottomMargin">
+                <number>12</number>
+               </property>
+               <item>
+                <widget class="QWidget" name="rowSearchMode" native="true">
+                 <layout class="QVBoxLayout" name="rowSearchModeLayout">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblSearchMode">
+                    <property name="text">
+                     <string>搜索模式 / Search Pattern</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="searchMode">
+                    <item>
+                     <property name="text">
+                      <string>直飞归向 · 锁定最强辐射源</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>螺旋扫描 · 区域覆盖搜索</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>扇形分区扫描 · 协同禁收</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>&quot;8&quot;字搜索 · 航路交叉</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowSector" native="true">
+                 <layout class="QHBoxLayout" name="rowSectorLayout">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QWidget" name="colSectorStart" native="true">
+                    <layout class="QVBoxLayout" name="colSectorStartLayout">
+                     <property name="spacing">
+                      <number>4</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblSectorStart">
+                       <property name="text">
+                        <string>方位扇区 起始(°)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="sectorStart">
+                       <property name="text">
+                        <string>-30</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QWidget" name="colSectorEnd" native="true">
+                    <layout class="QVBoxLayout" name="colSectorEndLayout">
+                     <property name="spacing">
+                      <number>4</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblSectorEnd">
+                       <property name="text">
+                        <string>方位扇区 终止(°)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="sectorEnd">
+                       <property name="text">
+                        <string>+30</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowElevation" native="true">
+                 <layout class="QHBoxLayout" name="rowElevationLayout">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QWidget" name="colElevMin" native="true">
+                    <layout class="QVBoxLayout" name="colElevMinLayout">
+                     <property name="spacing">
+                      <number>4</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblElevMin">
+                       <property name="text">
+                        <string>俯仰搜索范围(下)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="elevMin">
+                       <property name="text">
+                        <string>-15</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QWidget" name="colElevMax" native="true">
+                    <layout class="QVBoxLayout" name="colElevMaxLayout">
+                     <property name="spacing">
+                      <number>4</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblElevMax">
+                       <property name="text">
+                        <string>俯仰搜索范围(上)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="elevMax">
+                       <property name="text">
+                        <string>+25</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblBurstHeight">
+                 <property name="text">
+                  <string>💥 引炸炸高 / 起爆高度 (m AGL)</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="burstHeight">
+                 <property name="text">
+                  <string>35</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblBurstHint">
+                 <property name="text">
+                  <string>▸ 针对雷达天线罩推荐 25~45m 空爆</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowDivider" native="true">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>1</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>1</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="rowFuse" native="true">
+                 <layout class="QVBoxLayout" name="rowFuseLayout">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblFuseType">
+                    <property name="text">
+                     <string>引信基本类型</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="fuseTypeSimple">
+                    <item>
+                     <property name="text">
+                      <string>无线电近炸引信</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>触发+近炸复合</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <spacer name="seekerBodySpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Expanding</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="tableSectionWidget" native="true">
+        <layout class="QVBoxLayout" name="tableSectionLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QWidget" name="selectAllRow" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>32</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>32</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="selectAllLayout">
+            <property name="leftMargin">
+             <number>12</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>12</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QCheckBox" name="selectAllCheckbox">
+              <property name="text">
+               <string>全选/取消全选</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblSelectedPrefix">
+              <property name="text">
+               <string>已选择</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="selectedCount">
+              <property name="text">
+               <string>0</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblSelectedSuffix">
+              <property name="text">
+               <string>架无人机</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="selectAllSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Expanding</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="droneTable">
+           <property name="columnCount">
+            <number>9</number>
+           </property>
+           <column>
+            <property name="text">
+             <string>选择</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>无人机编号</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>机型/频段</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>装订进度</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>导引头/炸高状态</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>攻击目标</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>预置炸高(m)</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>数据链质量</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>就绪</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="actionBar" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>50</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="actionBarLayout">
+         <property name="leftMargin">
+          <number>16</number>
+         </property>
+         <property name="topMargin">
+          <number>8</number>
+         </property>
+         <property name="rightMargin">
+          <number>16</number>
+         </property>
+         <property name="bottomMargin">
+          <number>8</number>
+         </property>
+         <item>
+          <spacer name="actionBarSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Expanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="verifyBtn">
+           <property name="text">
+            <string>✔ 参数校验</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="defaultBtn">
+           <property name="text">
+            <string>↺ 恢复默认</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="batchUploadBtn">
+           <property name="text">
+            <string>⚡ 装订至选中无人机</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

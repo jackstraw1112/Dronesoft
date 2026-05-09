@@ -6,6 +6,8 @@
 #define RZSIM_ANTI_RADIATION_UAV_PARAMETERLOADING_H
 
 #include <QWidget>
+#include <QTableWidget>
+#include <QCheckBox>
 
 
 QT_BEGIN_NAMESPACE
@@ -20,8 +22,28 @@ public:
 
     ~ParameterLoading() override;
 
+    void applyTechStyle();
+    void setupDroneTable();
+    void updateStatusBar();
+
+public slots:
+    void restoreDefaults();
+
+private slots:
+    void onVerifyClicked();
+    void onDefaultClicked();
+    void onBatchUploadClicked();
+    void onRefreshTableClicked();
+    void onSelectAllChanged(int state);
+    void onDroneCheckChanged();
+
 private:
+    void connectSignals();
+    void populateSampleData();
+
     Ui::ParameterLoading *ui;
+    QList<QCheckBox*> m_droneCheckBoxes;
+    int m_selectedCount = 0;
 };
 
 

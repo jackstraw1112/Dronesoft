@@ -8,22 +8,14 @@
 #include <QFrame>
 #include <QList>
 #include <QString>
-#include "StructData.h"
+#include "TaskPlanningData.h"
 #include "PathAlgorithm/path_planner.h"
+#include "PathDisplayDialog.h"
 
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class RoutePlanning; }
 QT_END_NAMESPACE
-
-// 无人机任务分配：描述每架无人机被分配的目标信息
-struct UavAssignment {
-    QString uavId;          // 无人机编号（如 "UAV-01"）
-    int uavIndex = 0;       // 全局索引（0-based）
-    QString targetId;       // 目标编号（如 "PT-01"）
-    QString targetName;     // 目标名称（如 "东郊制导雷达"）
-    QString targetType;     // 目标类型（"PT" / "AR"）
-};
 
 
 class RoutePlanning : public QFrame {
@@ -41,6 +33,12 @@ private slots:
     // "一键自动规划"按钮点击
     void onPlanAllClicked();
 
+    // 逐组处理规划
+    void processNextGroup();
+
+    // 逐行追加表格内容（延时）
+    void appendNextRow();
+
 private:
     void applyTechStyle();
 
@@ -49,16 +47,41 @@ private:
                                      const std::vector<GeoPoint> &startPositions,
                                      const std::vector<GeoPoint> &targetArea);
 
-    // 将规划结果填入表格
-    void populateTable(const PlanningResult &result, const QString &targetName);
-
     // 解析 UI 中的字符串数值
     static double parseValue(const QString &text);
     static double parseSpeed(const QString &text);
 
+    // 分组规划数据（预计算）
+    struct GroupPlanData {
+        PlanningInput input;
+        QString targetName;
+        int uavCount = 0;
+    };
+
+    // 分组规划结果
+    struct GroupPlanResult {
+        int uavCount = 0;
+        PlanningResult result;
+        QString targetName;
+    };
+
     Ui::RoutePlanning *ui;
     QList<UavAssignment> m_assignments;
     int m_totalUavCount = 0;
+
+    // 延时逐行填充状态
+    QList<GroupPlanData> m_pendingGroups;
+    QList<GroupPlanResult> m_planningResults;
+    int m_currentGroupIndex = 0;
+
+    int m_currentRowInGroup = 0;
+    int m_groupStartRow = 0;
+    PlanningResult m_currentGroupResult;
+    QString m_currentGroupTargetName;
+    int m_currentGroupUavCount = 0;
+
+    // 每行航迹数据（用于查看详情弹窗）
+    QList<QPair<UAVPath, UAVPath>> m_rowPaths;
 };
 
 

@@ -20,7 +20,7 @@
 #include <QMap>
 #include <QGridLayout>
 #include <QScrollArea>
-#include "StructData.h"
+#include "TaskPlanningData.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -28,19 +28,7 @@ namespace Ui { class ForceRequirementPanel; }
 QT_END_NAMESPACE
 
 
-// 雷达目标基础数据
-struct RadarItemData {
-    // 目标编号
-    QString id;
-    // 目标名称
-    QString name;
-    // 目标类型（PT 点目标 / AR 区域目标）
-    QString type;
-
-    RadarItemData() : id(""), name(""), type("PT") {}
-    RadarItemData(const QString &i, const QString &n, const QString &t = "PT")
-        : id(i), name(n), type(t) {}
-};
+// RadarItemData 已统一为 RadarTarget（定义在 TaskPlanningData.h）
 
 
 // 点目标输入参数：每个目标独立保存

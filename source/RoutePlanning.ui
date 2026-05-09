@@ -631,9 +631,12 @@
        <height>70</height>
       </size>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <layout class="QHBoxLayout" name="horizontalLayout_9">
+      <property name="spacing">
+       <number>15</number>
+      </property>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="pushButton_Plan">
         <property name="minimumSize">
          <size>
           <width>200</width>
@@ -644,6 +647,60 @@
          <string>一键自动规划/AUTO-PLAN ALL</string>
         </property>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>编队</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>2</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>无人机</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>11</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>目标</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>5</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <spacer name="horizontalSpacer_5">
@@ -662,7 +719,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableWidget">
+    <widget class="QTableWidget" name="tableWidget_Plan">
      <column>
       <property name="text">
        <string>编号</string>
@@ -686,6 +743,11 @@
      <column>
       <property name="text">
        <string>状态</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>操作</string>
       </property>
      </column>
     </widget>
