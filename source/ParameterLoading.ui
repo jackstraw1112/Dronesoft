@@ -188,67 +188,129 @@
                   <item>
                    <widget class="QLabel" name="lblFreq">
                     <property name="text">
-                     <string>中心频率 / 工作频点 (GHz)</string>
+                     <string>中心频率 / 工作频段 (GHz)</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="rfFreq">
-                    <property name="text">
-                     <string>9.375</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                <widget class="QWidget" name="rowBand" native="true">
-                 <layout class="QVBoxLayout" name="rowBandLayout">
-                  <property name="spacing">
-                   <number>4</number>
-                  </property>
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QLabel" name="lblBand">
-                    <property name="text">
-                     <string>频段 / Band</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QComboBox" name="rfBand">
-                    <item>
-                     <property name="text">
-                      <string>H/I (8-10 GHz) 火控/制导雷达</string>
+                   <widget class="QWidget" name="rowFreqRange" native="true">
+                    <layout class="QHBoxLayout" name="rowFreqRangeLayout">
+                     <property name="spacing">
+                      <number>12</number>
                      </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>G/H (6-8 GHz) 监视雷达</string>
+                     <property name="leftMargin">
+                      <number>0</number>
                      </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>D/E (2-4 GHz) 警戒雷达</string>
+                     <property name="topMargin">
+                      <number>0</number>
                      </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>宽频 6-18 GHz</string>
+                     <property name="rightMargin">
+                      <number>0</number>
                      </property>
-                    </item>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QWidget" name="colFreqMin" native="true">
+                       <layout class="QVBoxLayout" name="colFreqMinLayout">
+                        <property name="spacing">
+                         <number>4</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="lblFreqMin">
+                          <property name="text">
+                           <string>起始 (GHz)</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QDoubleSpinBox" name="rfFreqMin">
+                          <property name="suffix">
+                           <string> GHz</string>
+                          </property>
+                          <property name="decimals">
+                           <number>1</number>
+                          </property>
+                          <property name="minimum">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="maximum">
+                           <double>40.000000000000000</double>
+                          </property>
+                          <property name="singleStep">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="value">
+                           <double>8.000000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QWidget" name="colFreqMax" native="true">
+                       <layout class="QVBoxLayout" name="colFreqMaxLayout">
+                        <property name="spacing">
+                         <number>4</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="lblFreqMax">
+                          <property name="text">
+                           <string>终止 (GHz)</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QDoubleSpinBox" name="rfFreqMax">
+                          <property name="suffix">
+                           <string> GHz</string>
+                          </property>
+                          <property name="decimals">
+                           <number>1</number>
+                          </property>
+                          <property name="minimum">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="maximum">
+                           <double>40.000000000000000</double>
+                          </property>
+                          <property name="singleStep">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="value">
+                           <double>10.000000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                    </layout>
                    </widget>
                   </item>
                  </layout>
@@ -298,10 +360,78 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="pulseWidth">
-                       <property name="text">
-                        <string>1.2</string>
-                       </property>
+                      <widget class="QWidget" name="rowPulseRange" native="true">
+                       <layout class="QHBoxLayout" name="rowPulseRangeLayout">
+                        <property name="spacing">
+                         <number>6</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QDoubleSpinBox" name="pulseWidthMin">
+                          <property name="suffix">
+                           <string> μs</string>
+                          </property>
+                          <property name="decimals">
+                           <number>1</number>
+                          </property>
+                          <property name="minimum">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="maximum">
+                           <double>100.000000000000000</double>
+                          </property>
+                          <property name="singleStep">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="value">
+                           <double>0.500000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="lblPulseSep">
+                          <property name="text">
+                           <string>~</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QDoubleSpinBox" name="pulseWidthMax">
+                          <property name="suffix">
+                           <string> μs</string>
+                          </property>
+                          <property name="decimals">
+                           <number>1</number>
+                          </property>
+                          <property name="minimum">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="maximum">
+                           <double>100.000000000000000</double>
+                          </property>
+                          <property name="singleStep">
+                           <double>0.100000000000000</double>
+                          </property>
+                          <property name="value">
+                           <double>2.500000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
                       </widget>
                      </item>
                     </layout>
@@ -333,10 +463,72 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="prf">
-                       <property name="text">
-                        <string>3200</string>
-                       </property>
+                      <widget class="QWidget" name="rowPrfRange" native="true">
+                       <layout class="QHBoxLayout" name="rowPrfRangeLayout">
+                        <property name="spacing">
+                         <number>6</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QSpinBox" name="prfMin">
+                          <property name="suffix">
+                           <string> Hz</string>
+                          </property>
+                          <property name="minimum">
+                           <number>100</number>
+                          </property>
+                          <property name="maximum">
+                           <number>100000</number>
+                          </property>
+                          <property name="singleStep">
+                           <number>100</number>
+                          </property>
+                          <property name="value">
+                           <number>100</number>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="lblPrfSep">
+                          <property name="text">
+                           <string>~</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QSpinBox" name="prfMax">
+                          <property name="suffix">
+                           <string> Hz</string>
+                          </property>
+                          <property name="minimum">
+                           <number>100</number>
+                          </property>
+                          <property name="maximum">
+                           <number>100000</number>
+                          </property>
+                          <property name="singleStep">
+                           <number>100</number>
+                          </property>
+                          <property name="value">
+                           <number>100</number>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
                       </widget>
                      </item>
                     </layout>
@@ -627,9 +819,18 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="sectorStart">
-                       <property name="text">
-                        <string>-30</string>
+                      <widget class="QSpinBox" name="sectorStart">
+                       <property name="suffix">
+                        <string> °</string>
+                       </property>
+                       <property name="minimum">
+                        <number>-180</number>
+                       </property>
+                       <property name="maximum">
+                        <number>180</number>
+                       </property>
+                       <property name="value">
+                        <number>0</number>
                        </property>
                       </widget>
                      </item>
@@ -662,9 +863,18 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="sectorEnd">
-                       <property name="text">
-                        <string>+30</string>
+                      <widget class="QSpinBox" name="sectorEnd">
+                       <property name="suffix">
+                        <string> °</string>
+                       </property>
+                       <property name="minimum">
+                        <number>-180</number>
+                       </property>
+                       <property name="maximum">
+                        <number>180</number>
+                       </property>
+                       <property name="value">
+                        <number>30</number>
                        </property>
                       </widget>
                      </item>
@@ -718,9 +928,18 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="elevMin">
-                       <property name="text">
-                        <string>-15</string>
+                      <widget class="QSpinBox" name="elevMin">
+                       <property name="suffix">
+                        <string> °</string>
+                       </property>
+                       <property name="minimum">
+                        <number>-90</number>
+                       </property>
+                       <property name="maximum">
+                        <number>90</number>
+                       </property>
+                       <property name="value">
+                        <number>0</number>
                        </property>
                       </widget>
                      </item>
@@ -753,9 +972,18 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="elevMax">
-                       <property name="text">
-                        <string>+25</string>
+                      <widget class="QSpinBox" name="elevMax">
+                       <property name="suffix">
+                        <string> °</string>
+                       </property>
+                       <property name="minimum">
+                        <number>-90</number>
+                       </property>
+                       <property name="maximum">
+                        <number>90</number>
+                       </property>
+                       <property name="value">
+                        <number>25</number>
                        </property>
                       </widget>
                      </item>
@@ -773,9 +1001,18 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="burstHeight">
-                 <property name="text">
-                  <string>35</string>
+                <widget class="QSpinBox" name="burstHeight">
+                 <property name="suffix">
+                  <string> m</string>
+                 </property>
+                 <property name="minimum">
+                  <number>5</number>
+                 </property>
+                 <property name="maximum">
+                  <number>200</number>
+                 </property>
+                 <property name="value">
+                  <number>35</number>
                  </property>
                 </widget>
                </item>

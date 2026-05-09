@@ -3,6 +3,10 @@
 
 #include "MissionPlanner.h"
 #include "MissionPlannerTheme.h"
+#include "ForceRequirementPanel.h"
+#include "RightSidePanel.h"
+#include "TaskAllocationPanel.h"
+#include "RoutePlanning.h"
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
@@ -86,6 +90,19 @@ void MissionPlanner::initParams()
     m_currentEditingTaskUid.clear();
     m_runtimeStage = TaskPlanStage::Scheme;
     m_runtimeSimTimestampSec = static_cast<uint>(QDateTime::currentSecsSinceEpoch());
+
+    // 初始化默认无人机资源池（240架 JWS-01 型号）
+    m_totalUavAvailable = 240;
+    m_uavResourcePool.clear();
+    for (int i = 0; i < 240; ++i)
+    {
+        UavResource uav;
+        uav.uavIndex = i;
+        uav.uavName = QString("JWS01-%1").arg(i + 1, 3, 10, QChar('0'));
+        uav.typeName = QStringLiteral("JWS01");
+        uav.isAvailable = true;
+        m_uavResourcePool.append(uav);
+    }
 }
 
 void MissionPlanner::initObject()
@@ -139,6 +156,11 @@ void MissionPlanner::initObject()
             }
         }
 
+        // 初始化右侧资源面板：显示240架无人机资源池
+        ui->widget_Source->setUavResources(m_uavResourcePool);
+        // 设置协同任务分配模块的资源总量上限
+        ui->step3Page->setTotalUavLimit(m_totalUavAvailable);
+
         refreshTaskList();
 
         if (!m_taskStore.isEmpty() && !m_taskNumberToUid.isEmpty())
@@ -163,6 +185,105 @@ void MissionPlanner::initConnect()
 
     // 步骤1页面保存后，把完整任务数据写回主窗口缓存
     connect(ui->step1Page, &RZSetTaskPlan::saveTaskDetailClicked, this, &MissionPlanner::onTaskSavedDetail);
+    connect(ui->step1Page, &RZSetTaskPlan::targetsModified, this, [this]()
+    {
+        const QString &taskUid = m_currentEditingTaskUid;
+        if (taskUid.isEmpty())
+            return;
+        const QString taskId = m_taskNumberToUid.key(taskUid);
+        if (taskId.isEmpty())
+            return;
+        TaskPlanningData &entry = m_taskStore[taskUid];
+        entry.pointTargets = ui->step1Page->pointTargets();
+        entry.areaTargets = ui->step1Page->areaTargets();
+        const int totalCount = entry.pointTargets.size() + entry.areaTargets.size();
+        mTaskListWidget->updateTaskItemTargetCount(taskId, totalCount);
+    });
+
+    // 兵力计算结果变更时同步到任务缓存
+    connect(ui->step2Page, &ForceRequirementPanel::forceResultsChanged, this, [this]()
+    {
+        const QString &taskUid = m_currentEditingTaskUid;
+        if (taskUid.isEmpty() || !m_taskStore.contains(taskUid))
+            return;
+        TaskPlanningData &entry = m_taskStore[taskUid];
+        entry.forcePtResults = ui->step2Page->ptResults();
+        entry.forceArResults = ui->step2Page->arResults();
+
+        QList<ForceTargetData> forceList;
+        for (int i = 0; i < ui->step2Page->targetCount(); ++i)
+        {
+            const QString id = ui->step2Page->targetId(i);
+            const QString name = ui->step2Page->targetName(i);
+            const QString type = ui->step2Page->targetType(i);
+            int count = 0;
+            if (type == "PT" && entry.forcePtResults.contains(id))
+                count = entry.forcePtResults.value(id).total;
+            else if (type == "AR" && entry.forceArResults.contains(id))
+                count = entry.forceArResults.value(id).total;
+            const QString pri = (i < 3) ? "P1" : "P2";
+            if (!id.isEmpty())
+                forceList.append(ForceTargetData(id, name, type, count, pri));
+        }
+        entry.forceRequirements = forceList;
+
+        // 同步更新右侧面板KPI：出动架次
+        int totalUavNeeded = 0;
+        for (const auto &fd : forceList)
+            totalUavNeeded += fd.aircraftCount;
+        ui->widget_Source->setKpiValue(2, QString::number(totalUavNeeded));
+    });
+
+    // 分配结果变更时同步到任务缓存
+    connect(ui->step3Page, &TaskAllocationPanel::allocationResultsChanged, this, [this]()
+    {
+        const QString &taskUid = m_currentEditingTaskUid;
+        if (taskUid.isEmpty() || !m_taskStore.contains(taskUid))
+            return;
+        TaskPlanningData &entry = m_taskStore[taskUid];
+        entry.altPlans = ui->step3Page->altPlanDataList();
+
+        // 生成 UAV 分配列表（从资源池取名称）
+        QList<UavAssignment> assignments;
+        const QList<ForceTargetData> &targets = ui->step3Page->forceTargets();
+        int uavIndex = 0;
+        for (const ForceTargetData &tgt : targets)
+        {
+            for (int j = 0; j < tgt.aircraftCount; ++j)
+            {
+                UavAssignment ua;
+                if (uavIndex < m_uavResourcePool.size())
+                    ua.uavId = m_uavResourcePool[uavIndex].uavName;
+                else
+                    ua.uavId = QString("UAV-%1").arg(uavIndex + 1, 2, 10, QChar('0'));
+                ua.uavIndex = uavIndex;
+                ua.targetId = tgt.id;
+                ua.targetName = tgt.name;
+                ua.targetType = tgt.type;
+                assignments.append(ua);
+                ++uavIndex;
+            }
+        }
+        entry.uavAssignments = assignments;
+
+        // 同步更新右侧面板KPI：出动架次（总分配架数）
+        int totalPlanes = 0;
+        const auto &altPlans = ui->step3Page->altPlanDataList();
+        int curIdx = ui->step3Page->currentAltPlanIndex();
+        if (curIdx >= 0 && curIdx < altPlans.size())
+            totalPlanes = altPlans[curIdx].totalAssigned;
+        ui->widget_Source->setKpiValue(2, QString::number(totalPlanes));
+    });
+
+    // 航路规划结果变更时同步到任务缓存
+    connect(ui->step4Page, &RoutePlanning::routePlanningChanged, this, [this]()
+    {
+        const QString &taskUid = m_currentEditingTaskUid;
+        if (taskUid.isEmpty() || !m_taskStore.contains(taskUid))
+            return;
+        TaskPlanningData &entry = m_taskStore[taskUid];
+        entry.paths = ui->step4Page->pathResults();
+    });
 }
 
 // 应用科技风格样式：暗色背景、蓝色/青色强调色、发光边框，与ForceRequirementPanel统一
@@ -184,29 +305,68 @@ void MissionPlanner::onStepChanged(int index)
 
     // 步骤 3（协同任务分配）：从兵力需求面板读取数据，注入到分配面板
     if (index == 2) {
-        ForceRequirementPanel *forcePanel = ui->step2Page;
         TaskAllocationPanel *allocPanel = ui->step3Page;
+        allocPanel->setTotalUavLimit(m_totalUavAvailable);
 
         QList<ForceTargetData> targets;
-        int n = forcePanel->targetCount();
-        for (int i = 0; i < n; ++i) {
-            QString id = forcePanel->targetId(i);
-            QString name = forcePanel->targetName(i);
-            QString type = forcePanel->targetType(i);
-            int count = 0;
-            // 从计算结果中读取总架数
-            if (type == "PT" && forcePanel->ptResults().contains(id))
-                count = forcePanel->ptResults().value(id).total;
-            else if (type == "AR" && forcePanel->arResults().contains(id))
-                count = forcePanel->arResults().value(id).total;
-            // 优先级：P1 / P2（简单按索引前 3 个为 P1）
-            QString pri = (i < 3) ? "P1" : "P2";
-            if (!id.isEmpty())
-                targets.append(ForceTargetData(id, name, type, count, pri));
+        QMap<QString, PtCalcData> ptMap;
+        QMap<QString, ArCalcData> arMap;
+
+        // 优先使用 m_taskStore 中已保存的兵力需求结果（含正确架数）
+        if (m_taskStore.contains(m_currentEditingTaskUid))
+        {
+            const TaskPlanningData &entry = m_taskStore[m_currentEditingTaskUid];
+            if (!entry.forceRequirements.isEmpty())
+            {
+                targets = entry.forceRequirements;
+                ptMap = entry.forcePtResults;
+                arMap = entry.forceArResults;
+            }
         }
-        allocPanel->setForceData(targets,
-                                 forcePanel->ptResults(),
-                                 forcePanel->arResults());
+
+        // 回退：从兵力需求面板读取实时数据
+        if (targets.isEmpty())
+        {
+            ForceRequirementPanel *forcePanel = ui->step2Page;
+            int n = forcePanel->targetCount();
+            for (int i = 0; i < n; ++i) {
+                QString id = forcePanel->targetId(i);
+                QString name = forcePanel->targetName(i);
+                QString type = forcePanel->targetType(i);
+                int count = 0;
+                if (type == "PT" && forcePanel->ptResults().contains(id))
+                    count = forcePanel->ptResults().value(id).total;
+                else if (type == "AR" && forcePanel->arResults().contains(id))
+                    count = forcePanel->arResults().value(id).total;
+                QString pri = (i < 3) ? "P1" : "P2";
+                if (!id.isEmpty())
+                    targets.append(ForceTargetData(id, name, type, count, pri));
+            }
+            ptMap = forcePanel->ptResults();
+            arMap = forcePanel->arResults();
+        }
+
+        allocPanel->setForceData(targets, ptMap, arMap);
+
+        // 传入无人机资源池（240架 JWS-01 个体）
+        allocPanel->setUavResourcePool(m_uavResourcePool);
+
+        // 恢复已保存的候选方案
+        if (m_taskStore.contains(m_currentEditingTaskUid))
+        {
+            const TaskPlanningData &entry = m_taskStore[m_currentEditingTaskUid];
+            if (!entry.altPlans.isEmpty())
+                allocPanel->setAltPlanData(entry.altPlans);
+            else {
+                allocPanel->clearAltPlans();
+                allocPanel->clearAllocGroups();
+            }
+        }
+        else
+        {
+            allocPanel->clearAltPlans();
+            allocPanel->clearAllocGroups();
+        }
     }
 
     // 步骤 4（航路规划）：从任务分配面板读取兵力编排数据，注入到航路规划面板
@@ -221,7 +381,10 @@ void MissionPlanner::onStepChanged(int index)
         for (const ForceTargetData &tgt : targets) {
             for (int j = 0; j < tgt.aircraftCount; ++j) {
                 UavAssignment ua;
-                ua.uavId = QString("UAV-%1").arg(uavIndex + 1, 2, 10, QChar('0'));
+                if (uavIndex < m_uavResourcePool.size())
+                    ua.uavId = m_uavResourcePool[uavIndex].uavName;
+                else
+                    ua.uavId = QString("UAV-%1").arg(uavIndex + 1, 2, 10, QChar('0'));
                 ua.uavIndex = uavIndex;
                 ua.targetId = tgt.id;
                 ua.targetName = tgt.name;
@@ -232,6 +395,20 @@ void MissionPlanner::onStepChanged(int index)
         }
 
         routePanel->setAllocationData(assignments, uavIndex);
+
+        // 恢复已保存的路径规划结果
+        if (m_taskStore.contains(m_currentEditingTaskUid))
+        {
+            const TaskPlanningData &entry = m_taskStore[m_currentEditingTaskUid];
+            if (!entry.paths.isEmpty())
+                routePanel->setPathResults(entry.paths);
+            else
+                routePanel->setPathResults(QList<PathPlanning>());
+        }
+        else
+        {
+            routePanel->setPathResults(QList<PathPlanning>());
+        }
     }
 }
 
@@ -263,11 +440,87 @@ void MissionPlanner::onTaskItemSelected(QString taskId)
     }
 
     m_currentEditingTaskUid = taskUid;
-    const TaskPlanningData &entry = m_taskStore.value(taskUid);
+    TaskPlanningData &entry = m_taskStore[taskUid];
     ui->step1Page->loadTaskForEdit(entry.basicInfo, entry.pointTargets, entry.areaTargets);
-    // 自动切换到任务创建页，方便用户直接查看/编辑详情
-    ui->contentStackedWidget->setCurrentIndex(0);
-    ui->step1Btn->setChecked(true);
+
+    ui->step2Page->loadTaskTargets(entry.pointTargets, entry.areaTargets);
+    // 恢复已保存的兵力计算结果（覆盖自动计算值）
+    if (!entry.forcePtResults.isEmpty() || !entry.forceArResults.isEmpty())
+        ui->step2Page->restoreResults(entry.forcePtResults, entry.forceArResults);
+
+    // ── 协同任务分配：先清空旧数据，再恢复已保存的数据 ──
+    ui->step3Page->setTotalUavLimit(m_totalUavAvailable);
+    if (!entry.forceRequirements.isEmpty())
+    {
+        ui->step3Page->setForceData(entry.forceRequirements, entry.forcePtResults, entry.forceArResults);
+        if (!entry.altPlans.isEmpty())
+            ui->step3Page->setAltPlanData(entry.altPlans);
+        else
+        {
+            ui->step3Page->clearAltPlans();
+            ui->step3Page->clearAllocGroups();
+        }
+    }
+    else
+    {
+        ui->step3Page->clearAltPlans();
+        ui->step3Page->clearAllocGroups();
+    }
+
+    // ── 航路规划：先注入分配数据（更新统计标签 + m_assignments），再恢复已保存的路径 ──
+    {
+        QList<UavAssignment> uavAssignments;
+        int totalCount = 0;
+        if (!entry.uavAssignments.isEmpty())
+        {
+            uavAssignments = entry.uavAssignments;
+            totalCount = entry.uavAssignments.size();
+        }
+        else if (!entry.forceRequirements.isEmpty())
+        {
+            int idx = 0;
+            for (const ForceTargetData &ft : entry.forceRequirements)
+            {
+                for (int j = 0; j < ft.aircraftCount; ++j)
+                {
+                    UavAssignment ua;
+                    if (idx < m_uavResourcePool.size())
+                        ua.uavId = m_uavResourcePool[idx].uavName;
+                    else
+                        ua.uavId = QString("UAV-%1").arg(idx + 1, 2, 10, QChar('0'));
+                    ua.uavIndex = idx;
+                    ua.targetId = ft.id;
+                    ua.targetName = ft.name;
+                    ua.targetType = ft.type;
+                    uavAssignments.append(ua);
+                    ++idx;
+                }
+            }
+            totalCount = idx;
+        }
+        ui->step4Page->setAllocationData(uavAssignments, totalCount);
+        ui->step4Page->setPathResults(entry.paths);
+        ui->step5Page->setAssignmentData(uavAssignments, m_uavResourcePool);
+    }
+
+    // ── 更新右侧资源面板的KPI信息 ──
+    const int ptCount = entry.pointTargets.size();
+    const int arCount = entry.areaTargets.size();
+    int totalUavNeeded = 0;
+    for (const auto &fd : entry.forceRequirements)
+        totalUavNeeded += fd.aircraftCount;
+    if (totalUavNeeded == 0)
+    {
+        for (auto it = entry.forcePtResults.cbegin(); it != entry.forcePtResults.cend(); ++it)
+            totalUavNeeded += it.value().total;
+        for (auto it = entry.forceArResults.cbegin(); it != entry.forceArResults.cend(); ++it)
+            totalUavNeeded += it.value().total;
+    }
+    RightSidePanel *rsp = ui->widget_Source;
+    rsp->setKpiValue(0, QString::number(ptCount));
+    rsp->setKpiValue(1, QString::number(arCount));
+    rsp->setKpiValue(2, QString::number(totalUavNeeded));
+    rsp->setKpiValue(3, QString::number(m_totalUavAvailable));
 }
 
 // 新建任务按钮点击事件
@@ -355,6 +608,18 @@ void MissionPlanner::onTaskSavedDetail(const TaskPlanningData &taskData)
     }
     const TaskBasicInfo &taskInfo = entry.basicInfo;
 
+    // 保留已有兵力计算结果 / 分配方案 / 航路规划（编辑页回传的数据不包含这些字段）
+    if (m_taskStore.contains(taskInfo.taskUid))
+    {
+        const TaskPlanningData &existing = m_taskStore[taskInfo.taskUid];
+        entry.forcePtResults = existing.forcePtResults;
+        entry.forceArResults = existing.forceArResults;
+        entry.forceRequirements = existing.forceRequirements;
+        entry.altPlans = existing.altPlans;
+        entry.uavAssignments = existing.uavAssignments;
+        entry.paths = existing.paths;
+    }
+
     const QString oldTaskUid = m_currentEditingTaskUid;
     if (!m_currentEditingTaskUid.isEmpty() && m_currentEditingTaskUid != taskInfo.taskUid)
     {
@@ -407,8 +672,8 @@ void MissionPlanner::refreshTaskList()
         const QString timeRange = QString("%1 ~ %2")
                                           .arg(QDateTime::fromSecsSinceEpoch(task.startTimestampSec).toString("yyyy-MM-dd HH:mm"))
                                           .arg(QDateTime::fromSecsSinceEpoch(task.endTimestampSec).toString("yyyy-MM-dd HH:mm"));
-        // 目标数量目前使用点目标数量，后续可扩展为点+区域总和
-        mTaskListWidget->addTask(taskId, task.taskName, statusText, taskData.pointTargets.size(), 6, timeRange);
+        // 目标数量 = 点目标 + 区域目标
+        mTaskListWidget->addTask(taskId, task.taskName, statusText, taskData.pointTargets.size() + taskData.areaTargets.size(), 6, timeRange);
     }
 
     // 强制刷新界面

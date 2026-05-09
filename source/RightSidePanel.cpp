@@ -189,7 +189,7 @@ void RightSidePanel::setupHeader()
 // setupKpiSection - 设置KPI指标区域
 // ============================================================================
 // 功能：创建关键指标显示区域，使用网格布局显示4个KPI卡片
-// 显示：点目标、区域目标、出动架次、预期毁伤率
+// 显示：点目标、区域目标、出动架次、无人机总数
 // ============================================================================
 void RightSidePanel::setupKpiSection()
 {
@@ -235,7 +235,7 @@ void RightSidePanel::setupKpiSection()
     addKpiCard("出动架次", "12");
     kpiGrid->addWidget(m_kpiCards.last(), 1, 0);
 
-    addKpiCard("预期毁伤率", "91%");
+    addKpiCard("无人机总数", "240");
     kpiGrid->addWidget(m_kpiCards.last(), 1, 1);
 
     sectionLayout->addLayout(kpiGrid);
@@ -299,6 +299,7 @@ void RightSidePanel::addKpiCard(QString label, QString value)
 
     // 将卡片添加到列表
     m_kpiCards.append(kpiCard);
+    m_kpiValueLabels.append(kpiValue);
 }
 
 // ============================================================================
@@ -337,18 +338,8 @@ void RightSidePanel::setupAssetsSection()
     );
     sectionLayout->addWidget(sectionTitle);
 
-    // 添加无人机卡片
-    addUavCard("HF-ARM-200A", "G/H/I 频段 · 12 架可用", "已分配 6", true);
-    sectionLayout->addWidget(m_uavCards.last());
-
-    addUavCard("HF-ARM-200B", "D/E/F 频段 · 8 架可用", "已分配 2", true);
-    sectionLayout->addWidget(m_uavCards.last());
-
-    addUavCard("HF-ARM-300", "宽频 · 4 架可用", "就绪", true);
-    sectionLayout->addWidget(m_uavCards.last());
-
-    addUavCard("HF-EW-100", "电子战 · 维护中", "维护", false);
-    sectionLayout->addWidget(m_uavCards.last());
+    // 存储布局指针，供 setUavResources 动态更新
+    m_assetsSectionLayout = sectionLayout;
 
     m_contentLayout->addWidget(sectionFrame);
 }
@@ -392,10 +383,13 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
     // 创建信息布局
     QVBoxLayout *infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(2);
+    infoLayout->setAlignment(Qt::AlignLeft);
 
     // 创建无人机名称标签
     QLabel *uavName = new QLabel(uavCard);
     uavName->setText(name);
+    uavName->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    uavName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     uavName->setStyleSheet(
         "QLabel {"
         "   font-size: 14px;"
@@ -407,6 +401,8 @@ void RightSidePanel::addUavCard(QString name, QString spec, QString status, bool
     // 创建无人机规格标签
     QLabel *uavSpec = new QLabel(uavCard);
     uavSpec->setText(spec);
+    uavSpec->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    uavSpec->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     uavSpec->setStyleSheet(
         "QLabel {"
         "   font-size: 12px;"
@@ -690,4 +686,65 @@ void RightSidePanel::addWeatherCard(QString label, QString value)
 
     // 将卡片添加到列表
     m_weatherCards.append(weatherCard);
+}
+
+// ============================================================================
+// setUavResources - 从资源池更新可用兵力显示
+// ============================================================================
+void RightSidePanel::setUavResources(const QList<UavResource> &resources)
+{
+    clearUavCards();
+    if (!m_assetsSectionLayout)
+        return;
+
+    // 按型号分组统计
+    QMap<QString, QPair<int, int>> groupStats;
+    for (const UavResource &res : resources)
+    {
+        auto &stats = groupStats[res.typeName];
+        stats.first++;   // totalCount
+        if (res.isAvailable)
+            stats.second++; // availableCount
+    }
+
+    for (auto it = groupStats.cbegin(); it != groupStats.cend(); ++it)
+    {
+        const QString &typeName = it.key();
+        int totalCount = it.value().first;
+        int availableCount = it.value().second;
+
+        QString spec = QString("%1 架可用").arg(availableCount);
+
+        QString statusText;
+        if (availableCount < totalCount)
+            statusText = QStringLiteral("已分配 %1").arg(totalCount - availableCount);
+        else
+            statusText = QStringLiteral("就绪");
+
+        addUavCard(typeName, spec, statusText, true);
+        m_assetsSectionLayout->addWidget(m_uavCards.last());
+    }
+}
+
+// ============================================================================
+// setKpiValue - 更新指定索引的KPI数值
+// ============================================================================
+void RightSidePanel::setKpiValue(int index, const QString &value)
+{
+    if (index >= 0 && index < m_kpiValueLabels.size())
+        m_kpiValueLabels[index]->setText(value);
+}
+
+// ============================================================================
+// clearUavCards - 清空所有无人机卡片
+// ============================================================================
+void RightSidePanel::clearUavCards()
+{
+    for (QFrame *card : m_uavCards)
+    {
+        if (m_assetsSectionLayout)
+            m_assetsSectionLayout->removeWidget(card);
+        delete card;
+    }
+    m_uavCards.clear();
 }

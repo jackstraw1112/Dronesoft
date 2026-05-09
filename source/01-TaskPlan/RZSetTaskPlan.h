@@ -31,6 +31,15 @@ public:
     // 加载已有任务到界面（用于编辑）
     void loadTaskForEdit(const TaskBasicInfo &taskInfo, const QList<PointTargetInfo> &pointTargets, const QList<AreaTargetInfo> &areaTargets);
 
+    // 获取当前点目标数量（用于实时同步任务列表计数）
+    int pointTargetCount() const { return m_pointTargets.size(); }
+    // 获取当前区域目标数量（用于实时同步任务列表计数）
+    int areaTargetCount() const { return m_areaTargets.size(); }
+    // 获取当前点目标列表（用于同步内存缓存）
+    const QList<PointTargetInfo> &pointTargets() const { return m_pointTargets; }
+    // 获取当前区域目标列表（用于同步内存缓存）
+    const QList<AreaTargetInfo> &areaTargets() const { return m_areaTargets; }
+
 signals:
     // 保存任务时发射，返回当前界面填写的任务基本信息
     void saveTaskClicked(const TaskBasicInfo &taskInfo);
@@ -38,6 +47,8 @@ signals:
     void saveTaskWithPointTargetsClicked(const TaskBasicInfo &taskInfo, const QList<PointTargetInfo> &pointTargets);
     // 保存任务时发射完整任务数据（用于缓存更新）
     void saveTaskDetailClicked(const TaskPlanningData &taskData);
+    // 点目标/区域目标增删时发射，用于实时同步任务列表卡片中的目标数量
+    void targetsModified();
 
 private:
     // 初始化参数

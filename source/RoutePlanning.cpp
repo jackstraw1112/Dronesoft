@@ -6,6 +6,7 @@
 
 #include "RoutePlanning.h"
 #include "ui_RoutePlanning.h"
+#include "PathAlgorithm/path_planner.h"
 #include <QLabel>
 #include <QGroupBox>
 #include <QComboBox>
@@ -110,10 +111,11 @@ void RoutePlanning::onPlanAllClicked()
         }
 
         PlanningInput input = buildPlanningInput(group, startPositions, targetArea);
-        m_pendingGroups.append({input, group.first().targetName, group.size()});
+        m_pendingGroups.append({input, group.first().targetName, group.size(), group});
     }
 
     m_currentGroupIndex = 0;
+    m_planningActive = true;
     processNextGroup();
 }
 
@@ -125,6 +127,57 @@ void RoutePlanning::processNextGroup()
             totalRows += r.uavCount;
         ui->pushButton_Plan->setEnabled(true);
         ui->pushButton_Plan->setText(QString("航路规划完成  (%1 架)").arg(totalRows));
+
+        // 构建缓存的路径规划结果（按分组逐架取真实名称，避免跨组重复）
+        m_cachedPaths.clear();
+        for (int gi = 0; gi < m_planningResults.size(); ++gi)
+        {
+            const GroupPlanResult &pr = m_planningResults[gi];
+            const QList<UavAssignment> &groupAssigns = (gi < m_pendingGroups.size())
+                ? m_pendingGroups[gi].assignments : QList<UavAssignment>();
+
+            int n = qMin(pr.uavCount, static_cast<int>(pr.result.approach_paths.size()));
+            for (int ui = 0; ui < n; ++ui)
+            {
+                const UAVPath &approachPath = pr.result.approach_paths[ui];
+                const UAVPath &attackPath = pr.result.attack_paths[ui];
+
+                PathPlanning pathData;
+                if (ui < groupAssigns.size())
+                    pathData.uavName = groupAssigns[ui].uavId;
+                else
+                    pathData.uavName = QString("UAV-%1").arg(approachPath.uav_id + 1, 2, 10, QChar('0'));
+                pathData.relatedTask = pr.targetName;
+                pathData.status = QStringLiteral("已生成");
+
+                int order = 0;
+                for (const auto &wp : approachPath.waypoints) {
+                    PathPoint pt;
+                    pt.pointOrder = ++order;
+                    pt.latitude = wp.lat;
+                    pt.longitude = wp.lon;
+                    pt.altitude = wp.alt;
+                    pt.pointType = QStringLiteral("巡航路径");
+                    pathData.fightPathPoints.append(pt);
+                }
+                for (const auto &wp : attackPath.waypoints) {
+                    PathPoint pt;
+                    pt.pointOrder = ++order;
+                    pt.latitude = wp.lat;
+                    pt.longitude = wp.lon;
+                    pt.altitude = wp.alt;
+                    pt.pointType = QStringLiteral("搜索路径");
+                    pathData.searchPathPoints.append(pt);
+                }
+                pathData.pathPointCount = order;
+                m_cachedPaths.append(pathData);
+            }
+        }
+
+        if (m_planningActive) {
+            m_planningActive = false;
+            emit routePlanningChanged();
+        }
         return;
     }
 
@@ -169,14 +222,12 @@ void RoutePlanning::appendNextRow()
     idItem->setTextAlignment(Qt::AlignCenter);
     ui->tableWidget_Plan->setItem(row, 0, idItem);
 
+    // 从当前组的分配列表中取真实名称（避免跨组重复）
     QString uavName;
-    for (const auto &a : m_assignments) {
-        if (a.uavIndex == approach.uav_id) {
-            uavName = a.uavId;
-            break;
-        }
-    }
-    if (uavName.isEmpty())
+    if (m_currentGroupIndex < m_pendingGroups.size() &&
+        i < m_pendingGroups[m_currentGroupIndex].assignments.size())
+        uavName = m_pendingGroups[m_currentGroupIndex].assignments[i].uavId;
+    else
         uavName = QString("UAV-%1").arg(approach.uav_id + 1, 2, 10, QChar('0'));
     QTableWidgetItem *uavItem = new QTableWidgetItem(uavName);
     uavItem->setTextAlignment(Qt::AlignCenter);
@@ -231,39 +282,39 @@ void RoutePlanning::appendNextRow()
         const UAVPath &attackPath = m_rowPaths[capturedRow].second;
 
         PathPlanning pathData;
-        for (const auto &a : m_assignments) {
-            if (a.uavIndex == approachPath.uav_id) {
-                pathData.uavName = a.uavId;
-                break;
+        if (capturedRow < m_cachedPaths.size()) {
+            pathData = m_cachedPaths[capturedRow];
+        } else if (capturedRow < m_rowPaths.size()) {
+            // 从表格中直接读取已正确填写的无人机名称
+            QTableWidgetItem *uavNameItem = ui->tableWidget_Plan->item(capturedRow, 1);
+            pathData.uavName = uavNameItem ? uavNameItem->text()
+                : QString("UAV-%1").arg(approachPath.uav_id + 1, 2, 10, QChar('0'));
+
+            QTableWidgetItem *tgtItem = ui->tableWidget_Plan->item(capturedRow, 2);
+            pathData.relatedTask = tgtItem ? tgtItem->text() : QString();
+            pathData.status = QString::fromUtf8("\xe5\xb7\xb2\xe7\x94\x9f\xe6\x88\x90");
+
+            int order = 0;
+            for (const auto &wp : approachPath.waypoints) {
+                PathPoint pt;
+                pt.pointOrder = ++order;
+                pt.latitude = wp.lat;
+                pt.longitude = wp.lon;
+                pt.altitude = wp.alt;
+                pt.pointType = QString::fromUtf8("\xe5\xb7\xa1\xe8\x88\xaa\xe8\xb7\xaf\xe5\xbe\x84");
+                pathData.fightPathPoints.append(pt);
             }
+            for (const auto &wp : attackPath.waypoints) {
+                PathPoint pt;
+                pt.pointOrder = ++order;
+                pt.latitude = wp.lat;
+                pt.longitude = wp.lon;
+                pt.altitude = wp.alt;
+                pt.pointType = QString::fromUtf8("\xe6\x90\x9c\xe7\xb4\xa2\xe8\xb7\xaf\xe5\xbe\x84");
+                pathData.searchPathPoints.append(pt);
+            }
+            pathData.pathPointCount = order;
         }
-        if (pathData.uavName.isEmpty())
-            pathData.uavName = QString("UAV-%1").arg(approachPath.uav_id + 1, 2, 10, QChar('0'));
-
-        QTableWidgetItem *tgtItem = ui->tableWidget_Plan->item(capturedRow, 2);
-        pathData.relatedTask = tgtItem ? tgtItem->text() : QString();
-        pathData.status = QString::fromUtf8("\xe5\xb7\xb2\xe7\x94\x9f\xe6\x88\x90");
-
-        int order = 0;
-        for (const auto &wp : approachPath.waypoints) {
-            PathPoint pt;
-            pt.pointOrder = ++order;
-            pt.latitude = wp.lat;
-            pt.longitude = wp.lon;
-            pt.altitude = wp.alt;
-            pt.pointType = QString::fromUtf8("\xe5\xb7\xa1\xe8\x88\xaa\xe8\xb7\xaf\xe5\xbe\x84");
-            pathData.fightPathPoints.append(pt);
-        }
-        for (const auto &wp : attackPath.waypoints) {
-            PathPoint pt;
-            pt.pointOrder = ++order;
-            pt.latitude = wp.lat;
-            pt.longitude = wp.lon;
-            pt.altitude = wp.alt;
-            pt.pointType = QString::fromUtf8("\xe6\x90\x9c\xe7\xb4\xa2\xe8\xb7\xaf\xe5\xbe\x84");
-            pathData.searchPathPoints.append(pt);
-        }
-        pathData.pathPointCount = order;
 
         PathDisplayDialog *dlg = new PathDisplayDialog(this);
         dlg->setPathData(pathData);
@@ -281,6 +332,105 @@ void RoutePlanning::appendNextRow()
                                      .arg(m_planningResults.last().uavCount + m_groupStartRow));
 
     QTimer::singleShot(80, this, &RoutePlanning::appendNextRow);
+}
+
+void RoutePlanning::setPathResults(const QList<PathPlanning> &paths)
+{
+    m_cachedPaths = paths;
+    m_rowPaths.clear();
+    m_planningResults.clear();
+    m_pendingGroups.clear();
+    // 重置定时器链状态，防止过期 QTimer::singleShot 回调访问已清空的表格（越界崩溃）
+    m_currentGroupIndex = 0;
+    m_currentRowInGroup = 0;
+    m_groupStartRow = 0;
+    m_currentGroupResult = PlanningResult();
+    m_currentGroupTargetName.clear();
+    m_currentGroupUavCount = 0;
+    m_planningActive = false;
+
+    ui->tableWidget_Plan->setRowCount(0);
+    ui->tableWidget_Plan->clearContents();
+
+    if (paths.isEmpty()) {
+        ui->pushButton_Plan->setText(QString("一键自动规划  (%1 架 UAV)").arg(m_assignments.size()));
+        return;
+    }
+
+    ui->pushButton_Plan->setEnabled(true);
+    ui->pushButton_Plan->setText(QString("航路规划完成  (%1 架)").arg(paths.size()));
+
+    for (int i = 0; i < paths.size(); ++i)
+    {
+        const PathPlanning &pd = paths[i];
+        int row = ui->tableWidget_Plan->rowCount();
+        ui->tableWidget_Plan->setRowCount(row + 1);
+
+        QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(row + 1));
+        idItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget_Plan->setItem(row, 0, idItem);
+
+        QTableWidgetItem *uavItem = new QTableWidgetItem(pd.uavName);
+        uavItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget_Plan->setItem(row, 1, uavItem);
+
+        QTableWidgetItem *tgtItem = new QTableWidgetItem(pd.relatedTask);
+        tgtItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget_Plan->setItem(row, 2, tgtItem);
+
+        double totalDist = 0.0;
+        for (int k = 1; k < pd.fightPathPoints.size(); ++k) {
+            const PathPoint &a = pd.fightPathPoints[k - 1];
+            const PathPoint &b = pd.fightPathPoints[k];
+            totalDist += geo::haversineDistance(
+                GeoPoint{a.longitude, a.latitude, a.altitude},
+                GeoPoint{b.longitude, b.latitude, b.altitude});
+        }
+        for (int k = 1; k < pd.searchPathPoints.size(); ++k) {
+            const PathPoint &a = pd.searchPathPoints[k - 1];
+            const PathPoint &b = pd.searchPathPoints[k];
+            totalDist += geo::haversineDistance(
+                GeoPoint{a.longitude, a.latitude, a.altitude},
+                GeoPoint{b.longitude, b.latitude, b.altitude});
+        }
+
+        QTableWidgetItem *distItem = new QTableWidgetItem(
+            QString("%1 km").arg(totalDist / 1000.0, 0, 'f', 2));
+        distItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget_Plan->setItem(row, 3, distItem);
+
+        QTableWidgetItem *statusItem = new QTableWidgetItem(pd.status.isEmpty() ? QStringLiteral("已生成") : pd.status);
+        statusItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget_Plan->setItem(row, 4, statusItem);
+
+        QPushButton *detailBtn = new QPushButton(QStringLiteral("查看详情"));
+        detailBtn->setFixedHeight(16);
+        detailBtn->setStyleSheet(QString(R"(
+            QPushButton {
+                background-color: #0f1a2e;
+                border: 1px solid #1a3a6a;
+                border-radius: 2px;
+                color: #00b4ff;
+                padding: 0px 6px;
+                font-size: 10px;
+            }
+            QPushButton:hover {
+                background-color: #0f1a3e;
+                border: 1px solid #00b4ff;
+                color: #00e5ff;
+            }
+        )"));
+        ui->tableWidget_Plan->setRowHeight(row, 40);
+        int capturedRow = row;
+        connect(detailBtn, &QPushButton::clicked, this, [this, capturedRow]() {
+            if (capturedRow < 0 || capturedRow >= m_cachedPaths.size()) return;
+            PathDisplayDialog *dlg = new PathDisplayDialog(this);
+            dlg->setPathData(m_cachedPaths[capturedRow]);
+            dlg->setAttribute(Qt::WA_DeleteOnClose);
+            dlg->exec();
+        });
+        ui->tableWidget_Plan->setCellWidget(row, 5, detailBtn);
+    }
 }
 
 PlanningInput RoutePlanning::buildPlanningInput(const QList<UavAssignment> &group,
@@ -550,6 +700,34 @@ void RoutePlanning::applyTechStyle()
             font-weight: bold;
             font-size: 12px;
             padding: 6px 8px;
+        }
+        QScrollBar:vertical {
+            background: %7;
+            width: 6px;
+            margin: 0;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical {
+            background: %9;
+            min-height: 30px;
+            border-radius: 3px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0;
+        }
+        QScrollBar:horizontal {
+            background: %7;
+            height: 6px;
+            margin: 0;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:horizontal {
+            background: %9;
+            min-width: 30px;
+            border-radius: 3px;
+        }
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            width: 0;
         }
     )").arg(panelBg).arg(borderColor).arg("#1a2a4a")
        .arg(textPrimary).arg("#0d2466").arg("#ffffff")

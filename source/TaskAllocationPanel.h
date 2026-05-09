@@ -51,6 +51,24 @@ public:
     // 获取当前兵力目标数据（供 MissionPlanner 在步骤切换时传递给 RoutePlanning）
     const QList<ForceTargetData> &forceTargets() const { return m_forceTargets; }
 
+    // 获取候选方案数据列表
+    const QList<AltPlanData> &altPlanDataList() const { return m_altPlanDataList; }
+    // 获取当前选中方案索引
+    int currentAltPlanIndex() const { return m_currentAltPlan; }
+    // 从外部恢复已保存的候选方案数据
+    void setAltPlanData(const QList<AltPlanData> &plans, int currentIndex = -1);
+
+    // 设置无人机资源池总量上限（默认240架）
+    void setTotalUavLimit(int limit);
+
+    // 设置无人机资源池（含240架个体无人机名称/型号）
+    void setUavResourcePool(const QList<UavResource> &pool);
+
+signals:
+    // 分配结果变更时发射（用于 MissionPlanner 同步到 m_taskStore）
+    void allocationResultsChanged();
+
+public:
     // ═══════════════════════════════════════════
     // 求解算法 API
     // ═══════════════════════════════════════════
@@ -295,6 +313,10 @@ private:
     QMap<QString, PtCalcData> m_forcePtResults;     // 点目标计算结果
     QMap<QString, ArCalcData> m_forceArResults;     // 区域目标计算结果
     QList<ForceTargetData> m_lastTargets;            // 最近一次求解使用的目标数据（用于切换候选方案）
+
+    // ─── 资源池约束 ───
+    int m_totalUavLimit = 240;      // 无人机资源池总量上限
+    QList<UavResource> m_uavResourcePool; // 无人机资源池（240架个体）
 };
 
 

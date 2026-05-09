@@ -49,10 +49,67 @@ void PathDisplayDialog::InitDisplay()
     ui->pathPointTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->pathPointTable->setAlternatingRowColors(false);
 
+    // 应用深色滚动条样式
+    ui->pathPointTable->setStyleSheet(QStringLiteral(
+        "QTableWidget {"
+        "   background-color: #0f1a2e;"
+        "   border: 1px solid #1a3a6a;"
+        "   gridline-color: #1a2a4a;"
+        "   color: #e0e8f0;"
+        "   font-size: 12px;"
+        "   selection-background-color: #0d2466;"
+        "   selection-color: #ffffff;"
+        "}"
+        "QTableWidget::item {"
+        "   padding: 4px 8px;"
+        "}"
+        "QHeaderView::section {"
+        "   background-color: #0a1628;"
+        "   border: 1px solid #1a3a6a;"
+        "   color: #00b4ff;"
+        "   font-weight: bold;"
+        "   font-size: 12px;"
+        "   padding: 6px 8px;"
+        "}"
+        "QScrollBar:vertical {"
+        "   background: #0a0e1a;"
+        "   width: 6px;"
+        "   margin: 0;"
+        "   border-radius: 3px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "   background: #1a3a6a;"
+        "   min-height: 30px;"
+        "   border-radius: 3px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "   background: #00b4ff;"
+        "}"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
+        "   height: 0;"
+        "}"
+        "QScrollBar:horizontal {"
+        "   background: #0a0e1a;"
+        "   height: 6px;"
+        "   margin: 0;"
+        "   border-radius: 3px;"
+        "}"
+        "QScrollBar::handle:horizontal {"
+        "   background: #1a3a6a;"
+        "   min-width: 30px;"
+        "   border-radius: 3px;"
+        "}"
+        "QScrollBar::handle:horizontal:hover {"
+        "   background: #00b4ff;"
+        "}"
+        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {"
+        "   width: 0;"
+        "}"
+    ));
+
     // 连接关闭按钮信号
     connect(ui->closeButton, &QPushButton::clicked, this, &QDialog::reject);
     connect(ui->closeButton2, &QPushButton::clicked, this, &QDialog::reject);
-
 }
 
 /**

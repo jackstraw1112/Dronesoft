@@ -8,6 +8,7 @@
 #include <QWidget>
 #include <QTableWidget>
 #include <QCheckBox>
+#include "TaskPlanningData.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -25,6 +26,8 @@ public:
     void applyTechStyle();
     void setupDroneTable();
     void updateStatusBar();
+    void setAssignmentData(const QList<UavAssignment> &assignments,
+                           const QList<UavResource> &resourcePool = QList<UavResource>());
 
 public slots:
     void restoreDefaults();
@@ -44,6 +47,8 @@ private:
     Ui::ParameterLoading *ui;
     QList<QCheckBox*> m_droneCheckBoxes;
     int m_selectedCount = 0;
+    QList<UavAssignment> m_assignments;
+    QList<UavResource> m_resourcePool;
 };
 
 

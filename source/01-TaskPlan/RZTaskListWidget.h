@@ -36,6 +36,9 @@ public:
     // 参数：任务ID、名称、状态、目标数量、飞机架次、时间
     void addTask(QString taskId, QString taskName, QString status, int targets, int aircraft, QString time);
 
+    // 更新指定任务的目标数量（实时刷新卡片显示，无需重新添加）
+    void updateTaskItemTargetCount(const QString &taskId, int totalCount);
+
     // 清空所有任务项：删除所有任务卡片并重置选中状态
     void clearTasks();
 

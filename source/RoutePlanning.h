@@ -29,6 +29,15 @@ public:
     // 设置协同任务分配的无人机编组数据（由 MissionPlanner 在步骤切换时调用）
     void setAllocationData(const QList<UavAssignment> &assignments, int totalUavCount);
 
+    // 获取路径规划结果（用于 MissionPlanner 同步到 m_taskStore）
+    const QList<PathPlanning> &pathResults() const { return m_cachedPaths; }
+    // 从外部恢复已保存的路径规划结果
+    void setPathResults(const QList<PathPlanning> &paths);
+
+signals:
+    // 路径规划结果变更时发射（用于 MissionPlanner 同步到 m_taskStore）
+    void routePlanningChanged();
+
 private slots:
     // "一键自动规划"按钮点击
     void onPlanAllClicked();
@@ -56,6 +65,7 @@ private:
         PlanningInput input;
         QString targetName;
         int uavCount = 0;
+        QList<UavAssignment> assignments;  // 该组对应的无人机分配列表（用于查名称）
     };
 
     // 分组规划结果
@@ -82,6 +92,12 @@ private:
 
     // 每行航迹数据（用于查看详情弹窗）
     QList<QPair<UAVPath, UAVPath>> m_rowPaths;
+
+    // 缓存的路径规划结果（供 MissionPlanner 持久化）
+    QList<PathPlanning> m_cachedPaths;
+
+    // 标记当前是否正在执行一键规划（用于防止 task 切换时残留 timer 误发 routePlanningChanged）
+    bool m_planningActive = false;
 };
 
 

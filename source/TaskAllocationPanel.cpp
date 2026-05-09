@@ -47,7 +47,7 @@ static const char *kGroupBoxTitle= "#00b4ff";   // GroupBox 标题色
 static const int kWeightProfiles[][4] = {
     {40, 30, 20, 10},   // [0] Hungarian — 毁伤优先，精确指派
     {25, 25, 25, 25},   // [1] GA — 均衡分配，多目标优化
-    {15, 25, 40, 20},   // [2] CNP — 成本优先，分布式投标
+    {30, 20, 30, 20},   // [2] PSO — 效能-成本并重
 };
 static const int kWeightCount = 4;          // 权重个数
 static const int kAnimDuration = 1500;       // 动画持续毫秒数（缓慢过渡）
@@ -224,6 +224,23 @@ void TaskAllocationPanel::setForceData(const QList<ForceTargetData> &targets,
                            .arg(m_forceTargets.size()));
 }
 
+// ═══════════════════════════════════════════════════════════
+// 设置无人机资源池总量上限
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::setTotalUavLimit(int limit)
+{
+    m_totalUavLimit = qMax(1, limit);
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 设置无人机资源池
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::setUavResourcePool(const QList<UavResource> &pool)
+{
+    m_uavResourcePool = pool;
+}
+
 
 // ═══════════════════════════════════════════════════════════
 // 求解按钮
@@ -251,7 +268,7 @@ void TaskAllocationPanel::onSolveClicked()
 // 算法差异说明：
 //   [0] Hungarian（FAST） — 毁伤优先，精确指派 → 总架数 = 需求总和（最省）
 //   [1] GA（SLOW）        — 均衡分配，多目标优化 → 总架数 = 需求总和 × 1.15（中等）
-//   [2] CNP（DIST）       — 成本优先，分布式投标 → 总架数 = 需求总和 × 1.30（最多）
+//   [2] PSO — 效能-成本并重 → 总架数 = 需求总和 × 1.30（最多）
 // ═══════════════════════════════════════════════════════════
 void TaskAllocationPanel::generateAllocationResult()
 {
@@ -277,7 +294,7 @@ void TaskAllocationPanel::generateAllocationResult()
 
     // ── 2. 按算法计算总架数和各目标分配架数 ──
     //   multiplier: 算法差异系数
-    //   Hungarian = 1.00, GA = 1.15, CNP = 1.30
+    //   Hungarian = 1.00, GA = 1.15, PSO = 1.30
     double multiplier = (alg == 0) ? 1.00 : (alg == 1) ? 1.15 : 1.30;
 
     // 计算每个目标分配多少架无人机
@@ -316,8 +333,39 @@ void TaskAllocationPanel::generateAllocationResult()
         allocs.append(ta);
     }
 
+    // ── 受无人机资源池总量上限约束（默认240架） ──
+    if (totalAssigned > m_totalUavLimit)
+    {
+        double scale = static_cast<double>(m_totalUavLimit) / totalAssigned;
+        int cappedTotal = 0;
+        for (int i = 0; i < allocs.size(); ++i)
+        {
+            int capped = qMax(1, static_cast<int>(qRound(allocs[i].assigned * scale)));
+            allocs[i].assigned = capped;
+            allocs[i].primary = qMax(1, capped * 2 / 3);
+            allocs[i].backup = capped - allocs[i].primary;
+            cappedTotal += capped;
+        }
+        // 若取整后仍超出，从最大分配目标依次扣减
+        int overshoot = cappedTotal - m_totalUavLimit;
+        while (overshoot > 0)
+        {
+            for (int i = allocs.size() - 1; i >= 0 && overshoot > 0; --i)
+            {
+                if (allocs[i].assigned > 1)
+                {
+                    allocs[i].assigned--;
+                    allocs[i].primary = qMax(1, allocs[i].assigned * 2 / 3);
+                    allocs[i].backup = allocs[i].assigned - allocs[i].primary;
+                    overshoot--;
+                }
+            }
+        }
+        totalAssigned = m_totalUavLimit;
+    }
+
     // ── 3. 计算算法指标 ──
-    //   目标函数值: Hungarian 最优 ≈0.96, GA 中等 ≈0.92, CNP 略低 ≈0.88
+    //   目标函数值: Hungarian 最优 ≈0.96, GA 中等 ≈0.92, PSO 略低 ≈0.88
     double fVal[] = {0.96, 0.92, 0.88};
     double fImprove[] = {47.0, 32.0, 18.0};   // 较初始提升百分比
     int coveragePct = 100;                     // 全部目标覆盖
@@ -432,6 +480,8 @@ void TaskAllocationPanel::generateAllocationResult()
         }
         animateWeights();
     }
+
+    emit allocationResultsChanged();
 }
 
 
@@ -505,7 +555,7 @@ void TaskAllocationPanel::applyAltPlan(int index)
     // 清空旧分配组重新生成
     clearAllocGroups();
 
-    int uavCounter = 1;
+    int poolIdx = 0;
 
     for (int ti = 0; ti < m_lastTargets.size(); ++ti) {
         int uavCount = (ti < plan.perTargetCounts.size()) ? plan.perTargetCounts[ti] : 1;
@@ -523,12 +573,16 @@ void TaskAllocationPanel::applyAltPlan(int index)
                   << "C-band · 55km" << "L-band · 60km" << "L-band · 62km";
         }
 
-        // 构造 UAV 编队列表
+        // 构造 UAV 编队列表（从资源池中顺序取名称）
         QList<UavSpec> uavs;
         int primary = qMin(uavCount, qMax(2, (uavCount * 2 + 2) / 3));
         for (int ui = 0; ui < uavCount; ++ui) {
             UavSpec spec;
-            spec.id = QString("UAV-%1").arg(uavCounter++, 3, 10, QChar('0'));
+            if (poolIdx < m_uavResourcePool.size())
+                spec.id = m_uavResourcePool[poolIdx].uavName;
+            else
+                spec.id = QString("UAV-%1").arg(poolIdx + 1, 3, 10, QChar('0'));
+            ++poolIdx;
             if (ui < primary)
                 spec.role = (ui == 0) ? "长机" : QString("僚机 %1").arg(ui);
             else
@@ -555,6 +609,64 @@ void TaskAllocationPanel::applyAltPlan(int index)
     }
 
     m_allocScrollLayout->addStretch();
+
+    emit allocationResultsChanged();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 从外部恢复已保存的候选方案
+// ═══════════════════════════════════════════════════════════
+void TaskAllocationPanel::setAltPlanData(const QList<AltPlanData> &plans, int currentIndex)
+{
+    clearAltPlans();
+    m_altPlanDataList = plans;
+    m_currentAltPlan = currentIndex;
+
+    // applyAltPlan 依赖 m_lastTargets 生成编队分配组，
+    // 始终从 m_forceTargets 同步（由 setForceData 在切换任务时注入）
+    m_lastTargets = m_forceTargets;
+
+    // 如果还是没有目标数据（setForceData 未调用或传入空列表），
+    // 从候选方案的 perTargetCounts 自动生成虚拟目标列表
+    if (m_lastTargets.isEmpty() && !plans.isEmpty() && !plans[0].perTargetCounts.isEmpty())
+    {
+        const auto &pc = plans[0].perTargetCounts;
+        for (int i = 0; i < pc.size(); ++i)
+        {
+            ForceTargetData ft;
+            ft.id = QString("TGT-%1").arg(i + 1, 2, 10, QChar('0'));
+            ft.name = QString("目标 %1").arg(i + 1);
+            ft.type = "PT";
+            ft.aircraftCount = pc[i];
+            ft.priority = (i < 3) ? "P1" : "P2";
+            m_lastTargets.append(ft);
+        }
+        m_forceTargets = m_lastTargets;
+    }
+
+    for (const AltPlanData &pd : m_altPlanDataList)
+        addAltPlan(pd.name, QString::number(pd.fVal, 'f', 3),
+                   QString::number(pd.totalAssigned), pd.risk, pd.isCurrent);
+
+    // 从已保存数据中查找 isCurrent == true 的方案作为默认选中
+    if (currentIndex < 0 || currentIndex >= m_altPlanDataList.size())
+    {
+        for (int i = 0; i < m_altPlanDataList.size(); ++i)
+        {
+            if (m_altPlanDataList[i].isCurrent)
+            {
+                currentIndex = i;
+                break;
+            }
+        }
+    }
+    if (currentIndex >= 0 && currentIndex < m_altPlanDataList.size())
+        applyAltPlan(currentIndex);
+    else if (!m_altPlanDataList.isEmpty())
+        applyAltPlan(0);
+
+    emit allocationResultsChanged();
 }
 
 
@@ -780,7 +892,7 @@ void TaskAllocationPanel::setupAlgorithmGroup()
     // 添加 3 种默认求解算法
     addAlgorithm("匈牙利算法 · Hungarian", "指派问题最优解 · 适用于无人机数 ≈ 目标数", "FAST", "#00e676");
     addAlgorithm("遗传算法 · GA",          "多约束启发式 · 适合复杂场景与多波次",    "SLOW", "#ffb300");
-    addAlgorithm("合同网协议 · CNP",        "分布式投标 · 适合动态重分配场景",       "DIST", "#00b4ff");
+    addAlgorithm("粒子群算法 · PSO",           "效能-成本并重 · 适合多峰连续解空间",       "PSO", "#00b4ff");
 
     layout->addStretch();
 
@@ -902,6 +1014,12 @@ void TaskAllocationPanel::setupAllocationResult()
         "QScrollBar::handle:vertical {"
         "  background: %2; min-height: 30px; border-radius: 3px; }"
         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
+        "QScrollBar:horizontal {"
+        "  background: %1; height: 6px; margin: 0;"
+        "  border-radius: 3px; }"
+        "QScrollBar::handle:horizontal {"
+        "  background: %2; min-width: 30px; border-radius: 3px; }"
+        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }"
     ).arg(kInputBg).arg(kAccentBlue));
 
     QWidget *scrollContent = new QWidget(m_allocScrollArea);

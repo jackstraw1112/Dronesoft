@@ -17,6 +17,9 @@
 #include <QPushButton>
 #include <QEvent>
 #include <QMouseEvent>
+#include <QFile>
+#include <QCoreApplication>
+#include <QDir>
 
 // 构造函数：初始化UI、设置雷达目标数据、应用样式、连接信号槽
 ForceRequirementPanel::ForceRequirementPanel(QWidget *parent) : QFrame(parent), ui(new Ui::ForceRequirementPanel)
@@ -39,11 +42,9 @@ ForceRequirementPanel::ForceRequirementPanel(QWidget *parent) : QFrame(parent), 
     setupDefaultTargets();
     if (m_targetPills.size() > 0) selectTarget(0);
 
-    setupConnections(); // 初始化信号槽连接
-    setupPtInputConnections(); // 初始化点目标输入参数信号槽
-    setupArInputConnections(); // 初始化区域目标输入参数信号槽
-    updatePtCalculation();     // 初始计算点目标结果
-    updateArCalculation();     // 初始计算区域目标结果
+    setupConnections();          // 初始化信号槽连接
+    setupPtInputConnections();   // 初始化点目标输入参数信号槽
+    setupArInputConnections();   // 初始化区域目标输入参数信号槽
 }
 
 // 析构函数
@@ -60,29 +61,8 @@ void ForceRequirementPanel::initTargetScrollArea()
     m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_scrollArea->setWidgetResizable(true);
-    m_scrollArea->setStyleSheet(
-        "QScrollArea { background: transparent; border: none; }"
-        "QScrollBar:vertical {"
-        "   background: #0a0e1a;"
-        "   width: 6px;"
-        "   border: none;"
-        "}"
-        "QScrollBar::handle:vertical {"
-        "   background: #1a3a6a;"
-        "   border-radius: 3px;"
-        "   min-height: 20px;"
-        "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
-        "   height: 0px;"
-        "}"
-    );
 
     m_scrollWidget = ui->scrollAreaWidgetContents;
-    m_scrollWidget->setStyleSheet(
-        "background: #0b1124;"
-        "border: 1px solid #1a3a6a;"
-        "border-radius: 4px;"
-    );
     m_targetGrid = ui->gridLayout;
     m_targetGrid->setSpacing(6);
     m_targetGrid->setContentsMargins(6, 6, 6, 6);
@@ -98,11 +78,11 @@ void ForceRequirementPanel::initTargetScrollArea()
     }
 }
 
-// 初始化信号槽连接：绑定计算过程和兵力汇总按钮的点击事件
+// 初始化信号槽连接：绑定单独计算、全部计算按钮
 void ForceRequirementPanel::setupConnections()
 {
-    connect(ui->btn_CalculateProcess, &QPushButton::clicked, this, &ForceRequirementPanel::onCalculateProcessClicked);
-    connect(ui->btn_TotalForceSummary, &QPushButton::clicked, this, &ForceRequirementPanel::onTotalForceSummaryClicked);
+    connect(ui->btn_AngleCalculate, &QPushButton::clicked, this, &ForceRequirementPanel::onSingleCalculate);
+    connect(ui->btn_AllCalculate, &QPushButton::clicked, this, &ForceRequirementPanel::onAllCalculate);
 }
 
 // 初始化点目标输入参数信号槽：毁伤要求按钮、单弹毁伤概率、备份架数变化时重新计算
@@ -171,23 +151,6 @@ void ForceRequirementPanel::updatePtCalculation()
     int n = static_cast<int>(qCeil(quotient));
     int total = n + backup;
 
-    ui->btn_cal1->setText(QString("P̄=%1").arg(P_bar, 0, 'f', 2));
-    ui->btn_cal2->setText(QString("log(1-%1)=%2").arg(P_bar, 0, 'f', 2).arg(logNumerator, 0, 'f', 3));
-    ui->btn_cal3->setText(QString("Pk=%1").arg(Pk, 0, 'f', 2));
-    ui->btn_cal4->setText(QString("log(1-%1)=%2").arg(Pk, 0, 'f', 2).arg(logDenominator, 0, 'f', 3));
-
-    ui->btn_cal5->setText(QString::number(quotient, 'f', 3));
-    ui->btn_cal6->setText(QString("%1弹").arg(n));
-
-    ui->btn_cal7->setText(QString("n = %1").arg(n));
-    ui->btn_cal8->setText(QString("备份= %1").arg(backup));
-    ui->btn_cal9->setText(QString("%1架").arg(total));
-
-    ui->label_CalculationResult->setText(QString("%1架").arg(total));
-    ui->label_ResultDescription->setText(
-        QString("按照%1弹齐射+%2架备份编组，预计达成毁伤率>=%3")
-            .arg(n).arg(backup).arg(P_bar, 0, 'f', 2));
-
     PtCalcData data;
     data.damageLevel = P_bar;
     data.Pk = Pk;
@@ -195,6 +158,9 @@ void ForceRequirementPanel::updatePtCalculation()
     data.backup = backup;
     data.total = total;
     m_ptResults[m_currentTargetId] = data;
+
+    updateSummaryRow(m_currentTargetId);
+    emit forceResultsChanged();
 }
 
 // 更新区域目标计算结果：N搜 = ⌈面积/25⌉，N打 = ⌈估计目标数×每目标弹数⌉，总 = MAX(N搜,N打) + 备份
@@ -211,17 +177,6 @@ void ForceRequirementPanel::updateArCalculation()
     int N_max = qMax(N_search, N_strike);
     int total = N_max + backup;
 
-    ui->btn_cal10->setText(QString("面积 = %1 KM²").arg(area));
-    ui->btn_cal12->setText(QString("%1架").arg(N_search));
-    ui->btn_cal13->setText(QString("M = %1 部").arg(estTargets, 0, 'f', 1));
-    ui->btn_cal14->setText(QString("n = %1弹/部").arg(shotsPerTarget));
-    ui->btn_cal15->setText(QString("%1架").arg(N_strike));
-    ui->btn_cal16->setText(QString("MAX(%1,%2) = %3").arg(N_search).arg(N_strike).arg(N_max));
-    ui->btn_cal17->setText(QString("备份 = %1").arg(backup));
-    ui->btn_cal18->setText(QString("%1架").arg(total));
-
-    ui->label_TotalResult->setText(QString("%1架").arg(total));
-
     ArCalcData data;
     data.area = area;
     data.estTargets = estTargets;
@@ -231,494 +186,171 @@ void ForceRequirementPanel::updateArCalculation()
     data.N_strike = N_strike;
     data.total = total;
     m_arResults[m_currentTargetId] = data;
+
+    updateSummaryRow(m_currentTargetId);
+    emit forceResultsChanged();
 }
 
 void ForceRequirementPanel::applyTechStyle()
 {
-    const QString baseBg = "#0a0e1a";
-    const QString panelBg = "#0d1326";
-    const QString borderColor = "#1a3a6a";
-    const QString accentBlue = "#00b4ff";
-    const QString accentCyan = "#00e5ff";
-    const QString textPrimary = "#e0e8f0";
-    const QString textSecondary = "#7a8ba8";
-    const QString inputBg = "#0f1a2e";
-    const QString inputBorder = "#1a3a6a";
-    const QString hoverBorder = "#00b4ff";
-    const QString groupBoxBg = "#0b1124";
-    const QString groupBoxTitle = "#00b4ff";
-    const QString dangerRed = "#ff3355";
-    const QString successGreen = "#00e676";
+    const QString fileName = QStringLiteral("force_requirement_panel.qss");
+    const QString relPath = QStringLiteral("theme/") + fileName;
 
-    setStyleSheet(QString(R"(
-        ForceRequirementPanel {
-            background-color: %1;
-            border: 2px solid %2;
-            border-radius: 6px;
-        }
-        QWidget {
-            color: %3;
-            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
-        }
-    )").arg(baseBg).arg(borderColor).arg(textPrimary));
+    const QString exeDir = QCoreApplication::applicationDirPath();
+    QStringList candidates;
+    candidates << (exeDir + QStringLiteral("/") + relPath);
+    candidates << (exeDir + QStringLiteral("/../") + relPath);
+    candidates << (exeDir + QStringLiteral("/../../") + relPath);
+    candidates << QDir::cleanPath(exeDir + QStringLiteral("/../source/theme/") + fileName);
 
-    ui->label_Title->setStyleSheet(QString(R"(
-        QLabel {
-            color: %1;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 6px 0px;
-            background: transparent;
-            border: none;
+    for (const QString &path : candidates) {
+        QFile f(path);
+        if (!f.exists())
+            continue;
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+            continue;
+        const QString qss = QString::fromUtf8(f.readAll());
+        if (!qss.trimmed().isEmpty()) {
+            setStyleSheet(qss);
+            return;
         }
-    )").arg(accentBlue));
-
-    ui->label_PointModel->setStyleSheet(QString(R"(
-        QLabel {
-            color: %1;
-            font-size: 13px;
-            font-weight: bold;
-            padding: 4px 0px;
-            background: transparent;
-            border: none;
-        }
-    )").arg(accentCyan));
-
-    QString groupBoxTechStyle = QString(R"(
-        QGroupBox {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 6px;
-            margin-top: 20px;
-            padding: 14px 8px 8px 8px;
-            font-weight: bold;
-            color: %3;
-        }
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            padding: 2px 10px;
-            color: %3;
-            font-size: 12px;
-            background-color: %4;
-            border: 1px solid %2;
-            border-radius: 3px;
-            margin-left: 0px;
-            margin-top: 6px;
-        }
-    )").arg(groupBoxBg).arg(borderColor).arg(groupBoxTitle).arg(inputBg);
-
-    for (QGroupBox* gb : findChildren<QGroupBox*>()) {
-        gb->setStyleSheet(groupBoxTechStyle);
     }
 
-    QString buttonTechStyle = QString(R"(
-        QPushButton {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            color: %3;
-            padding: 4px 12px;
-            font-size: 12px;
-            font-weight: bold;
-            min-height: 28px;
-        }
-        QPushButton:hover {
-            background-color: %4;
-            border: 1px solid %5;
-            color: %6;
-        }
-        QPushButton:pressed {
-            background-color: %7;
-            border: 1px solid %5;
-        }
-    )").arg(inputBg).arg(borderColor).arg(textPrimary)
-       .arg("#0f1a3e").arg(hoverBorder).arg(accentCyan)
-       .arg("#081020");
+    qWarning() << "[ForceRequirementPanel] Failed to load theme:" << relPath
+               << "(tried near executable/source)";
+}
 
-    for (QPushButton* btn : findChildren<QPushButton*>()) {
-        // 跳过目标选择 pill 按钮（带 targetPill 属性标记）
-        if (btn->property("targetPill").toBool()) continue;
-        btn->setStyleSheet(buttonTechStyle);
+// 单独计算：仅计算当前选中的目标，刷新汇总表格
+void ForceRequirementPanel::onSingleCalculate()
+{
+    if (m_currentTargetId.isEmpty()) return;
+
+    if (m_currentTargetType == "PT")
+        updatePtCalculation();
+    else if (m_currentTargetType == "AR")
+        updateArCalculation();
+}
+
+// 全部计算：遍历所有目标，依次计算并刷新汇总表格
+void ForceRequirementPanel::onAllCalculate()
+{
+    // 记住当前选中的目标 ID，计算完毕后恢复
+    const QString prevTargetId = m_currentTargetId;
+    const QString prevTargetType = m_currentTargetType;
+
+    for (int i = 0; i < m_targetIds.size(); ++i)
+    {
+        const QString &id = m_targetIds[i];
+        const QString &type = m_targetTypes[i];
+
+        // 切换到该目标并恢复其输入参数
+        saveCurrentInput();
+        restoreInput(id, type);
+        m_currentTargetId = id;
+        m_currentTargetType = type;
+
+        if (type == "PT")
+            updatePtCalculation();
+        else
+            updateArCalculation();
     }
 
-    ui->btn_CalculateProcess->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            color: %3;
-            padding: 6px 16px;
-            font-size: 13px;
-            font-weight: bold;
-            min-height: 32px;
-        }
-        QPushButton:hover {
-            background-color: %4;
-            border: 1px solid %5;
-            color: %6;
-        }
-        QPushButton:pressed {
-            background-color: %7;
-        }
-    )").arg("#0a1628").arg(accentBlue).arg(accentCyan)
-       .arg("#0f1a3e").arg(accentCyan).arg("#ffffff")
-       .arg("#060e1a"));
+    // 恢复之前选中目标的输入参数
+    if (!prevTargetId.isEmpty())
+    {
+        saveCurrentInput();
+        restoreInput(prevTargetId, prevTargetType);
+        m_currentTargetId = prevTargetId;
+        m_currentTargetType = prevTargetType;
 
-    ui->btn_TotalForceSummary->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            color: %3;
-            padding: 6px 16px;
-            font-size: 13px;
-            font-weight: bold;
-            min-height: 32px;
+        // 刷新 UI 页面
+        if (prevTargetType == "PT")
+        {
+            ui->stackedWidget->setCurrentIndex(0);
+            ui->label_PointModel->setText(QString("点目标模型 · POINT MODEL  [ %1 ]").arg(prevTargetId));
         }
-        QPushButton:hover {
-            background-color: %4;
-            border: 1px solid %5;
-            color: %6;
+        else
+        {
+            ui->stackedWidget->setCurrentIndex(1);
+            ui->label_PointModel->setText(QString("区域目标模型 · AREA MODEL  [ %1 ]").arg(prevTargetId));
         }
-        QPushButton:pressed {
-            background-color: %7;
-        }
-    )").arg("#0a1628").arg(successGreen).arg(successGreen)
-       .arg("#0f1a3e").arg(successGreen).arg("#ffffff")
-       .arg("#060e1a"));
+    }
+}
 
-    QString lineEditStyle = QString(R"(
-        QLineEdit {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            color: %3;
-            padding: 2px 8px;
-            font-size: 12px;
-            min-height: 26px;
-        }
-        QLineEdit:focus {
-            border: 1px solid %4;
-            background-color: %5;
-        }
-        QLineEdit:disabled {
-            background-color: %6;
-            color: %7;
-        }
-    )").arg(inputBg).arg(inputBorder).arg(textPrimary)
-       .arg(hoverBorder).arg("#0a1428")
-       .arg("#060a14").arg(textSecondary);
+// 更新汇总表格中指定目标的行
+void ForceRequirementPanel::updateSummaryRow(const QString &targetId)
+{
+    int idx = m_targetIds.indexOf(targetId);
+    if (idx < 0) return;
 
-    for (QLineEdit* le : findChildren<QLineEdit*>()) {
-        le->setStyleSheet(lineEditStyle);
+    QTableWidget *table = ui->tableWidget_Count;
+    QString typeDisplay = (m_targetTypes[idx] == "PT") ? "点目标" : "区域目标";
+
+    // 查找该目标是否已有行
+    int row = -1;
+    for (int r = 0; r < table->rowCount(); ++r)
+    {
+        QTableWidgetItem *item = table->item(r, 0);
+        if (item && item->data(Qt::UserRole).toString() == targetId)
+        {
+            row = r;
+            break;
+        }
     }
 
-    QString spinBoxStyle = QString(R"(
-        QSpinBox, QDoubleSpinBox {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            color: %3;
-            padding: 2px 4px;
-            font-size: 13px;
-            font-weight: bold;
-            min-height: 26px;
-        }
-        QSpinBox:focus, QDoubleSpinBox:focus {
-            border: 1px solid %4;
-        }
-        QSpinBox::up-button, QDoubleSpinBox::up-button {
-            background-color: %5;
-            border: 1px solid %2;
-            border-radius: 2px;
-            width: 20px;
-            subcontrol-origin: border;
-            subcontrol-position: top right;
-        }
-        QSpinBox::down-button, QDoubleSpinBox::down-button {
-            background-color: %5;
-            border: 1px solid %2;
-            border-radius: 2px;
-            width: 20px;
-            subcontrol-origin: border;
-            subcontrol-position: bottom right;
-        }
-        QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
-            image: none;
-            width: 0px;
-            height: 0px;
-        }
-        QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
-            image: none;
-            width: 0px;
-            height: 0px;
-        }
-    )").arg(inputBg).arg(inputBorder).arg(accentCyan)
-       .arg(hoverBorder).arg("#0a1428");
-
-    for (QSpinBox* sb : findChildren<QSpinBox*>()) {
-        sb->setStyleSheet(spinBoxStyle);
-        sb->setButtonSymbols(QAbstractSpinBox::PlusMinus);
-    }
-    for (QDoubleSpinBox* dsb : findChildren<QDoubleSpinBox*>()) {
-        dsb->setStyleSheet(spinBoxStyle);
-        dsb->setButtonSymbols(QAbstractSpinBox::PlusMinus);
-    }
-
-    QString tableStyle = QString(R"(
-        QTableWidget {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            gridline-color: %3;
-            color: %4;
-            font-size: 12px;
-            selection-background-color: %5;
-            selection-color: %6;
-        }
-        QTableWidget::item {
-            padding: 4px 8px;
-        }
-        QTableWidget::item:alternate {
-            background-color: %7;
-        }
-        QHeaderView::section {
-            background-color: %8;
-            border: 1px solid %2;
-            color: %9;
-            font-weight: bold;
-            font-size: 12px;
-            padding: 6px 8px;
-        }
-    )").arg(panelBg).arg(borderColor).arg("#1a2a4a")
-       .arg(textPrimary).arg("#0d2466").arg("#ffffff")
-       .arg("#0f1a2e").arg("#0a1628").arg(accentBlue);
-
-    ui->tableWidget->setStyleSheet(tableStyle);
-
-    QStringList labelNames = {
-        "label_DamageLevel", "label_DamageLevelEn", "label_DestroyProb",
-        "label_SingleShotProb", "label_SingleShotProbEn", "label_WeaponManual",
-        "label_BackupCount", "label_BackupCountEn", "label_DefaultBackup",
-        "label_Area", "label_AreaEn", "label_AreaModel",
-        "label_EstTargetCount", "label_EstTargetCountEn", "label_WeaponManual2",
-        "label_IntelligenceNote", "label_ShotsPerTarget", "label_ShotsPerTargetEn",
-        "label_ShotsPerUnit", "label_FormulaNote", "label_AreaBackupCount",
-        "label_AreaBackupCountEn", "label_AreaSuggestion", "label_AreaUncertaintyNote",
-        "label_FinalSuggestion", "label_TotalResult", "label_AttackStrategy",
-        "label_AreaResultDisplay", "label_DivisionSign", "label_Equal2",
-        "label_AreaResult2", "label_DivisionSign2", "label_Equal3",
-        "label_AreaFinalResult", "label_DivisionSign3", "label_Equal4",
-        "label_Arrow1", "label_Arrow2", "label_Arrow3",
-        "label_Quotient", "label_RoundUp", "label_ResultDisplay",
-        "label_PlusSign", "label_Equal", "label_SuggestedLaunch",
-        "label_CalculationResult", "label_ResultDescription",
-        "label_AreaUnit", "label_AreaSuggestion"
+    auto makeItem = [](const QString &text) {
+        auto *item = new QTableWidgetItem(text);
+        item->setTextAlignment(Qt::AlignCenter);
+        return item;
     };
 
-    for (const QString& name : labelNames) {
-        QLabel* label = findChild<QLabel*>(name);
-        if (!label) continue;
-
-        QString color = textSecondary;
-        int fontSize = 12;
-        bool isBold = false;
-
-        if (name == "label_DamageLevel" || name == "label_Area" ||
-            name == "label_EstTargetCount" || name == "label_ShotsPerTarget" ||
-            name == "label_AreaBackupCount" || name == "label_BackupCount") {
-            color = textPrimary;
-            fontSize = 13;
-            isBold = true;
-        } else if (name == "label_IntelligenceNote" || name == "label_FormulaNote" ||
-                   name == "label_AreaUncertaintyNote" || name == "label_DefaultBackup") {
-            color = "#ffaa44";
-            fontSize = 11;
-        } else if (name == "label_TotalResult" || name == "label_FinalSuggestion") {
-            color = accentCyan;
-            fontSize = 15;
-            isBold = true;
-        } else if (name == "label_AttackStrategy") {
-            color = textSecondary;
-            fontSize = 11;
-        } else if (name == "label_SuggestedLaunch") {
-            color = textPrimary;
-            fontSize = 13;
-        } else if (name == "label_CalculationResult") {
-            color = accentCyan;
-            fontSize = 14;
-            isBold = true;
-        } else if (name == "label_ResultDescription") {
-            color = textSecondary;
-            fontSize = 11;
-        } else if (name == "label_AreaResultDisplay" || name == "label_AreaResult2" ||
-                   name == "label_AreaFinalResult") {
-            color = accentCyan;
-            fontSize = 12;
-        } else if (name == "label_DivisionSign" || name == "label_DivisionSign2" ||
-                   name == "label_DivisionSign3") {
-            color = textSecondary;
-            fontSize = 14;
-            isBold = true;
-        } else if (name == "label_Equal" || name == "label_Equal2" ||
-                   name == "label_Equal3" || name == "label_Equal4") {
-            color = accentBlue;
-            fontSize = 14;
-            isBold = true;
-        } else if (name == "label_Arrow1" || name == "label_Arrow2" || name == "label_Arrow3") {
-            color = accentBlue;
-            fontSize = 16;
-            isBold = true;
-        } else if (name == "label_Quotient" || name == "label_RoundUp") {
-            color = accentCyan;
-            fontSize = 12;
-            isBold = true;
-        } else if (name == "label_ResultDisplay") {
-            color = accentCyan;
-            fontSize = 12;
-        } else if (name == "label_PlusSign") {
-            color = accentBlue;
-            fontSize = 14;
-            isBold = true;
-        } else if (name == "label_AreaUnit") {
-            color = textSecondary;
-            fontSize = 11;
-        } else if (name == "label_AreaModel") {
-            color = accentCyan;
-            fontSize = 12;
-            isBold = true;
-        } else if (name == "label_AreaSuggestion") {
-            color = "#ffaa44";
-            fontSize = 12;
-            isBold = true;
-        }
-
-        label->setStyleSheet(QString(R"(
-            QLabel {
-                color: %1;
-                font-size: %2px;
-                font-weight: %3;
-                background: transparent;
-                border: none;
-                padding: 1px 2px;
-            }
-        )").arg(color).arg(fontSize).arg(isBold ? "bold" : "normal"));
+    // ── 设置表格列头（仅在首次填充时） ──
+    if (table->columnCount() == 0)
+    {
+        QStringList headers;
+        headers << "目标" << "类型" << "毁伤要求" << "建议架次" << "备份架次" << "总架数" << "匹配机型";
+        table->setColumnCount(headers.size());
+        table->setHorizontalHeaderLabels(headers);
+        table->horizontalHeader()->setStretchLastSection(true);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->setAlternatingRowColors(true);
     }
 
-    ui->stackedWidget->setStyleSheet(QString(R"(
-        QStackedWidget {
-            background-color: %1;
-            border: none;
-        }
-    )").arg(baseBg));
-
-    ui->widget_Model->setStyleSheet(QString(R"(
-        QWidget#widget_Model {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-        }
-    )").arg(groupBoxBg).arg(borderColor));
-}
-
-// 计算过程按钮响应：切换到当前选中目标的模型计算页面，刷新计算结果
-void ForceRequirementPanel::onCalculateProcessClicked()
-{
-    if (m_currentTargetId.isEmpty()) {
-        qDebug() << "请先选择一个目标";
-        return;
-    }
-
-    if (m_currentTargetType == "PT") {
-        ui->stackedWidget->setCurrentIndex(0);
-        updatePtCalculation();
-    } else if (m_currentTargetType == "AR") {
-        ui->stackedWidget->setCurrentIndex(1);
-        updateArCalculation();
-    }
-}
-
-// 兵力汇总按钮响应：填充汇总表格并切换到汇总页面
-void ForceRequirementPanel::onTotalForceSummaryClicked()
-{
-    populateSummaryTable();
-    ui->stackedWidget->setCurrentIndex(2);
-}
-
-// 根据目标类型更新当前页面索引
-void ForceRequirementPanel::updatePageForTarget(const QString& targetId, const QString& targetType)
-{
-    Q_UNUSED(targetId);
-    if (targetType == "PT") {
-        ui->stackedWidget->setCurrentIndex(0);
-    } else if (targetType == "AR") {
-        ui->stackedWidget->setCurrentIndex(1);
-    }
-}
-
-// 填充兵力汇总表格：列出所有目标的毁伤要求、计算依据、建议架次等信息
-void ForceRequirementPanel::populateSummaryTable()
-{
-    QTableWidget* table = ui->tableWidget;
-    table->setRowCount(0);
-
-    // 设置表格列头
-    QStringList headers;
-    headers << "目标" << "类型" << "毁伤要求" << "Pk/估目标" << "计算依据" << "建议架次" << "匹配机型";
-    table->setColumnCount(headers.size());
-    table->setHorizontalHeaderLabels(headers);
-
-    // 表格属性设置：自适应列宽、行选中、交替行颜色
-    table->horizontalHeader()->setStretchLastSection(true);
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    table->setAlternatingRowColors(true);
-
-    // 逐行填充目标数据（使用成员列表中的已添加目标）
-    for (int i = 0; i < m_targetIds.size(); ++i) {
-        int row = table->rowCount();
+    if (row < 0)
+    {
+        row = table->rowCount();
         table->insertRow(row);
         table->setRowHeight(row, 32);
+    }
 
-        QString typeDisplay = (m_targetTypes[i] == "PT") ? "点目标" : "区域目标";
-
-        QString damageStr, paramStr, basisStr, totalStr;
-
-        if (m_targetTypes[i] == "PT") {
-            PtCalcData d;
-            if (m_ptResults.contains(m_targetIds[i])) {
-                d = m_ptResults.value(m_targetIds[i]);
-            }
-            damageStr = QString("%1").arg(d.damageLevel, 0, 'f', 2);
-            paramStr = QString("Pk=%1").arg(d.Pk, 0, 'f', 2);
-            basisStr = QString("n=%1, 备份=%2").arg(d.n).arg(d.backup);
-            totalStr = QString("%1架").arg(d.total);
-        } else {
-            ArCalcData d;
-            if (m_arResults.contains(m_targetIds[i])) {
-                d = m_arResults.value(m_targetIds[i]);
-            }
-            damageStr = "N/A";
-            paramStr = QString("%1部").arg(d.estTargets, 0, 'f', 1);
-            basisStr = QString("N搜=%1, N打=%2, 备份=%3").arg(d.N_search).arg(d.N_strike).arg(d.backup);
-            totalStr = QString("%1架").arg(d.total);
-        }
-
-        auto makeItem = [](const QString &text) {
-            auto *item = new QTableWidgetItem(text);
-            item->setTextAlignment(Qt::AlignCenter);
-            return item;
-        };
-
-        table->setItem(row, 0, makeItem(QString("%1 %2").arg(m_targetIds[i]).arg(m_targetNames[i])));
+    // 填充数据
+    if (m_targetTypes[idx] == "PT")
+    {
+        PtCalcData d = m_ptResults.value(targetId);
+        table->setItem(row, 0, makeItem(QString("%1 %2").arg(targetId).arg(m_targetNames[idx])));
         table->setItem(row, 1, makeItem(typeDisplay));
-        table->setItem(row, 2, makeItem(damageStr));
-        table->setItem(row, 3, makeItem(paramStr));
-        table->setItem(row, 4, makeItem(basisStr));
-        table->setItem(row, 5, makeItem(totalStr));
+        table->setItem(row, 2, makeItem(QString("%1").arg(d.damageLevel, 0, 'f', 2)));
+        table->setItem(row, 3, makeItem(QString("%1架").arg(d.n)));
+        table->setItem(row, 4, makeItem(QString("%1架").arg(d.backup)));
+        table->setItem(row, 5, makeItem(QString("%1架").arg(d.total)));
         table->setItem(row, 6, makeItem(QString("反辐射无人机")));
     }
+    else
+    {
+        ArCalcData d = m_arResults.value(targetId);
+        table->setItem(row, 0, makeItem(QString("%1 %2").arg(targetId).arg(m_targetNames[idx])));
+        table->setItem(row, 1, makeItem(typeDisplay));
+        table->setItem(row, 2, makeItem(QString("N/A")));
+        table->setItem(row, 3, makeItem(QString("%1架").arg(d.N_search)));
+        table->setItem(row, 4, makeItem(QString("%1架").arg(d.backup)));
+        table->setItem(row, 5, makeItem(QString("%1架").arg(d.total)));
+        table->setItem(row, 6, makeItem(QString("反辐射无人机")));
+    }
+
+    // 在 item 中存 targetId 用于查找
+    if (table->item(row, 0))
+        table->item(row, 0)->setData(Qt::UserRole, targetId);
 }
 
 // ─────────────────────────────────────────────
@@ -1017,6 +649,115 @@ QString ForceRequirementPanel::targetType(int index) const
     return m_targetTypes[index];
 }
 
+// 根据几何类型计算区域面积（平方千米），返回至少为 1
+static int calcAreaFromGeometry(const AreaTargetInfo &ar);
+
+// 从任务加载点目标和区域目标：清空旧 pill → 添加新 pill → 注入目标参数 → 全量自动计算
+void ForceRequirementPanel::loadTaskTargets(const QList<PointTargetInfo> &pointTargets,
+                                            const QList<AreaTargetInfo> &areaTargets)
+{
+    clearTargets();
+
+    for (const PointTargetInfo &pt : pointTargets)
+    {
+        addTarget(pt.targetId, pt.name, QStringLiteral("PT"));
+        PtInputData in;
+        in.damageLevel = (pt.requiredPk > 0.0) ? pt.requiredPk : 0.9;
+        in.singleShotProb = 0.95;
+        in.backupCount = 1;
+        m_ptInputs[pt.targetId] = in;
+    }
+    for (const AreaTargetInfo &ar : areaTargets)
+    {
+        addTarget(ar.targetId, ar.name, QStringLiteral("AR"));
+        ArInputData in;
+        in.area = calcAreaFromGeometry(ar);
+        in.estTargetCount = 3.0;
+        in.shotsPerTarget = 2;
+        in.backupCount = 2;
+        m_arInputs[ar.targetId] = in;
+    }
+
+    if (m_targetPills.isEmpty())
+        return;
+
+    setUpdatesEnabled(false);
+    const int count = m_targetPills.size();
+    for (int i = 0; i < count; ++i)
+        selectTarget(i);
+    setUpdatesEnabled(true);
+
+    selectTarget(0);
+}
+
+// 根据几何类型计算区域面积（平方千米），返回至少为 1
+static int calcAreaFromGeometry(const AreaTargetInfo &ar)
+{
+    switch (ar.areaType)
+    {
+    case AreaGeometryType::Circle:
+        if (ar.radiusKm > 0.0)
+            return qMax(1, static_cast<int>(3.14159265 * ar.radiusKm * ar.radiusKm));
+        return 100;
+
+    case AreaGeometryType::Rectangle:
+        if (ar.vertices.size() >= 4)
+        {
+            double minLat = ar.vertices[0].latitude, maxLat = ar.vertices[0].latitude;
+            double minLon = ar.vertices[0].longitude, maxLon = ar.vertices[0].longitude;
+            for (const GeoPosition &v : ar.vertices)
+            {
+                if (v.latitude  < minLat) minLat = v.latitude;
+                if (v.latitude  > maxLat) maxLat = v.latitude;
+                if (v.longitude < minLon) minLon = v.longitude;
+                if (v.longitude > maxLon) maxLon = v.longitude;
+            }
+            const double latSpan = (maxLat - minLat) * 111.32;
+            const double lonSpan = (maxLon - minLon) * 111.32 * qCos(qDegreesToRadians((minLat + maxLat) * 0.5));
+            return qMax(1, static_cast<int>(latSpan * lonSpan));
+        }
+        return 100;
+
+    case AreaGeometryType::Polygon:
+        if (ar.vertices.size() >= 3)
+        {
+            double area = 0.0;
+            const int n = ar.vertices.size();
+            for (int i = 0; i < n; ++i)
+            {
+                const int j = (i + 1) % n;
+                const double xi = ar.vertices[i].longitude * 111.32 * qCos(qDegreesToRadians(ar.vertices[i].latitude));
+                const double yi = ar.vertices[i].latitude * 111.32;
+                const double xj = ar.vertices[j].longitude * 111.32 * qCos(qDegreesToRadians(ar.vertices[j].latitude));
+                const double yj = ar.vertices[j].latitude * 111.32;
+                area += xi * yj - xj * yi;
+            }
+            return qMax(1, static_cast<int>(qAbs(area) * 0.5));
+        }
+        return 100;
+
+    case AreaGeometryType::Corridor:
+        if (ar.vertices.size() >= 2)
+        {
+            const double lat1 = ar.vertices[0].latitude * 111.32;
+            const double lon1 = ar.vertices[0].longitude * 111.32 * qCos(qDegreesToRadians(ar.vertices[0].latitude));
+            const double lat2 = ar.vertices[1].latitude * 111.32;
+            const double lon2 = ar.vertices[1].longitude * 111.32 * qCos(qDegreesToRadians(ar.vertices[1].latitude));
+            const double lengthKm = qSqrt((lat2 - lat1) * (lat2 - lat1) + (lon2 - lon1) * (lon2 - lon1));
+            const double widthKm = (ar.radiusKm > 0.0) ? ar.radiusKm * 2.0 : 10.0;
+            return qMax(1, static_cast<int>(lengthKm * widthKm));
+        }
+        if (ar.radiusKm > 0.0)
+            return qMax(1, static_cast<int>(3.14159265 * ar.radiusKm * ar.radiusKm));
+        return 100;
+
+    default:
+        if (ar.radiusKm > 0.0)
+            return qMax(1, static_cast<int>(3.14159265 * ar.radiusKm * ar.radiusKm));
+        return 100;
+    }
+}
+
 // 保存当前选中目标的输入参数到映射表
 void ForceRequirementPanel::saveCurrentInput()
 {
@@ -1047,10 +788,10 @@ void ForceRequirementPanel::restoreInput(const QString &id, const QString &type)
         m_currentDamageLevel = pt.damageLevel;
         ui->spinBox_SingleShotProb->setValue(pt.singleShotProb);
         ui->spinBox_BackupCount->setValue(pt.backupCount);
-        // 同步毁伤要求按钮选中状态
-        ui->btn_DamageLevel_Low->setChecked(pt.damageLevel == 0.7);
-        ui->btn_DamageLevel_Mid->setChecked(pt.damageLevel == 0.8);
-        ui->btn_DamageLevel_High->setChecked(pt.damageLevel == 0.9);
+        // 同步毁伤要求按钮选中状态（取最近档位）
+        ui->btn_DamageLevel_Low->setChecked(pt.damageLevel < 0.75);
+        ui->btn_DamageLevel_Mid->setChecked(pt.damageLevel >= 0.75 && pt.damageLevel < 0.85);
+        ui->btn_DamageLevel_High->setChecked(pt.damageLevel >= 0.85);
     } else if (type == "AR") {
         if (!m_arInputs.contains(id)) return;
         const ArInputData &ar = m_arInputs[id];
@@ -1091,4 +832,24 @@ void ForceRequirementPanel::selectTarget(int index)
         ui->stackedWidget->setCurrentIndex(1);
         updateArCalculation();
     }
+}
+
+// 从外部恢复已保存的兵力计算结果：覆盖 m_ptResults/m_arResults，
+// 若当前选中目标匹配则同步刷新 UI 计算按钮文字。
+void ForceRequirementPanel::restoreResults(const QMap<QString, PtCalcData> &ptResults,
+                                            const QMap<QString, ArCalcData> &arResults)
+{
+    for (auto it = ptResults.cbegin(); it != ptResults.cend(); ++it)
+        m_ptResults[it.key()] = it.value();
+    for (auto it = arResults.cbegin(); it != arResults.cend(); ++it)
+        m_arResults[it.key()] = it.value();
+
+    if (!m_currentTargetId.isEmpty()) {
+        if (m_currentTargetType == "PT" && m_ptResults.contains(m_currentTargetId))
+            updatePtCalculation();
+        else if (m_currentTargetType == "AR" && m_arResults.contains(m_currentTargetId))
+            updateArCalculation();
+    }
+
+    emit forceResultsChanged();
 }

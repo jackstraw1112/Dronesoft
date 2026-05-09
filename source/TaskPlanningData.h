@@ -329,12 +329,14 @@ struct PathPlanning
 // 雷达辐射源参数（对应于 UI 左侧卡片）
 struct RadarEmitterParams
 {
-    double  frequencyGHz = 9.375;  // 辐射源频率（GHz）
-    int     bandIndex = 0;         // 频段选择索引（0=H/I, 1=G, 2=E/F, 3=X/Ku）
-    double  pulseWidthUs = 1.2;    // 脉宽（微秒）
-    double  prfHz = 3200.0;        // 重频（Hz）
-    int     threatLevelIndex = 0;  // 威胁等级索引（0=高, 1=中, 2=低）
-    QString emitterReport;         // 辐射源批报文本
+    double  freqMinGHz = 8.0;       // 频率范围起始（GHz）
+    double  freqMaxGHz = 10.0;      // 频率范围终止（GHz）
+    double  pulseWidthMinUs = 0.5;  // 脉宽范围起始（微秒）
+    double  pulseWidthMaxUs = 2.5;  // 脉宽范围终止（微秒）
+    int     prfMinHz = 1000;        // 重频范围起始（Hz）
+    int     prfMaxHz = 5000;        // 重频范围终止（Hz）
+    int     threatLevelIndex = 0;   // 威胁等级索引（0=高, 1=中, 2=低）
+    QString emitterReport;          // 辐射源批报文本
 };
 
 // 导引头搜索参数（对应于 UI 右侧上半部分）
@@ -367,7 +369,16 @@ struct DroneBindingInfo
     QString targetName;           // 目标名称
     double  presetHeightM = 35.0; // 预设高度（米）
     int     linkQualityPercent = 0; // 链路质量百分比
-    int     readinessIndex = 0;    // 就绪状态（0=未就绪, 1=就绪）
+    int readinessIndex = 0;    // 就绪状态（0=未就绪, 1=就绪）
+};
+
+// 无人机资源信息（全局资源池用）
+struct UavResource
+{
+    int uavIndex = 0;          // 无人机全局序号（0~239）
+    QString uavName;           // 无人机名称（如 "JWS-01-001"）
+    QString typeName;          // 型号名称（如 "JWS-01"）
+    bool isAvailable = true;   // 是否可用
 };
 
 // ============================================================================

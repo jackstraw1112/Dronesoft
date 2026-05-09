@@ -87,6 +87,10 @@ public:
     // 选中指定索引的计算目标
     void selectTarget(int index);
 
+    // 从任务加载点目标和区域目标，自动清空旧目标并重新计算兵力需求
+    void loadTaskTargets(const QList<PointTargetInfo> &pointTargets,
+                         const QList<AreaTargetInfo> &areaTargets);
+
     // ═══════════════════════════════════════════
     // 数据查询（供 MissionPlanner / TaskAllocationPanel 读取）
     // ═══════════════════════════════════════════
@@ -101,11 +105,19 @@ public:
     // 获取区域目标计算结果映射表（仅供读取，非 const 引用）
     const QMap<QString, ArCalcData> &arResults() const { return m_arResults; }
 
+    // 从外部恢复已保存的兵力计算结果（覆盖自动计算值）
+    void restoreResults(const QMap<QString, PtCalcData> &ptResults,
+                        const QMap<QString, ArCalcData> &arResults);
+
+signals:
+    // 兵力计算结果变更时发射（用于 MissionPlanner 同步到 m_taskStore）
+    void forceResultsChanged();
+
 private slots:
-    // 计算过程按钮点击响应
-    void onCalculateProcessClicked();
-    // 兵力汇总按钮点击响应
-    void onTotalForceSummaryClicked();
+    // 单独计算按钮：仅计算当前选中目标
+    void onSingleCalculate();
+    // 全部计算按钮：计算所有目标并刷新汇总表
+    void onAllCalculate();
 
 protected:
     // 事件过滤器：捕获 pill 点击事件
@@ -151,10 +163,8 @@ private:
     void setupConnections();
     // 应用技术样式
     void applyTechStyle();
-    // 根据目标类型切换页面
-    void updatePageForTarget(const QString &targetId, const QString &targetType);
-    // 填充兵力汇总表格
-    void populateSummaryTable();
+    // 更新汇总表格中指定目标的行
+    void updateSummaryRow(const QString &targetId);
     // 初始化点目标输入参数信号槽
     void setupPtInputConnections();
     // 初始化区域目标输入参数信号槽

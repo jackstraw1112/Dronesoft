@@ -111,6 +111,16 @@ void RZTaskListWidget::addTask(QString taskId, QString taskName,
     }
 }
 
+// 更新指定任务的目标数量：查找现有卡片并刷新显示，无需重建列表
+void RZTaskListWidget::updateTaskItemTargetCount(const QString &taskId, int totalCount)
+{
+    TaskItemWidget *item = m_taskItems.value(taskId);
+    if (item)
+    {
+        item->setTargetCount(totalCount);
+    }
+}
+
 // 清空所有任务项：释放所有卡片并重置内部状态
 // 注意：此处直接 delete 子项，确保立即释放资源；随后清空索引容器。
 void RZTaskListWidget::clearTasks()

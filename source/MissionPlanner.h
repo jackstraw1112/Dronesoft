@@ -116,6 +116,16 @@ private:
 
     // 任务列表
     RZTaskListWidget *mTaskListWidget = nullptr;
+
+    // 默认无人机资源池（240架）
+    QList<UavResource> m_uavResourcePool;
+    // 无人机资源池总量（固定240架）
+    int m_totalUavAvailable = 240;
+
+public:
+    // 获取无人机资源池（常量引用，供外部读取）
+    const QList<UavResource> &uavResourcePool() const { return m_uavResourcePool; }
+    int totalUavAvailable() const { return m_totalUavAvailable; }
 };
 
 #endif // MISSIONPLANNER_H

@@ -16,6 +16,7 @@
 #include <QGridLayout>
 #include <QScrollArea>
 #include <QList>
+#include "TaskPlanningData.h"
 
 // ============================================================================
 // RightSidePanel - 右侧资源态势面板类
@@ -56,6 +57,13 @@ public:
     // 参数：label - 气象项目名称，value - 气象数值
     void addWeatherCard(QString label, QString value);
 
+    // 从无人机资源池更新可用兵力显示
+    void setUavResources(const QList<UavResource> &resources);
+    // 更新KPI数值（点目标数、区域目标数、出动架次、预期毁伤率）
+    void setKpiValue(int index, const QString &value);
+    // 清空所有无人机卡片
+    void clearUavCards();
+
 private:
     // =========================================================================
     // 私有成员变量
@@ -71,6 +79,8 @@ private:
     QList<QFrame*> m_uavCards;          // 无人机卡片列表
     QList<QFrame*> m_threatItems;       // 威胁项目列表
     QList<QFrame*> m_weatherCards;      // 气象卡片列表
+    QList<QLabel*> m_kpiValueLabels;    // KPI数值标签（用于动态更新）
+    QVBoxLayout *m_assetsSectionLayout = nullptr; // 可用兵力区域布局
 
     // =========================================================================
     // 私有初始化方法

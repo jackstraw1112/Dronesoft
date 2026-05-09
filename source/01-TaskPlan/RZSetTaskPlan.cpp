@@ -425,6 +425,7 @@ void RZSetTaskPlan::onAddPointTarget()
     setPointTargetRow(row, targetInfo);
     updatePointTargetActionBtnState();
     forceRefreshView();
+    emit targetsModified();
 }
 
 void RZSetTaskPlan::onEditPointTarget()
@@ -465,6 +466,7 @@ void RZSetTaskPlan::onDeletePointTarget()
     ui->tbwPointTarget->removeRow(row);
     updatePointTargetActionBtnState();
     forceRefreshView();
+    emit targetsModified();
 }
 
 void RZSetTaskPlan::updatePointTargetActionBtnState()
@@ -614,6 +616,7 @@ void RZSetTaskPlan::onAddAreaTarget()
     setAreaTargetRow(row, targetInfo);
     updateAreaTargetActionBtnState();
     forceRefreshView();
+    emit targetsModified();
 }
 
 void RZSetTaskPlan::onEditAreaTarget()
@@ -654,6 +657,7 @@ void RZSetTaskPlan::onDeleteAreaTarget()
     ui->tbwAreaTarget->removeRow(row);
     updateAreaTargetActionBtnState();
     forceRefreshView();
+    emit targetsModified();
 }
 
 void RZSetTaskPlan::updateAreaTargetActionBtnState()

@@ -9,6 +9,7 @@
 
 #include <QHeaderView>
 #include <QMessageBox>
+#include <QAbstractSpinBox>
 
 
 ParameterLoading::ParameterLoading(QWidget *parent) :
@@ -23,6 +24,20 @@ ParameterLoading::ParameterLoading(QWidget *parent) :
 
 ParameterLoading::~ParameterLoading() {
     delete ui;
+}
+
+void ParameterLoading::setAssignmentData(const QList<UavAssignment> &assignments,
+                                          const QList<UavResource> &resourcePool)
+{
+    m_assignments = assignments;
+    m_resourcePool = resourcePool;
+    populateSampleData();
+    m_selectedCount = 0;
+    ui->selectedCount->setText("0");
+    ui->selectAllCheckbox->blockSignals(true);
+    ui->selectAllCheckbox->setChecked(false);
+    ui->selectAllCheckbox->blockSignals(false);
+    updateStatusBar();
 }
 
 void ParameterLoading::applyTechStyle()
@@ -147,8 +162,8 @@ void ParameterLoading::applyTechStyle()
         }
     )").arg(accentCyan));
 
-    QString lineEditStyle = QString(R"(
-        QLineEdit {
+    QString spinBoxStyle = QString(R"(
+        QAbstractSpinBox {
             background-color: %1;
             border: 1px solid %2;
             border-radius: 4px;
@@ -157,14 +172,18 @@ void ParameterLoading::applyTechStyle()
             min-height: 26px;
             font-size: 12px;
         }
-        QLineEdit:focus {
+        QAbstractSpinBox:focus {
             border: 1px solid %4;
             background-color: %5;
         }
+        QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {
+            width: 16px;
+            border-left: 1px solid %2;
+        }
     )").arg(inputBg).arg(borderColor).arg(textPrimary)
        .arg(hoverBorder).arg("#0a1428");
-    for (QLineEdit* le : findChildren<QLineEdit*>()) {
-        le->setStyleSheet(lineEditStyle);
+    for (QAbstractSpinBox* sb : findChildren<QAbstractSpinBox*>()) {
+        sb->setStyleSheet(spinBoxStyle);
     }
 
     QString comboBoxStyle = QString(R"(
@@ -227,6 +246,40 @@ void ParameterLoading::applyTechStyle()
             font-weight: bold;
             font-size: 11px;
             padding: 4px 6px;
+        }
+        QScrollBar:vertical {
+            background: #0a0e1a;
+            width: 6px;
+            margin: 0;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical {
+            background: #1a3a6a;
+            min-height: 30px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background: #00b4ff;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0;
+        }
+        QScrollBar:horizontal {
+            background: #0a0e1a;
+            height: 6px;
+            margin: 0;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:horizontal {
+            background: #1a3a6a;
+            min-width: 30px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:horizontal:hover {
+            background: #00b4ff;
+        }
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            width: 0;
         }
     )").arg(panelBg).arg(borderColor).arg("#1a2a4a")
        .arg(textPrimary).arg("#0d2466").arg("#ffffff")
@@ -403,27 +456,16 @@ void ParameterLoading::populateSampleData()
     m_droneCheckBoxes.clear();
     ui->droneTable->setRowCount(0);
 
-    struct DroneInfo {
-        QString id;
-        QString type;
-        QString progress;
-        QString seekerStatus;
-        QString target;
-        QString burstHeight;
-        QString linkQuality;
-        QString ready;
-    };
+    if (m_assignments.isEmpty())
+    {
+        updateStatusBar();
+        return;
+    }
 
-    QList<DroneInfo> drones = {
-        {"UAV-101", "AR-1 / H/I", "已上传(100%)", "归向锁定 · 35m", "敌防空雷达阵位-01", "35", "-68dBm", "是"},
-        {"UAV-102", "AR-1 / H/I", "待校验(60%)", "归向锁定 · 35m", "敌防空雷达阵位-02", "35", "-65dBm", "否"},
-        {"UAV-103", "AR-2 / G/H", "待上传(0%)", "待配置", "未分配", "30", "-70dBm", "否"},
-        {"UAV-104", "AR-1 / H/I", "已上传(100%)", "螺旋扫描 · 30m", "敌防空雷达阵位-03", "30", "-72dBm", "是"},
-        {"UAV-105", "AR-3 / 宽频", "已上传(100%)", "扇形扫描 · 40m", "敌防空雷达阵位-04", "40", "-66dBm", "是"},
-        {"UAV-106", "AR-2 / G/H", "待校验(60%)", "归向锁定 · 35m", "敌防空雷达阵位-05", "35", "-69dBm", "否"},
-    };
+    for (int i = 0; i < m_assignments.size(); ++i)
+    {
+        const UavAssignment &assignment = m_assignments[i];
 
-    for (int i = 0; i < drones.size(); ++i) {
         int row = ui->droneTable->rowCount();
         ui->droneTable->insertRow(row);
         ui->droneTable->setRowHeight(row, 28);
@@ -442,7 +484,6 @@ void ParameterLoading::populateSampleData()
         connect(cb, &QCheckBox::toggled, this, &ParameterLoading::onDroneCheckChanged);
         m_droneCheckBoxes.append(cb);
 
-        const DroneInfo &d = drones[i];
         auto setItem = [&](int col, const QString &text, const QString &color = QString()) {
             QTableWidgetItem *item = new QTableWidgetItem(text);
             item->setTextAlignment(Qt::AlignCenter);
@@ -452,14 +493,26 @@ void ParameterLoading::populateSampleData()
             ui->droneTable->setItem(row, col, item);
         };
 
-        setItem(1, d.id);
-        setItem(2, d.type);
-        setItem(3, d.progress, d.progress.contains("100%") ? "#68d391" : "#ffb86b");
-        setItem(4, d.seekerStatus);
-        setItem(5, d.target);
-        setItem(6, d.burstHeight);
-        setItem(7, d.linkQuality);
-        setItem(8, d.ready, d.ready == "是" ? "#68d391" : "#ff7a7a");
+        QString typeName;
+        for (const UavResource &res : m_resourcePool)
+        {
+            if (res.uavIndex == assignment.uavIndex)
+            {
+                typeName = res.typeName;
+                break;
+            }
+        }
+        if (typeName.isEmpty())
+            typeName = (assignment.targetType == "AR") ? "AR-1 / H/I" : "PT-1 / I";
+
+        setItem(1, assignment.uavId);
+        setItem(2, typeName);
+        setItem(3, "待上传(0%)", "#ffb86b");
+        setItem(4, "待配置");
+        setItem(5, assignment.targetName);
+        setItem(6, "30");
+        setItem(7, "-70dBm");
+        setItem(8, "否", "#ff7a7a");
     }
 }
 
@@ -516,20 +569,22 @@ void ParameterLoading::onDefaultClicked()
 
 void ParameterLoading::restoreDefaults()
 {
-    ui->rfFreq->setText("9.375");
-    ui->rfBand->setCurrentIndex(0);
-    ui->pulseWidth->setText("1.2");
-    ui->prf->setText("3200");
+    ui->rfFreqMin->setValue(8.0);
+    ui->rfFreqMax->setValue(10.0);
+    ui->pulseWidthMin->setValue(0.5);
+    ui->pulseWidthMax->setValue(2.5);
+    ui->prfMin->setValue(1000);
+    ui->prfMax->setValue(5000);
     ui->threatLevel->setCurrentIndex(0);
 
 
     ui->searchMode->setCurrentIndex(0);
-    ui->sectorStart->setText("-30");
-    ui->sectorEnd->setText("+30");
-    ui->elevMin->setText("-15");
-    ui->elevMax->setText("+25");
+    ui->sectorStart->setValue(-30);
+    ui->sectorEnd->setValue(30);
+    ui->elevMin->setValue(-15);
+    ui->elevMax->setValue(25);
 
-    ui->burstHeight->setText("35");
+    ui->burstHeight->setValue(35);
     ui->fuseTypeSimple->setCurrentIndex(0);
 
     updateStatusBar();
@@ -542,6 +597,43 @@ void ParameterLoading::onBatchUploadClicked()
                              "请先勾选需要装订的无人机。");
         return;
     }
+
+    const QString burstHeight = QString::number(ui->burstHeight->value());
+    const QString searchMode = ui->searchMode->currentText();
+
+    QString seekerStatus;
+    if (searchMode.contains("归向")) {
+        seekerStatus = QString("归向锁定 · %1m").arg(burstHeight);
+    } else if (searchMode.contains("螺旋")) {
+        seekerStatus = QString("螺旋扫描 · %1m").arg(burstHeight);
+    } else if (searchMode.contains("扇形")) {
+        seekerStatus = QString("扇形扫描 · %1m").arg(burstHeight);
+    } else {
+        seekerStatus = QString("已配置 · %1m").arg(burstHeight);
+    }
+
+    for (int row = 0; row < m_droneCheckBoxes.size(); ++row) {
+        if (!m_droneCheckBoxes[row]->isChecked())
+            continue;
+
+        auto updateCell = [&](int col, const QString &text, const QString &color = QString()) {
+            QTableWidgetItem *item = ui->droneTable->item(row, col);
+            if (!item) {
+                item = new QTableWidgetItem();
+                ui->droneTable->setItem(row, col, item);
+            }
+            item->setText(text);
+            item->setTextAlignment(Qt::AlignCenter);
+            if (!color.isEmpty())
+                item->setForeground(QColor(color));
+        };
+
+        updateCell(3, "已上传(100%)", "#68d391");
+        updateCell(4, seekerStatus);
+        updateCell(6, burstHeight);
+        updateCell(8, "是", "#68d391");
+    }
+
     QMessageBox::information(this, "批量装订",
                              QString("已将融合参数装订至 %1 架无人机。").arg(m_selectedCount));
 }
@@ -558,8 +650,10 @@ void ParameterLoading::onRefreshTableClicked()
 
 void ParameterLoading::updateStatusBar()
 {
-    QString freq = ui->rfFreq->text();
+    QString freq = QString("%1~%2 GHz").arg(
+        QString::number(ui->rfFreqMin->value(), 'f', 1),
+        QString::number(ui->rfFreqMax->value(), 'f', 1));
     QString mode = ui->searchMode->currentText();
-    QString burst = ui->burstHeight->text();
+    QString burst = QString::number(ui->burstHeight->value());
 
 }
